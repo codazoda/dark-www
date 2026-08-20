@@ -1,0 +1,172 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Shut the Box</title>
+<style>
+  :root { color-scheme: dark; }
+  * { box-sizing: border-box; }
+  html, body { height: 100%; }
+  body {
+    margin: 0;
+    padding: 12px;
+    background: #000;
+    color: #fff;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    -webkit-tap-highlight-color: transparent;
+  }
+  button {
+    font: inherit;
+    color: inherit;
+    background: none;
+    border: 2px solid #fff;
+    border-radius: 0;
+    cursor: pointer;
+  }
+  button:focus-visible { outline: 2px dashed #fff; outline-offset: 3px; }
+
+  /* Tiles: twelve tall rectangles, number centered near the top. */
+  #tiles { display: grid; grid-template-columns: repeat(12, 1fr); gap: 6px; }
+  .tile {
+    aspect-ratio: 3 / 4;
+    max-height: 22vh;
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    padding-top: .3em;
+    font-size: clamp(14px, 2.4vw, 28px);
+  }
+  /* Shut: outline and number vanish, the tile keeps its space and stays clickable. */
+  .tile[aria-pressed="true"] { border-color: transparent; }
+  .tile[aria-pressed="true"] span { opacity: 0; }
+
+  /* Dice box: fills what's left below the tiles. */
+  #box {
+    flex: 1;
+    min-height: 110px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  #prompt { letter-spacing: .2em; font-size: clamp(12px, 2.4vw, 20px); }
+  #dice { display: none; gap: 10vmin; }
+  #box.rolled #dice { display: flex; }
+  #box.rolled #prompt { display: none; }
+  .die {
+    width: clamp(72px, 26vmin, 160px);
+    aspect-ratio: 1;
+    border: 2px solid #fff;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    grid-template-rows: repeat(3, 1fr);
+    padding: 9%;
+    gap: 4%;
+  }
+  .pip { border-radius: 50%; background: #fff; visibility: hidden; }
+  .pip.on { visibility: visible; }
+
+  #clear { align-self: center; padding: .6em 2em; letter-spacing: .2em; }
+
+  /* Twelve tiles across a phone are too thin to tap; wrap to two rows of six. */
+  @media (max-width: 600px) {
+    #tiles { grid-template-columns: repeat(6, 1fr); }
+    .tile { font-size: clamp(16px, 5vw, 28px); }
+  }
+</style>
+</head>
+<body>
+  <div id="tiles"></div>
+  <button id="box" type="button" aria-label="Roll the dice">
+    <span id="prompt">CLICK TO ROLL</span>
+    <span id="dice" role="img" aria-label="No dice rolled yet"></span>
+  </button>
+  <button id="clear" type="button">CLEAR</button>
+<script>
+  // Pip slots lit for each face, as indexes into a 3x3 grid read left to right.
+  var FACES = [[4], [0, 8], [0, 4, 8], [0, 2, 6, 8], [0, 2, 4, 6, 8], [0, 2, 3, 5, 6, 8]];
+
+  var box = document.getElementById('box');
+  var diceEl = document.getElementById('dice');
+  var tilesEl = document.getElementById('tiles');
+
+  for (var n = 1; n <= 12; n++) {
+    tilesEl.appendChild(makeTile(n));
+  }
+
+  function makeTile(n) {
+    var b = document.createElement('button');
+    b.type = 'button';
+    b.className = 'tile';
+    b.setAttribute('aria-pressed', 'false');
+    var label = document.createElement('span');
+    label.textContent = n;
+    b.appendChild(label);
+    b.addEventListener('click', function () {
+      // No rules here: a shut tile opens again, so a misclick costs nothing.
+      var shut = b.getAttribute('aria-pressed') === 'true';
+      b.setAttribute('aria-pressed', shut ? 'false' : 'true');
+    });
+    return b;
+  }
+
+  var dice = [makeDie(), makeDie()];
+
+  function makeDie() {
+    var d = document.createElement('span');
+    d.className = 'die';
+    for (var i = 0; i < 9; i++) {
+      var p = document.createElement('span');
+      p.className = 'pip';
+      d.appendChild(p);
+    }
+    diceEl.appendChild(d);
+    return d;
+  }
+
+  function draw(die, face) {
+    var on = FACES[face - 1];
+    for (var i = 0; i < 9; i++) {
+      die.children[i].className = on.indexOf(i) > -1 ? 'pip on' : 'pip';
+    }
+  }
+
+  function rnd() {
+    return Math.floor(Math.random() * 6) + 1;
+  }
+
+  function roll() {
+    var a = rnd(), b = rnd();
+    draw(dice[0], a);
+    draw(dice[1], b);
+    diceEl.setAttribute('aria-label', 'Dice: ' + a + ' and ' + b);
+    box.setAttribute('aria-label', 'Roll the dice. Showing ' + a + ' and ' + b + '.');
+    box.className = 'rolled';
+  }
+
+  function clear() {
+    var t = tilesEl.children;
+    for (var i = 0; i < t.length; i++) {
+      t[i].setAttribute('aria-pressed', 'false');
+    }
+    box.className = '';
+    box.setAttribute('aria-label', 'Roll the dice');
+    diceEl.setAttribute('aria-label', 'No dice rolled yet');
+  }
+
+  box.addEventListener('click', roll);
+  document.getElementById('clear').addEventListener('click', clear);
+
+  document.addEventListener('keydown', function (e) {
+    if (e.key !== 'Enter' && e.key !== ' ') return;
+    // A focused button owns these keys: Enter on a tile shuts it, it doesn't roll.
+    if (e.target && e.target.closest && e.target.closest('button')) return;
+    e.preventDefault();
+    roll();
+  });
+</script>
+</body>
+</html>
