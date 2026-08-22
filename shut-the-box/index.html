@@ -40,8 +40,8 @@
     padding-top: .3em;
     font-size: clamp(14px, 2.4vw, 28px);
   }
-  /* Shut: outline vanishes and the number darkens to 75% visible (not gone), tile keeps its space and stays clickable. */
-  .tile[aria-pressed="true"] { border-color: transparent; }
+  /* Shut: outline and number both darken to 75% visible (not gone), tile keeps its space and stays clickable. */
+  .tile[aria-pressed="true"] { border-color: rgba(255, 255, 255, .75); }
   .tile[aria-pressed="true"] span { opacity: .75; }
 
   /* Dice box: fills what's left below the tiles. */
