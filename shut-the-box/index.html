@@ -56,6 +56,8 @@
   #dice { display: none; gap: 10vmin; }
   #box.rolled #dice { display: flex; }
   #box.rolled #prompt { display: none; }
+  /* Rolling: dice stay hidden a moment before the new roll appears, so a repeat of the same numbers still reads as a fresh roll. */
+  #box.rolling #prompt { display: none; }
   .die {
     width: clamp(72px, 26vmin, 160px);
     aspect-ratio: 1;
@@ -138,16 +140,30 @@
     return Math.floor(Math.random() * 6) + 1;
   }
 
+  var rollTimer = null;
+
   function roll() {
-    var a = rnd(), b = rnd();
-    draw(dice[0], a);
-    draw(dice[1], b);
-    diceEl.setAttribute('aria-label', 'Dice: ' + a + ' and ' + b);
-    box.setAttribute('aria-label', 'Roll the dice. Showing ' + a + ' and ' + b + '.');
-    box.className = 'rolled';
+    if (rollTimer) clearTimeout(rollTimer);
+    // Hide whatever's showing first, so back-to-back rolls of the same numbers still look like something happened.
+    box.className = 'rolling';
+    box.setAttribute('aria-label', 'Rolling dice');
+    diceEl.setAttribute('aria-label', 'Rolling dice');
+    rollTimer = setTimeout(function () {
+      rollTimer = null;
+      var a = rnd(), b = rnd();
+      draw(dice[0], a);
+      draw(dice[1], b);
+      diceEl.setAttribute('aria-label', 'Dice: ' + a + ' and ' + b);
+      box.setAttribute('aria-label', 'Roll the dice. Showing ' + a + ' and ' + b + '.');
+      box.className = 'rolled';
+    }, 200);
   }
 
   function clear() {
+    if (rollTimer) {
+      clearTimeout(rollTimer);
+      rollTimer = null;
+    }
     var t = tilesEl.children;
     for (var i = 0; i < t.length; i++) {
       t[i].setAttribute('aria-pressed', 'false');
