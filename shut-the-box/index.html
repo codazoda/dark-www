@@ -53,15 +53,27 @@
     flex: 1;
     min-height: 110px;
     display: flex;
+    flex-direction: column;
     align-items: center;
     justify-content: center;
+    gap: 10px;
   }
   #prompt { letter-spacing: .2em; font-size: clamp(12px, 2.4vw, 20px); }
+  #instructions {
+    display: block;
+    font-size: clamp(11px, 2vw, 14px);
+    color: rgba(255, 255, 255, .6);
+    letter-spacing: normal;
+    max-width: 32em;
+    text-align: center;
+  }
   #dice { display: none; gap: 10vmin; }
   #box.rolled #dice { display: flex; }
   #box.rolled #prompt { display: none; }
+  #box.rolled #instructions { display: none; }
   /* Rolling: dice stay hidden a moment before the new roll appears, so a repeat of the same numbers still reads as a fresh roll. */
   #box.rolling #prompt { display: none; }
+  #box.rolling #instructions { display: none; }
   .die {
     width: clamp(72px, 26vmin, 160px);
     aspect-ratio: 1;
@@ -94,6 +106,7 @@
 <body>
   <div id="tiles"></div>
   <button id="box" type="button" aria-label="Roll the dice">
+    <span id="instructions">Tap tiles that add up to your roll to shut them. Score is a sum of open tiles. Empty the board to win. Stuck? CLEAR starts a new round.</span>
     <span id="prompt">CLICK TO ROLL</span>
     <span id="dice" role="img" aria-label="No dice rolled yet"></span>
   </button>
