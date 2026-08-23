@@ -73,6 +73,13 @@
 
   #clear { align-self: center; padding: .6em 2em; letter-spacing: .2em; }
 
+  #stats {
+    text-align: center;
+    font-size: clamp(11px, 2vw, 14px);
+    line-height: 1.7;
+    color: rgba(255, 255, 255, .6);
+  }
+
   /* Twelve tiles across a phone are too thin to tap; wrap to two rows of six. */
   @media (max-width: 600px) {
     #tiles { grid-template-columns: repeat(6, 1fr); }
@@ -87,13 +94,128 @@
     <span id="dice" role="img" aria-label="No dice rolled yet"></span>
   </button>
   <button id="clear" type="button">CLEAR</button>
+  <div id="stats">
+    <div id="statScore">Score: &ndash;</div>
+    <div id="statSummary">Best: &ndash; &middot; Games: 0 &middot; Boxes shut: 0</div>
+    <div id="statStreak">Streak: 0 days</div>
+  </div>
 <script>
+  // One fixed recovery code for everyone; change it and redeploy to rotate it.
+  var RECOVER_CODE = "h0wm27";
+  var SESSION_KEY = "shutTheBox.session";
+  var RECOVERY_KEY = "shutTheBox.recovery";
+  var DAY_MS = 24 * 60 * 60 * 1000;
+  var SESSION_TTL = DAY_MS;
+  var RECOVERY_TTL = 7 * DAY_MS;
+
   // Pip slots lit for each face, as indexes into a 3x3 grid read left to right.
   var FACES = [[4], [0, 8], [0, 4, 8], [0, 2, 6, 8], [0, 2, 4, 6, 8], [0, 2, 3, 5, 6, 8]];
 
   var box = document.getElementById('box');
   var diceEl = document.getElementById('dice');
   var tilesEl = document.getElementById('tiles');
+  var statScoreEl = document.getElementById('statScore');
+  var statSummaryEl = document.getElementById('statSummary');
+  var statStreakEl = document.getElementById('statStreak');
+
+  // Stats are opt-in and local only: no round is recorded until CLEAR is pressed with at least one roll behind it.
+  var stats = { score: null, best: null, games: 0, boxesShut: 0, streak: 0, lastPlayedDate: '' };
+  var rolledSinceClear = false;
+
+  function loadTier(key) {
+    try {
+      var obj = JSON.parse(localStorage.getItem(key));
+      if (!obj || typeof obj.expiresAt !== 'number' || obj.expiresAt <= Date.now()) return null;
+      return obj;
+    } catch (e) {
+      return null;
+    }
+  }
+
+  function saveTier(key, ttlMs) {
+    try {
+      localStorage.setItem(key, JSON.stringify({
+        score: stats.score,
+        best: stats.best,
+        games: stats.games,
+        boxesShut: stats.boxesShut,
+        streak: stats.streak,
+        lastPlayedDate: stats.lastPlayedDate,
+        expiresAt: Date.now() + ttlMs
+      }));
+    } catch (e) {
+      // Storage unavailable (e.g. private browsing quota) — stats just won't persist.
+    }
+  }
+
+  function touchExpiry() {
+    saveTier(SESSION_KEY, SESSION_TTL);
+    saveTier(RECOVERY_KEY, RECOVERY_TTL);
+  }
+
+  function renderStats() {
+    var scoreText = stats.score === null ? '–' : String(stats.score);
+    var bestText = stats.best === null ? '–' : String(stats.best);
+    statScoreEl.textContent = 'Score: ' + scoreText;
+    statSummaryEl.textContent = 'Best: ' + bestText + ' · Games: ' + stats.games + ' · Boxes shut: ' + stats.boxesShut;
+    statStreakEl.textContent = 'Streak: ' + stats.streak + ' day' + (stats.streak === 1 ? '' : 's');
+  }
+
+  function todayString() {
+    var d = new Date();
+    return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+  }
+
+  function recordRound() {
+    var t = tilesEl.children;
+    var score = 0;
+    for (var i = 0; i < t.length; i++) {
+      if (t[i].getAttribute('aria-pressed') !== 'true') score += i + 1;
+    }
+    stats.games += 1;
+    stats.score = score;
+    stats.best = stats.best === null ? score : Math.min(stats.best, score);
+    if (score === 0) stats.boxesShut += 1;
+    var today = todayString();
+    if (stats.lastPlayedDate !== today) {
+      stats.streak += 1;
+      stats.lastPlayedDate = today;
+    }
+  }
+
+  function initStats() {
+    var params = new URLSearchParams(location.search);
+    var code = params.get('r');
+    var restored = false;
+    if (code && code === RECOVER_CODE) {
+      var recovery = loadTier(RECOVERY_KEY);
+      if (recovery) {
+        stats = {
+          score: recovery.score, best: recovery.best, games: recovery.games,
+          boxesShut: recovery.boxesShut, streak: recovery.streak, lastPlayedDate: recovery.lastPlayedDate
+        };
+        saveTier(SESSION_KEY, SESSION_TTL);
+        restored = true;
+      }
+    }
+    if (params.has('r')) {
+      params.delete('r');
+      var qs = params.toString();
+      history.replaceState(null, '', location.pathname + (qs ? '?' + qs : '') + location.hash);
+    }
+    if (!restored) {
+      var session = loadTier(SESSION_KEY);
+      if (session) {
+        stats = {
+          score: session.score, best: session.best, games: session.games,
+          boxesShut: session.boxesShut, streak: session.streak, lastPlayedDate: session.lastPlayedDate
+        };
+      }
+    }
+    renderStats();
+  }
+
+  initStats();
 
   for (var n = 1; n <= 12; n++) {
     tilesEl.appendChild(makeTile(n));
@@ -144,6 +266,8 @@
 
   function roll() {
     if (rollTimer) clearTimeout(rollTimer);
+    rolledSinceClear = true;
+    touchExpiry();
     // Hide whatever's showing first, so back-to-back rolls of the same numbers still look like something happened.
     box.className = 'rolling';
     box.setAttribute('aria-label', 'Rolling dice');
@@ -164,6 +288,12 @@
       clearTimeout(rollTimer);
       rollTimer = null;
     }
+    if (rolledSinceClear) {
+      recordRound();
+      renderStats();
+    }
+    rolledSinceClear = false;
+    touchExpiry();
     var t = tilesEl.children;
     for (var i = 0; i < t.length; i++) {
       t[i].setAttribute('aria-pressed', 'false');
