@@ -261,6 +261,7 @@
     location.type = 'text';
     location.value = b.location;
     location.setAttribute('aria-label', 'Location');
+    location.addEventListener('focus', function () { location.value = ''; });
     location.addEventListener('change', function () { setLocation(b.id, location.value); });
     row.appendChild(location);
 
