@@ -1,0 +1,489 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="icon-180.png">
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#000000">
+<title>Battery Tracker</title>
+<style>
+  :root { color-scheme: dark; }
+  * { box-sizing: border-box; }
+  html, body { height: 100%; }
+  body {
+    margin: 0;
+    padding: 12px;
+    background: #000;
+    color: #fff;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    -webkit-tap-highlight-color: transparent;
+  }
+  h1 {
+    font-size: clamp(16px, 4vw, 22px);
+    letter-spacing: .1em;
+    margin: 0 0 16px;
+  }
+  input, select, button {
+    font: inherit;
+    color: inherit;
+    background: #000;
+    border: 2px solid #fff;
+    border-radius: 0;
+  }
+  button { cursor: pointer; }
+  input:focus-visible, select:focus-visible, button:focus-visible {
+    outline: 2px dashed #fff;
+    outline-offset: 2px;
+  }
+
+  #add {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 20px;
+  }
+  #add select, #add input { padding: .5em; }
+  #add input#customSize, #add input#descInput { flex: 1 1 10em; min-width: 0; }
+  #add input#qtyInput { width: 5em; flex: 0 0 auto; }
+  #add button { flex: 0 0 auto; padding: .5em 1em; letter-spacing: .1em; }
+
+  .group { margin-bottom: 18px; }
+  .group h2 {
+    font-size: clamp(13px, 3vw, 15px);
+    letter-spacing: .15em;
+    color: rgba(255, 255, 255, .6);
+    margin: 0 0 8px;
+    text-transform: uppercase;
+  }
+
+  .row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 0;
+    border-bottom: 1px solid rgba(255, 255, 255, .2);
+    flex-wrap: wrap;
+  }
+  .row .name { flex: 1 1 auto; min-width: 8em; }
+  .row .qty {
+    flex: 0 0 auto;
+    min-width: 2.5em;
+    text-align: right;
+    color: rgba(255, 255, 255, .8);
+  }
+  .row button {
+    flex: 0 0 auto;
+    padding: .3em .6em;
+    font-size: .85em;
+  }
+  .row button.remove {
+    border-color: rgba(255, 255, 255, .4);
+    color: rgba(255, 255, 255, .6);
+  }
+
+  .panel {
+    flex: 1 1 100%;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    padding: 8px 0 2px;
+  }
+  .panel input { padding: .4em; }
+  .panel input.num { width: 5em; flex: 0 0 auto; }
+  .panel input.text { flex: 1 1 10em; min-width: 0; }
+  .panel button { padding: .3em .6em; font-size: .85em; }
+
+  #empty {
+    color: rgba(255, 255, 255, .6);
+    padding: 20px 0;
+  }
+</style>
+</head>
+<body>
+  <h1>BATTERY TRACKER</h1>
+  <section id="add">
+    <select id="sizeSelect" aria-label="Battery size">
+      <option>AA</option>
+      <option>AAA</option>
+      <option>C</option>
+      <option>D</option>
+      <option>9V</option>
+      <option>Other</option>
+    </select>
+    <input id="customSize" class="text" type="text" placeholder="Size" hidden aria-label="Custom size">
+    <input id="descInput" type="text" placeholder="Description (e.g. EBL 2800)" aria-label="Description">
+    <input id="qtyInput" type="number" min="1" value="1" aria-label="Quantity">
+    <button id="addBtn" type="button">Add</button>
+  </section>
+  <div id="list"></div>
+  <p id="empty" hidden>No batteries yet — pick a size, optional description and quantity, then tap "Add".</p>
+  <datalist id="locList"></datalist>
+<script>
+  var STORAGE_KEY = 'batteryTracker.sets';
+  var ORGANIZER = 'Organizer';
+
+  var listEl = document.getElementById('list');
+  var emptyEl = document.getElementById('empty');
+  var locListEl = document.getElementById('locList');
+  var sizeSelect = document.getElementById('sizeSelect');
+  var customSize = document.getElementById('customSize');
+  var descInput = document.getElementById('descInput');
+  var qtyInput = document.getElementById('qtyInput');
+  var addBtn = document.getElementById('addBtn');
+
+  var sets = load();
+  var openPanel = null; // { setId, loc, type: 'move' | 'remove' | 'edit' }
+
+  function load() {
+    try {
+      var arr = JSON.parse(localStorage.getItem(STORAGE_KEY));
+      return Array.isArray(arr) ? arr : [];
+    } catch (e) {
+      return [];
+    }
+  }
+
+  function save() {
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(sets));
+    } catch (e) {
+      // Storage unavailable (e.g. private browsing quota) — list just won't persist.
+    }
+  }
+
+  function genId() {
+    return Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
+  }
+
+  function findById(id) {
+    for (var i = 0; i < sets.length; i++) {
+      if (sets[i].id === id) return sets[i];
+    }
+    return null;
+  }
+
+  function findSet(size, desc, excludeId) {
+    var sizeKey = size.trim().toLowerCase();
+    var descKey = desc.trim().toLowerCase();
+    for (var i = 0; i < sets.length; i++) {
+      var s = sets[i];
+      if (s.id === excludeId) continue;
+      if (s.size.trim().toLowerCase() === sizeKey && (s.desc || '').trim().toLowerCase() === descKey) {
+        return s;
+      }
+    }
+    return null;
+  }
+
+  function totalQty(set) {
+    var total = 0;
+    for (var loc in set.locations) total += set.locations[loc];
+    return total;
+  }
+
+  function allLocations() {
+    var found = {};
+    found[ORGANIZER] = true;
+    sets.forEach(function (s) {
+      for (var loc in s.locations) {
+        if (s.locations[loc] > 0) found[loc] = true;
+      }
+    });
+    var names = Object.keys(found);
+    names.sort(function (a, b) {
+      if (a === ORGANIZER) return -1;
+      if (b === ORGANIZER) return 1;
+      return a.localeCompare(b);
+    });
+    return names;
+  }
+
+  function setName(set) {
+    return set.desc ? set.size + ' — ' + set.desc : set.size;
+  }
+
+  function addSet() {
+    var size = sizeSelect.value === 'Other' ? customSize.value.trim() : sizeSelect.value;
+    if (!size) { customSize.focus(); return; }
+    var desc = descInput.value.trim();
+    var qty = parseInt(qtyInput.value, 10);
+    if (!qty || qty < 1) qty = 1;
+
+    var existing = findSet(size, desc);
+    if (existing) {
+      existing.locations[ORGANIZER] = (existing.locations[ORGANIZER] || 0) + qty;
+    } else {
+      var s = { id: genId(), size: size, desc: desc, locations: {} };
+      s.locations[ORGANIZER] = qty;
+      sets.push(s);
+    }
+    save();
+    descInput.value = '';
+    qtyInput.value = '1';
+    customSize.value = '';
+    render();
+  }
+
+  function confirmMove(setId, fromLoc, qty, toLoc) {
+    var set = findById(setId);
+    if (!set) return;
+    toLoc = toLoc.trim();
+    if (!toLoc) return;
+    var have = set.locations[fromLoc] || 0;
+    qty = Math.min(qty, have);
+    if (qty <= 0) return;
+    set.locations[fromLoc] -= qty;
+    if (set.locations[fromLoc] <= 0) delete set.locations[fromLoc];
+    set.locations[toLoc] = (set.locations[toLoc] || 0) + qty;
+    save();
+    openPanel = null;
+    render();
+  }
+
+  function confirmRemove(setId, loc, qty) {
+    var set = findById(setId);
+    if (!set) return;
+    var have = set.locations[loc] || 0;
+    qty = Math.min(qty, have);
+    if (qty <= 0) return;
+    set.locations[loc] -= qty;
+    if (set.locations[loc] <= 0) delete set.locations[loc];
+    if (Object.keys(set.locations).length === 0) {
+      sets = sets.filter(function (s) { return s.id !== setId; });
+    }
+    save();
+    openPanel = null;
+    render();
+  }
+
+  function confirmEdit(setId, newSize, newDesc) {
+    var set = findById(setId);
+    if (!set) return;
+    newSize = newSize.trim();
+    newDesc = newDesc.trim();
+    if (!newSize) return;
+    var other = findSet(newSize, newDesc, setId);
+    if (other) {
+      for (var loc in set.locations) {
+        other.locations[loc] = (other.locations[loc] || 0) + set.locations[loc];
+      }
+      sets = sets.filter(function (s) { return s.id !== setId; });
+    } else {
+      set.size = newSize;
+      set.desc = newDesc;
+    }
+    save();
+    openPanel = null;
+    render();
+  }
+
+  function makePanel(set, loc) {
+    var have = set.locations[loc] || 0;
+    var panel = document.createElement('div');
+    panel.className = 'panel';
+
+    if (openPanel.type === 'move') {
+      var qtyEl = document.createElement('input');
+      qtyEl.className = 'num';
+      qtyEl.type = 'number';
+      qtyEl.name = 'moveQty';
+      qtyEl.min = '1';
+      qtyEl.max = String(have);
+      qtyEl.value = String(have);
+      qtyEl.setAttribute('aria-label', 'Quantity to move');
+      panel.appendChild(qtyEl);
+
+      var targetEl = document.createElement('input');
+      targetEl.className = 'text';
+      targetEl.type = 'text';
+      targetEl.name = 'moveTarget';
+      targetEl.setAttribute('list', 'locList');
+      targetEl.placeholder = 'Move to…';
+      targetEl.setAttribute('aria-label', 'Move to location');
+      panel.appendChild(targetEl);
+
+      var confirmBtn = document.createElement('button');
+      confirmBtn.type = 'button';
+      confirmBtn.textContent = 'Move';
+      confirmBtn.addEventListener('click', function () {
+        var q = parseInt(qtyEl.value, 10) || 0;
+        confirmMove(set.id, loc, q, targetEl.value);
+      });
+      panel.appendChild(confirmBtn);
+
+      var cancelBtn = document.createElement('button');
+      cancelBtn.type = 'button';
+      cancelBtn.textContent = 'Cancel';
+      cancelBtn.addEventListener('click', function () { openPanel = null; render(); });
+      panel.appendChild(cancelBtn);
+
+      targetEl.focus();
+    } else if (openPanel.type === 'remove') {
+      var rQtyEl = document.createElement('input');
+      rQtyEl.className = 'num';
+      rQtyEl.type = 'number';
+      rQtyEl.name = 'removeQty';
+      rQtyEl.min = '1';
+      rQtyEl.max = String(have);
+      rQtyEl.value = String(have);
+      rQtyEl.setAttribute('aria-label', 'Quantity to remove');
+      panel.appendChild(rQtyEl);
+
+      var rConfirmBtn = document.createElement('button');
+      rConfirmBtn.type = 'button';
+      rConfirmBtn.textContent = 'Remove';
+      rConfirmBtn.addEventListener('click', function () {
+        var q = parseInt(rQtyEl.value, 10) || 0;
+        confirmRemove(set.id, loc, q);
+      });
+      panel.appendChild(rConfirmBtn);
+
+      var rCancelBtn = document.createElement('button');
+      rCancelBtn.type = 'button';
+      rCancelBtn.textContent = 'Cancel';
+      rCancelBtn.addEventListener('click', function () { openPanel = null; render(); });
+      panel.appendChild(rCancelBtn);
+
+      rQtyEl.focus();
+    } else if (openPanel.type === 'edit') {
+      var sizeEl = document.createElement('input');
+      sizeEl.className = 'text';
+      sizeEl.type = 'text';
+      sizeEl.name = 'editSize';
+      sizeEl.value = set.size;
+      sizeEl.setAttribute('aria-label', 'Edit size');
+      panel.appendChild(sizeEl);
+
+      var descEl = document.createElement('input');
+      descEl.className = 'text';
+      descEl.type = 'text';
+      descEl.name = 'editDesc';
+      descEl.value = set.desc || '';
+      descEl.setAttribute('aria-label', 'Edit description');
+      panel.appendChild(descEl);
+
+      var eConfirmBtn = document.createElement('button');
+      eConfirmBtn.type = 'button';
+      eConfirmBtn.textContent = 'Save';
+      eConfirmBtn.addEventListener('click', function () {
+        confirmEdit(set.id, sizeEl.value, descEl.value);
+      });
+      panel.appendChild(eConfirmBtn);
+
+      var eCancelBtn = document.createElement('button');
+      eCancelBtn.type = 'button';
+      eCancelBtn.textContent = 'Cancel';
+      eCancelBtn.addEventListener('click', function () { openPanel = null; render(); });
+      panel.appendChild(eCancelBtn);
+
+      sizeEl.focus();
+    }
+
+    return panel;
+  }
+
+  function makeRow(set, loc) {
+    var row = document.createElement('div');
+    row.className = 'row';
+
+    var name = document.createElement('span');
+    name.className = 'name';
+    name.textContent = setName(set);
+    row.appendChild(name);
+
+    var qty = document.createElement('span');
+    qty.className = 'qty';
+    qty.textContent = String(set.locations[loc]);
+    row.appendChild(qty);
+
+    var moveBtn = document.createElement('button');
+    moveBtn.type = 'button';
+    moveBtn.textContent = 'Move';
+    moveBtn.addEventListener('click', function () {
+      openPanel = { setId: set.id, loc: loc, type: 'move' };
+      render();
+    });
+    row.appendChild(moveBtn);
+
+    var editBtn = document.createElement('button');
+    editBtn.type = 'button';
+    editBtn.textContent = 'Edit';
+    editBtn.addEventListener('click', function () {
+      openPanel = { setId: set.id, loc: loc, type: 'edit' };
+      render();
+    });
+    row.appendChild(editBtn);
+
+    var removeBtn = document.createElement('button');
+    removeBtn.className = 'remove';
+    removeBtn.type = 'button';
+    removeBtn.textContent = '×';
+    removeBtn.setAttribute('aria-label', 'Remove ' + setName(set) + ' from ' + loc);
+    removeBtn.addEventListener('click', function () {
+      openPanel = { setId: set.id, loc: loc, type: 'remove' };
+      render();
+    });
+    row.appendChild(removeBtn);
+
+    if (openPanel && openPanel.setId === set.id && openPanel.loc === loc) {
+      row.appendChild(makePanel(set, loc));
+    }
+
+    return row;
+  }
+
+  function refreshLocList() {
+    var names = allLocations();
+    locListEl.textContent = '';
+    names.forEach(function (n) {
+      var opt = document.createElement('option');
+      opt.value = n;
+      locListEl.appendChild(opt);
+    });
+  }
+
+  function render() {
+    listEl.textContent = '';
+    refreshLocList();
+    var locations = allLocations();
+    var anyRows = false;
+
+    locations.forEach(function (loc) {
+      var rowsForLoc = sets
+        .filter(function (s) { return (s.locations[loc] || 0) > 0; })
+        .sort(function (a, b) { return setName(a).localeCompare(setName(b)); });
+      if (rowsForLoc.length === 0) return;
+      anyRows = true;
+
+      var total = rowsForLoc.reduce(function (sum, s) { return sum + s.locations[loc]; }, 0);
+
+      var section = document.createElement('div');
+      section.className = 'group';
+
+      var h2 = document.createElement('h2');
+      h2.textContent = loc + ' (' + total + ')';
+      section.appendChild(h2);
+
+      rowsForLoc.forEach(function (s) {
+        section.appendChild(makeRow(s, loc));
+      });
+
+      listEl.appendChild(section);
+    });
+
+    emptyEl.hidden = anyRows;
+  }
+
+  sizeSelect.addEventListener('change', function () {
+    customSize.hidden = sizeSelect.value !== 'Other';
+    if (!customSize.hidden) customSize.focus();
+  });
+
+  addBtn.addEventListener('click', addSet);
+
+  render();
+</script>
+</body>
+</html>
