@@ -3,17 +3,17 @@
   <!-- Die showing 3 (diagonal), tilted left -->
   <g transform="translate(190,220) rotate(-18)">
     <rect x="-90" y="-90" width="180" height="180" fill="#000" stroke="#fff" stroke-width="28"/>
-    <circle cx="-54" cy="-54" r="26" fill="#fff"/>
-    <circle cx="0" cy="0" r="26" fill="#fff"/>
-    <circle cx="54" cy="54" r="26" fill="#fff"/>
+    <circle cx="-46" cy="-46" r="19" fill="#fff"/>
+    <circle cx="0" cy="0" r="19" fill="#fff"/>
+    <circle cx="46" cy="46" r="19" fill="#fff"/>
   </g>
   <!-- Die showing 5 (corners + center), tilted right -->
   <g transform="translate(322,292) rotate(22)">
     <rect x="-90" y="-90" width="180" height="180" fill="#000" stroke="#fff" stroke-width="28"/>
-    <circle cx="-54" cy="-54" r="26" fill="#fff"/>
-    <circle cx="54" cy="-54" r="26" fill="#fff"/>
-    <circle cx="0" cy="0" r="26" fill="#fff"/>
-    <circle cx="-54" cy="54" r="26" fill="#fff"/>
-    <circle cx="54" cy="54" r="26" fill="#fff"/>
+    <circle cx="-46" cy="-46" r="19" fill="#fff"/>
+    <circle cx="46" cy="-46" r="19" fill="#fff"/>
+    <circle cx="0" cy="0" r="19" fill="#fff"/>
+    <circle cx="-46" cy="46" r="19" fill="#fff"/>
+    <circle cx="46" cy="46" r="19" fill="#fff"/>
   </g>
 </svg>
