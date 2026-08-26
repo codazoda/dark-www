@@ -117,13 +117,10 @@
     <div id="statStreak">Streak: 0 days</div>
   </div>
 <script>
-  // One fixed recovery code for everyone; change it and redeploy to rotate it.
-  var RECOVER_CODE = "h0wm27";
-  var SESSION_KEY = "shutTheBox.session";
-  var RECOVERY_KEY = "shutTheBox.recovery";
+  var STATS_KEY = "shutTheBox.stats";
+  var LEGACY_SESSION_KEY = "shutTheBox.session";
+  var LEGACY_RECOVERY_KEY = "shutTheBox.recovery";
   var DAY_MS = 24 * 60 * 60 * 1000;
-  var SESSION_TTL = DAY_MS;
-  var RECOVERY_TTL = 7 * DAY_MS;
 
   // Pip slots lit for each face, as indexes into a 3x3 grid read left to right.
   var FACES = [[4], [0, 8], [0, 4, 8], [0, 2, 6, 8], [0, 2, 4, 6, 8], [0, 2, 3, 5, 6, 8]];
@@ -139,34 +136,74 @@
   var stats = { best: null, games: 0, boxesShut: 0, streak: 0, lastPlayedDate: '' };
   var rolledSinceClear = false;
 
-  function loadTier(key) {
+  function loadJSON(key) {
     try {
-      var obj = JSON.parse(localStorage.getItem(key));
-      if (!obj || typeof obj.expiresAt !== 'number' || obj.expiresAt <= Date.now()) return null;
-      return obj;
+      return JSON.parse(localStorage.getItem(key));
     } catch (e) {
       return null;
     }
   }
 
-  function saveTier(key, ttlMs) {
+  // Defaults every field independently so a corrupt or partial record can't block loading.
+  function sanitizeStats(obj) {
+    if (!obj || typeof obj !== 'object') return null;
+    return {
+      best: (typeof obj.best === 'number' && isFinite(obj.best) && obj.best >= 0) ? obj.best : null,
+      games: (typeof obj.games === 'number' && isFinite(obj.games) && obj.games >= 0) ? Math.floor(obj.games) : 0,
+      boxesShut: (typeof obj.boxesShut === 'number' && isFinite(obj.boxesShut) && obj.boxesShut >= 0) ? Math.floor(obj.boxesShut) : 0,
+      streak: (typeof obj.streak === 'number' && isFinite(obj.streak) && obj.streak >= 0) ? Math.floor(obj.streak) : 0,
+      lastPlayedDate: (typeof obj.lastPlayedDate === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(obj.lastPlayedDate)) ? obj.lastPlayedDate : ''
+    };
+  }
+
+  function saveStats() {
     try {
-      localStorage.setItem(key, JSON.stringify({
+      localStorage.setItem(STATS_KEY, JSON.stringify({
         best: stats.best,
         games: stats.games,
         boxesShut: stats.boxesShut,
         streak: stats.streak,
-        lastPlayedDate: stats.lastPlayedDate,
-        expiresAt: Date.now() + ttlMs
+        lastPlayedDate: stats.lastPlayedDate
       }));
+      return true;
     } catch (e) {
       // Storage unavailable (e.g. private browsing quota) — stats just won't persist.
+      return false;
     }
   }
 
-  function touchExpiry() {
-    saveTier(SESSION_KEY, SESSION_TTL);
-    saveTier(RECOVERY_KEY, RECOVERY_TTL);
+  // One-time migration from the retired 24-hour/7-day tiers: take whichever legacy
+  // record expired later (even if both are already expired), then drop the old keys.
+  function migrateLegacyStats() {
+    var session = loadJSON(LEGACY_SESSION_KEY);
+    var recovery = loadJSON(LEGACY_RECOVERY_KEY);
+    if (!session && !recovery) return false;
+    var sessionExpiry = (session && typeof session.expiresAt === 'number') ? session.expiresAt : -Infinity;
+    var recoveryExpiry = (recovery && typeof recovery.expiresAt === 'number') ? recovery.expiresAt : -Infinity;
+    var chosen = recoveryExpiry > sessionExpiry ? recovery : session;
+    var sanitized = sanitizeStats(chosen);
+    if (!sanitized) return false;
+    stats = sanitized;
+    if (saveStats()) {
+      try {
+        localStorage.removeItem(LEGACY_SESSION_KEY);
+        localStorage.removeItem(LEGACY_RECOVERY_KEY);
+      } catch (e) {
+        // Non-fatal: legacy keys just linger unused.
+      }
+    }
+    return true;
+  }
+
+  // Calendar-date arithmetic in UTC millis so DST shifts never distort the day count.
+  function dateToUTCms(dateStr) {
+    var m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(dateStr);
+    if (!m) return null;
+    var y = Number(m[1]), mo = Number(m[2]), d = Number(m[3]);
+    var ms = Date.UTC(y, mo - 1, d);
+    var check = new Date(ms);
+    if (check.getUTCFullYear() !== y || check.getUTCMonth() !== mo - 1 || check.getUTCDate() !== d) return null;
+    return ms;
   }
 
   function renderStats() {
@@ -197,40 +234,26 @@
     stats.best = stats.best === null ? score : Math.min(stats.best, score);
     if (score === 0) stats.boxesShut += 1;
     var today = todayString();
-    if (stats.lastPlayedDate !== today) {
+    var lastMs = dateToUTCms(stats.lastPlayedDate);
+    var todayMs = dateToUTCms(today);
+    if (lastMs === todayMs) {
+      // Same local day: leave the streak unchanged.
+    } else if (lastMs !== null && todayMs - lastMs === DAY_MS) {
       stats.streak += 1;
-      stats.lastPlayedDate = today;
+    } else {
+      // First-ever round, a missed day, an invalid stored date, or the clock moving backward.
+      stats.streak = 1;
     }
+    stats.lastPlayedDate = today;
+    saveStats();
   }
 
   function initStats() {
-    var params = new URLSearchParams(location.search);
-    var code = params.get('r');
-    var restored = false;
-    if (code && code === RECOVER_CODE) {
-      var recovery = loadTier(RECOVERY_KEY);
-      if (recovery) {
-        stats = {
-          best: recovery.best, games: recovery.games,
-          boxesShut: recovery.boxesShut, streak: recovery.streak, lastPlayedDate: recovery.lastPlayedDate
-        };
-        saveTier(SESSION_KEY, SESSION_TTL);
-        restored = true;
-      }
-    }
-    if (params.has('r')) {
-      params.delete('r');
-      var qs = params.toString();
-      history.replaceState(null, '', location.pathname + (qs ? '?' + qs : '') + location.hash);
-    }
-    if (!restored) {
-      var session = loadTier(SESSION_KEY);
-      if (session) {
-        stats = {
-          best: session.best, games: session.games,
-          boxesShut: session.boxesShut, streak: session.streak, lastPlayedDate: session.lastPlayedDate
-        };
-      }
+    var existing = sanitizeStats(loadJSON(STATS_KEY));
+    if (existing) {
+      stats = existing;
+    } else {
+      migrateLegacyStats();
     }
     renderStats();
   }
@@ -288,7 +311,6 @@
   function roll() {
     if (rollTimer) clearTimeout(rollTimer);
     rolledSinceClear = true;
-    touchExpiry();
     // Hide whatever's showing first, so back-to-back rolls of the same numbers still look like something happened.
     box.className = 'rolling';
     box.setAttribute('aria-label', 'Rolling dice');
@@ -313,7 +335,6 @@
       recordRound();
     }
     rolledSinceClear = false;
-    touchExpiry();
     var t = tilesEl.children;
     for (var i = 0; i < t.length; i++) {
       t[i].setAttribute('aria-pressed', 'false');
