@@ -1,0 +1,110 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>BASIC32</title>
+<style>
+  :root { color-scheme: dark; }
+  * { box-sizing: border-box; }
+  html, body { height: 100%; }
+  body {
+    margin: 0;
+    padding: 12px;
+    background: #000;
+    color: #fff;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    -webkit-tap-highlight-color: transparent;
+  }
+  header {
+    display: flex;
+    align-items: baseline;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+  header h1 {
+    font-size: 1.1rem;
+    margin: 0;
+    font-weight: normal;
+  }
+  header a {
+    color: #7fd0ff;
+    font-size: .85rem;
+  }
+  #display {
+    border: 1px solid #444;
+    background: #000;
+  }
+  #console {
+    margin: 0;
+    padding: 8px;
+    width: 40ch;
+    max-width: 100%;
+    font-size: clamp(10px, 4.4vw, 22px);
+    line-height: 1.2;
+    white-space: pre;
+    overflow: hidden;
+  }
+  #canvas {
+    display: block;
+    width: 100%;
+    aspect-ratio: 4 / 3;
+    background: #000;
+  }
+  form {
+    display: flex;
+    gap: 8px;
+  }
+  #repl-input {
+    flex: 1;
+    font: inherit;
+    color: inherit;
+    background: #000;
+    border: 2px solid #fff;
+    border-radius: 0;
+    padding: 8px;
+  }
+  #repl-input:disabled { border-color: #444; color: #888; }
+  #repl-input:focus-visible { outline: 2px dashed #fff; outline-offset: 2px; }
+  button {
+    font: inherit;
+    color: inherit;
+    background: none;
+    border: 2px solid #fff;
+    border-radius: 0;
+    padding: 8px 14px;
+    cursor: pointer;
+  }
+  button:focus-visible { outline: 2px dashed #fff; outline-offset: 2px; }
+  p.help {
+    font-size: .8rem;
+    color: #aaa;
+    margin: 0;
+  }
+  code { color: #ddd; }
+</style>
+</head>
+<body>
+<header>
+  <h1>BASIC32</h1>
+  <a href="/">dark.joeldare.com</a>
+</header>
+<div id="display">
+  <pre id="console" aria-live="polite"></pre>
+  <canvas id="canvas" hidden></canvas>
+</div>
+<form id="repl-form">
+  <label for="repl-input" class="visually-hidden" hidden>BASIC input</label>
+  <input id="repl-input" type="text" autocomplete="off" autocapitalize="off" spellcheck="false" autofocus>
+  <button type="submit">Enter</button>
+</form>
+<p class="help">
+  A line-numbered BASIC. Try <code>10 PRINT "HELLO"</code>, then
+  <code>20 GOTO 10</code>, then <code>RUN</code>.
+</p>
+<script type="module" src="app.js"></script>
+</body>
+</html>
