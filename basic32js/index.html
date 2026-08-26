@@ -11,6 +11,8 @@
   body {
     margin: 0;
     padding: 12px;
+    height: 100dvh;
+    overflow: hidden;
     background: #000;
     color: #fff;
     font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
@@ -19,26 +21,18 @@
     gap: 10px;
     -webkit-tap-highlight-color: transparent;
   }
-  header {
-    display: flex;
-    align-items: baseline;
-    gap: 10px;
-    flex-wrap: wrap;
-  }
-  header h1 {
-    font-size: 1.1rem;
-    margin: 0;
-    font-weight: normal;
-  }
-  header a {
-    color: #7fd0ff;
-    font-size: .85rem;
-  }
   #display {
+    flex: 1 1 auto;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
     border: 1px solid #444;
     background: #000;
+    overflow: hidden;
   }
   #console {
+    flex: 1 1 auto;
+    min-height: 0;
     margin: 0;
     padding: 8px;
     width: 40ch;
@@ -46,15 +40,21 @@
     font-size: clamp(10px, 4.4vw, 22px);
     line-height: 1.2;
     white-space: pre;
-    overflow: hidden;
+    overflow-y: auto;
   }
   #canvas {
+    flex: 1 1 auto;
+    min-height: 0;
     display: block;
     width: 100%;
-    aspect-ratio: 4 / 3;
+    height: 100%;
     background: #000;
   }
+  #canvas[hidden] {
+    display: none;
+  }
   form {
+    flex: 0 0 auto;
     display: flex;
     gap: 8px;
   }
@@ -80,6 +80,7 @@
   }
   button:focus-visible { outline: 2px dashed #fff; outline-offset: 2px; }
   p.help {
+    flex: 0 0 auto;
     font-size: .8rem;
     color: #aaa;
     margin: 0;
@@ -88,17 +89,13 @@
 </style>
 </head>
 <body>
-<header>
-  <h1>BASIC32</h1>
-  <a href="/">dark.joeldare.com</a>
-</header>
 <div id="display">
   <pre id="console" aria-live="polite"></pre>
   <canvas id="canvas" hidden></canvas>
 </div>
 <form id="repl-form">
   <label for="repl-input" class="visually-hidden" hidden>BASIC input</label>
-  <input id="repl-input" type="text" autocomplete="off" autocapitalize="off" spellcheck="false" autofocus>
+  <input id="repl-input" type="text" autocomplete="off" autocapitalize="off" spellcheck="false" enterkeyhint="go" autofocus>
   <button type="submit">Enter</button>
 </form>
 <p class="help">

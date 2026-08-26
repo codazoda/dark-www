@@ -39,6 +39,7 @@ form.addEventListener('submit', async (e) => {
   input.value = '';
   input.disabled = true;
   try {
+    consoleApi.write(line + '\n');
     await interpreter.inputLine(line);
   } finally {
     input.disabled = false;
