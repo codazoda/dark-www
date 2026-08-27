@@ -287,6 +287,8 @@ export class Interpreter {
       if (name === 'TICK') return this.machine.uptimeMs();
       if (name === 'GWIDTH') return this.machine.graphicsWidth();
       if (name === 'GHEIGHT') return this.machine.graphicsHeight();
+      if (name === 'GFONTW') return this.machine.graphicsFontWidth();
+      if (name === 'GFONTH') return this.machine.graphicsFontHeight();
       return this.getVar(name);
     }
     throw new BasicError('SYNTAX');
@@ -294,17 +296,22 @@ export class Interpreter {
 
   /* ---- statements ---- */
 
-  execPrint(cur) {
+  /* The shared PRINT item loop: string literals and numeric expressions
+   * separated by ',' (tab) or ';' (nothing), with a trailing separator
+   * suppressing the closing newline. Every write goes through `emit` so
+   * the same formatting drives SCREEN 0 PRINT, SCREEN 1 PRINT, and
+   * GPRINT. Mirrors exec_print_list in basic.c. */
+  printList(cur, emit) {
     let suppressNewline = false;
     cur.skipSpaces();
-    if (cur.eof()) { this.out('\n'); return; }
+    if (cur.eof()) { emit('\n'); return; }
     for (;;) {
       cur.skipSpaces();
       if (cur.peek() === '"') {
         cur.i++;
         const start = cur.i;
         while (!cur.eof() && cur.peek() !== '"') cur.i++;
-        this.out(cur.s.slice(start, cur.i));
+        emit(cur.s.slice(start, cur.i));
         if (cur.peek() === '"') cur.i++;
         suppressNewline = false;
       } else if (cur.peek() === ',' || cur.peek() === ';' || cur.eof()) {
@@ -313,15 +320,53 @@ export class Interpreter {
          * so it's deliberately left untouched here. */
       } else {
         const v = this.parseExpr(cur);
-        this.out(formatNumber(v));
+        emit(formatNumber(v));
         suppressNewline = false;
       }
       cur.skipSpaces();
-      if (cur.peek() === ',') { cur.i++; this.out('\t'); suppressNewline = true; }
+      if (cur.peek() === ',') { cur.i++; emit('\t'); suppressNewline = true; }
       else if (cur.peek() === ';') { cur.i++; suppressNewline = true; }
       else break;
     }
-    if (!suppressNewline) this.out('\n');
+    if (!suppressNewline) emit('\n');
+  }
+
+  execPrint(cur) {
+    if (this.screenMode === 1) this.printList(cur, (s) => this.machine.graphicsText(s));
+    else this.printList(cur, (s) => this.out(s));
+  }
+
+  /* GPRINT x,y,print-list -- the PRINT list drawn at a zero-based pixel
+   * origin, leaving the LOCATE/PRINT cursor untouched. SCREEN 1 only. A
+   * trailing newline from the list is dropped (meaningless at an absolute
+   * origin). */
+  execGprint(cur) {
+    if (this.screenMode !== 1) throw new BasicError('ILLEGAL IN SCREEN 0');
+    const x = this.parseExpr(cur);
+    cur.skipSpaces();
+    cur.expect(',');
+    const y = this.parseExpr(cur);
+    cur.skipSpaces();
+    cur.expect(',');
+    let buf = '';
+    this.printList(cur, (s) => { buf += s; });
+    if (buf.endsWith('\n')) buf = buf.slice(0, -1);
+    this.machine.graphicsTextAt(Math.trunc(x), Math.trunc(y), buf);
+  }
+
+  /* PSET x,y,color -- one pixel, same palette/RGB() resolution and
+   * clipping as LINE, and like LINE only legal in SCREEN 1. */
+  execPset(cur) {
+    if (this.screenMode !== 1) throw new BasicError('ILLEGAL IN SCREEN 0');
+    const x = this.parseExpr(cur);
+    cur.skipSpaces();
+    cur.expect(',');
+    const y = this.parseExpr(cur);
+    cur.skipSpaces();
+    cur.expect(',');
+    const color = this.parseExpr(cur);
+    const rgb = resolveColor(color);
+    this.machine.graphicsPoint(Math.trunc(x), Math.trunc(y), rgb);
   }
 
   execLet(cur) {
@@ -449,7 +494,8 @@ export class Interpreter {
     cur.skipSpaces();
     cur.expect(',');
     const col = this.parseExpr(cur);
-    this.machine.consoleLocate(Math.trunc(row), Math.trunc(col));
+    if (this.screenMode === 1) this.machine.graphicsTextLocate(Math.trunc(row), Math.trunc(col));
+    else this.machine.consoleLocate(Math.trunc(row), Math.trunc(col));
   }
 
   async execPause(cur) {
@@ -486,6 +532,8 @@ export class Interpreter {
       case 'SLEEP': await this.execSleep(cur); return;
       case 'SCREEN': this.execScreen(cur); return;
       case 'LINE': this.execLine(cur); return;
+      case 'GPRINT': this.execGprint(cur); return;
+      case 'PSET': this.execPset(cur); return;
       default:
         if (cur.peek() === '=') { cur.i = save; this.execLet(cur); return; }
         throw new BasicError('SYNTAX');
