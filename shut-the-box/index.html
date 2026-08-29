@@ -228,23 +228,31 @@
     return score;
   }
 
+  // A day counts as played on its first dice roll, not on pressing CLEAR to finish a
+  // round. Called from every roll; the date guard makes every call after the first of
+  // the day a no-op. This is what keeps a streak alive when you play but close the tab
+  // without clearing, or clear at the start of the next session instead of the end.
+  function markPlayedToday() {
+    var today = todayString();
+    if (stats.lastPlayedDate === today) return;
+    var lastMs = dateToUTCms(stats.lastPlayedDate);
+    var todayMs = dateToUTCms(today);
+    if (lastMs !== null && todayMs !== null && todayMs - lastMs === DAY_MS) {
+      stats.streak += 1;
+    } else {
+      // First-ever play, a missed day, an invalid stored date, or the clock moving backward.
+      stats.streak = 1;
+    }
+    stats.lastPlayedDate = today;
+    saveStats();
+    renderStats();
+  }
+
   function recordRound() {
     var score = computeScore();
     stats.games += 1;
     stats.best = stats.best === null ? score : Math.min(stats.best, score);
     if (score === 0) stats.boxesShut += 1;
-    var today = todayString();
-    var lastMs = dateToUTCms(stats.lastPlayedDate);
-    var todayMs = dateToUTCms(today);
-    if (lastMs === todayMs) {
-      // Same local day: leave the streak unchanged.
-    } else if (lastMs !== null && todayMs - lastMs === DAY_MS) {
-      stats.streak += 1;
-    } else {
-      // First-ever round, a missed day, an invalid stored date, or the clock moving backward.
-      stats.streak = 1;
-    }
-    stats.lastPlayedDate = today;
     saveStats();
   }
 
@@ -311,6 +319,7 @@
   function roll() {
     if (rollTimer) clearTimeout(rollTimer);
     rolledSinceClear = true;
+    markPlayedToday();
     // Hide whatever's showing first, so back-to-back rolls of the same numbers still look like something happened.
     box.className = 'rolling';
     box.setAttribute('aria-label', 'Rolling dice');
