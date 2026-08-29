@@ -68,6 +68,14 @@
     text-align: center;
   }
   #dice { display: none; gap: 10vmin; }
+  /* Shown for a moment when a roll is refused because no tile was shut since the last one. */
+  #rollHint {
+    display: none;
+    font-size: clamp(11px, 2vw, 14px);
+    color: rgba(255, 255, 255, .45);
+    letter-spacing: normal;
+  }
+  #box.rolled #rollHint { display: block; min-height: 1.3em; }
   #box.rolled #dice { display: flex; }
   #box.rolled #prompt { display: none; }
   #box.rolled #instructions { display: none; }
@@ -115,6 +123,7 @@
     <span id="instructions">Tap tiles that add up to your roll to shut them. Score is a sum of open tiles. Empty the board to win. Stuck? CLEAR starts a new round.</span>
     <span id="prompt">CLICK TO ROLL</span>
     <span id="dice" role="img" aria-label="No dice rolled yet"></span>
+    <span id="rollHint" aria-live="polite"></span>
   </button>
   <button id="clear" type="button">CLEAR</button>
   <div id="stats">
@@ -133,6 +142,7 @@
 
   var box = document.getElementById('box');
   var diceEl = document.getElementById('dice');
+  var rollHintEl = document.getElementById('rollHint');
   var tilesEl = document.getElementById('tiles');
   var statScoreEl = document.getElementById('statScore');
   var statSummaryEl = document.getElementById('statSummary');
@@ -141,6 +151,13 @@
   // Stats are opt-in and local only: no round is recorded until CLEAR is pressed with at least one roll behind it.
   var stats = { best: null, games: 0, boxesShut: 0, streak: 0, lastPlayedDate: '' };
   var rolledSinceClear = false;
+
+  // The one enforced rule: after a roll you must shut at least one tile before
+  // rolling again. Tracked by comparing the shut-tile count now against its value
+  // at the last roll, so reopening the tile you just shut re-blocks the roll too.
+  var hasRolledThisRound = false;
+  var shutCountAtRoll = 0;
+  var rollHintTimer = null;
 
   function loadJSON(key) {
     try {
@@ -290,6 +307,8 @@
       // No rules here: a shut tile opens again, so a misclick costs nothing.
       var shut = b.getAttribute('aria-pressed') === 'true';
       b.setAttribute('aria-pressed', shut ? 'false' : 'true');
+      // Shutting a tile satisfies the roll-again rule, so drop any "shut a tile" hint.
+      if (!shut) clearRollHint();
       renderStats();
     });
     return b;
@@ -322,9 +341,44 @@
 
   var rollTimer = null;
 
+  function shutCount() {
+    var t = tilesEl.children;
+    var c = 0;
+    for (var i = 0; i < t.length; i++) {
+      if (t[i].getAttribute('aria-pressed') === 'true') c++;
+    }
+    return c;
+  }
+
+  function showRollHint() {
+    rollHintEl.textContent = 'Shut a tile before you roll again.';
+    if (rollHintTimer) clearTimeout(rollHintTimer);
+    rollHintTimer = setTimeout(function () {
+      rollHintTimer = null;
+      rollHintEl.textContent = '';
+    }, 1600);
+  }
+
+  function clearRollHint() {
+    if (rollHintTimer) {
+      clearTimeout(rollHintTimer);
+      rollHintTimer = null;
+    }
+    rollHintEl.textContent = '';
+  }
+
   function roll() {
+    // Can't roll again until a tile has been shut since the last roll. The first
+    // roll of a round is always allowed.
+    if (hasRolledThisRound && shutCount() <= shutCountAtRoll) {
+      showRollHint();
+      return;
+    }
     if (rollTimer) clearTimeout(rollTimer);
     rolledSinceClear = true;
+    hasRolledThisRound = true;
+    shutCountAtRoll = shutCount();
+    clearRollHint();
     markPlayedToday();
     // Hide whatever's showing first, so back-to-back rolls of the same numbers still look like something happened.
     box.className = 'rolling';
@@ -350,6 +404,9 @@
       recordRound();
     }
     rolledSinceClear = false;
+    hasRolledThisRound = false;
+    shutCountAtRoll = 0;
+    clearRollHint();
     var t = tilesEl.children;
     for (var i = 0; i < t.length; i++) {
       t[i].setAttribute('aria-pressed', 'false');
