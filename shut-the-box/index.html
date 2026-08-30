@@ -8,6 +8,18 @@
 <link rel="manifest" href="manifest.json">
 <meta name="theme-color" content="#000000">
 <title>Shut the Box</title>
+<meta name="description" content="A pocket Shut the Box board. Roll two dice, shut the numbered tiles, empty the box. Instant, private, no account. Beat your best score today and challenge a friend to beat it too.">
+<link rel="canonical" href="https://dark.joeldare.com/shut-the-box/">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Shut the Box">
+<meta property="og:title" content="Shut the Box">
+<meta property="og:description" content="Roll two dice, shut the numbered tiles, empty the box. Instant, private, no account. Beat your best score today and challenge a friend.">
+<meta property="og:url" content="https://dark.joeldare.com/shut-the-box/">
+<meta property="og:image" content="https://dark.joeldare.com/shut-the-box/icon-512.png">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Shut the Box">
+<meta name="twitter:description" content="Roll two dice, shut the numbered tiles, empty the box. Beat your best score today and challenge a friend.">
+<meta name="twitter:image" content="https://dark.joeldare.com/shut-the-box/icon-512.png">
 <style>
   :root { color-scheme: dark; }
   * { box-sizing: border-box; }
@@ -32,6 +44,17 @@
     cursor: pointer;
   }
   button:focus-visible { outline: 2px dashed #fff; outline-offset: 3px; }
+
+  /* Challenge banner: only shown when the page is opened from a ?best= link. */
+  #challenge {
+    display: none;
+    border: 2px solid #fff;
+    padding: .5em .8em;
+    text-align: center;
+    font-size: clamp(13px, 2.6vw, 18px);
+    letter-spacing: .12em;
+  }
+  #challenge.on { display: block; }
 
   /* Tiles: twelve tall rectangles, number centered near the top. */
   #tiles { display: grid; grid-template-columns: repeat(12, 1fr); gap: 6px; }
@@ -110,6 +133,27 @@
     letter-spacing: .08em;
   }
 
+  /* Challenge-a-friend sits with the best-today line; both hidden until a round is recorded today. */
+  #bestToday { display: none; }
+  #challengeWrap { display: none; margin-top: .4em; }
+  #challengeBtn { padding: .5em 1.4em; letter-spacing: .12em; }
+  #shareHint {
+    display: block;
+    min-height: 1.3em;
+    color: rgba(255, 255, 255, .45);
+  }
+  #challengeResult { display: none; margin-top: .4em; color: #fff; }
+  #rematchBtn { padding: .4em 1.2em; letter-spacing: .12em; margin-top: .3em; }
+
+  #footer {
+    text-align: center;
+    font-size: clamp(10px, 1.8vw, 12px);
+    color: rgba(255, 255, 255, .4);
+    line-height: 1.6;
+  }
+  #footer a { color: rgba(255, 255, 255, .6); }
+  #footer p { margin: .3em 0; }
+
   /* Twelve tiles across a phone are too thin to tap; wrap to two rows of six. */
   @media (max-width: 600px) {
     #tiles { grid-template-columns: repeat(6, 1fr); }
@@ -118,6 +162,7 @@
 </style>
 </head>
 <body>
+  <p id="challenge" aria-live="polite"></p>
   <div id="tiles"></div>
   <button id="box" type="button" aria-label="Roll the dice">
     <span id="instructions">Tap tiles that add up to your roll to shut them. Score is a sum of open tiles. Empty the board to win. Stuck? CLEAR starts a new round.</span>
@@ -130,12 +175,29 @@
     <div id="statScore">Score: &ndash;</div>
     <div id="statSummary">Best: &ndash; &middot; Games: 0 &middot; Boxes shut: 0</div>
     <div id="statStreak">Streak: 0 days</div>
+    <div id="bestToday"></div>
+    <div id="challengeWrap">
+      <button id="challengeBtn" type="button">CHALLENGE A FRIEND</button>
+      <span id="shareHint" aria-live="polite"></span>
+    </div>
+    <div id="challengeResult" aria-live="polite">
+      <span id="challengeResultText"></span>
+      <div><button id="rematchBtn" type="button">CHALLENGE THEM BACK</button></div>
+    </div>
   </div>
+  <footer id="footer">
+    <p id="amazon">Like Shut the Box? <a href="https://amzn.to/45SaAk9" target="_blank" rel="noopener nofollow sponsored">Get the physical game on Amazon.</a></p>
+    <p id="disclosure">As an Amazon Associate this site earns from qualifying purchases.</p>
+    <p><a href="making-of.html">How this game was built</a></p>
+  </footer>
 <script>
   var STATS_KEY = "shutTheBox.stats";
   var LEGACY_SESSION_KEY = "shutTheBox.session";
   var LEGACY_RECOVERY_KEY = "shutTheBox.recovery";
   var DAY_MS = 24 * 60 * 60 * 1000;
+  // Highest possible open-tile score: 1 + 2 + ... + 12. Also the ceiling for an incoming challenge value.
+  var MAX_SCORE = 78;
+  var CANONICAL = "https://dark.joeldare.com/shut-the-box/";
 
   // Pip slots lit for each face, as indexes into a 3x3 grid read left to right.
   var FACES = [[4], [0, 8], [0, 4, 8], [0, 2, 6, 8], [0, 2, 4, 6, 8], [0, 2, 3, 5, 6, 8]];
@@ -147,10 +209,23 @@
   var statScoreEl = document.getElementById('statScore');
   var statSummaryEl = document.getElementById('statSummary');
   var statStreakEl = document.getElementById('statStreak');
+  var challengeEl = document.getElementById('challenge');
+  var bestTodayEl = document.getElementById('bestToday');
+  var challengeWrapEl = document.getElementById('challengeWrap');
+  var challengeBtnEl = document.getElementById('challengeBtn');
+  var shareHintEl = document.getElementById('shareHint');
+  var challengeResultEl = document.getElementById('challengeResult');
+  var challengeResultTextEl = document.getElementById('challengeResultText');
+  var rematchBtnEl = document.getElementById('rematchBtn');
 
   // Stats are opt-in and local only: no round is recorded until CLEAR is pressed with at least one roll behind it.
-  var stats = { best: null, games: 0, boxesShut: 0, streak: 0, lastPlayedDate: '' };
+  // bestToday / bestTodayDate hold the lowest score recorded on the current local calendar day; they reset
+  // naturally the first time a round is recorded (or the display is read) on a new date.
+  var stats = { best: null, games: 0, boxesShut: 0, streak: 0, lastPlayedDate: '', bestToday: null, bestTodayDate: '' };
   var rolledSinceClear = false;
+
+  // Set from ?best=<n> on load when the value is a plain integer in [0, MAX_SCORE]; null for normal play.
+  var challengeTarget = null;
 
   // The one enforced rule: after a roll you must shut at least one tile before
   // rolling again. Tracked by comparing the shut-tile count now against its value
@@ -158,6 +233,9 @@
   var hasRolledThisRound = false;
   var shutCountAtRoll = 0;
   var rollHintTimer = null;
+  var shareHintTimer = null;
+
+  function noop() {}
 
   function loadJSON(key) {
     try {
@@ -175,7 +253,9 @@
       games: (typeof obj.games === 'number' && isFinite(obj.games) && obj.games >= 0) ? Math.floor(obj.games) : 0,
       boxesShut: (typeof obj.boxesShut === 'number' && isFinite(obj.boxesShut) && obj.boxesShut >= 0) ? Math.floor(obj.boxesShut) : 0,
       streak: (typeof obj.streak === 'number' && isFinite(obj.streak) && obj.streak >= 0) ? Math.floor(obj.streak) : 0,
-      lastPlayedDate: (typeof obj.lastPlayedDate === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(obj.lastPlayedDate)) ? obj.lastPlayedDate : ''
+      lastPlayedDate: (typeof obj.lastPlayedDate === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(obj.lastPlayedDate)) ? obj.lastPlayedDate : '',
+      bestToday: (typeof obj.bestToday === 'number' && isFinite(obj.bestToday) && obj.bestToday >= 0) ? Math.floor(obj.bestToday) : null,
+      bestTodayDate: (typeof obj.bestTodayDate === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(obj.bestTodayDate)) ? obj.bestTodayDate : ''
     };
   }
 
@@ -186,7 +266,9 @@
         games: stats.games,
         boxesShut: stats.boxesShut,
         streak: stats.streak,
-        lastPlayedDate: stats.lastPlayedDate
+        lastPlayedDate: stats.lastPlayedDate,
+        bestToday: stats.bestToday,
+        bestTodayDate: stats.bestTodayDate
       }));
       return true;
     } catch (e) {
@@ -229,12 +311,27 @@
     return ms;
   }
 
+  // The lowest score recorded so far on the current local day, or null if none yet today.
+  function currentBestToday() {
+    return stats.bestTodayDate === todayString() ? stats.bestToday : null;
+  }
+
   function renderStats() {
     var scoreText = String(computeScore());
     var bestText = stats.best === null ? '–' : String(stats.best);
     statScoreEl.textContent = 'Score: ' + scoreText;
     statSummaryEl.textContent = 'Best: ' + bestText + ' · Games: ' + stats.games + ' · Boxes shut: ' + stats.boxesShut;
     statStreakEl.textContent = 'Streak: ' + stats.streak + ' day' + (stats.streak === 1 ? '' : 's');
+
+    var bt = currentBestToday();
+    if (bt === null) {
+      bestTodayEl.style.display = 'none';
+      challengeWrapEl.style.display = 'none';
+    } else {
+      bestTodayEl.textContent = 'Best today: ' + bt;
+      bestTodayEl.style.display = 'block';
+      challengeWrapEl.style.display = 'block';
+    }
   }
 
   function todayString() {
@@ -276,7 +373,18 @@
     stats.games += 1;
     stats.best = stats.best === null ? score : Math.min(stats.best, score);
     if (score === 0) stats.boxesShut += 1;
+
+    // Best today: start a fresh low when the date has rolled over, then keep the minimum.
+    var today = todayString();
+    if (stats.bestTodayDate !== today) {
+      stats.bestToday = null;
+      stats.bestTodayDate = today;
+    }
+    stats.bestToday = stats.bestToday === null ? score : Math.min(stats.bestToday, score);
+
     saveStats();
+
+    if (challengeTarget !== null) showChallengeResult(score);
   }
 
   function initStats() {
@@ -289,10 +397,100 @@
     renderStats();
   }
 
+  // Parse an incoming challenge from the query string. Accept only a single plain
+  // integer in [0, MAX_SCORE]; anything missing, repeated, signed, fractional, or
+  // out of range returns null and the page just plays normally.
+  function parseChallenge() {
+    var params;
+    try {
+      params = new URLSearchParams(window.location.search);
+    } catch (e) {
+      return null;
+    }
+    var all = params.getAll('best');
+    if (all.length !== 1) return null;
+    var raw = all[0];
+    if (!/^\d+$/.test(raw)) return null;
+    var n = Number(raw);
+    if (!isFinite(n) || n < 0 || n > MAX_SCORE) return null;
+    return n;
+  }
+
+  function initChallenge() {
+    challengeTarget = parseChallenge();
+    if (challengeTarget === null) return;
+    challengeEl.textContent = 'Beat ' + challengeTarget;
+    challengeEl.className = 'on';
+  }
+
+  function showChallengeResult(score) {
+    var msg;
+    if (score < challengeTarget) {
+      msg = 'You scored ' + score + ' — you beat ' + challengeTarget + '!';
+    } else if (score === challengeTarget) {
+      msg = 'You scored ' + score + ' — a tie with ' + challengeTarget + '.';
+    } else {
+      msg = 'You scored ' + score + ' — ' + challengeTarget + ' still stands.';
+    }
+    challengeResultTextEl.textContent = msg;
+    // A rematch only makes sense once the recipient has a best-today of their own to send back.
+    rematchBtnEl.style.display = currentBestToday() === null ? 'none' : 'inline-block';
+    challengeResultEl.style.display = 'block';
+  }
+
+  function flashShareHint(text) {
+    shareHintEl.textContent = text;
+    if (shareHintTimer) clearTimeout(shareHintTimer);
+    shareHintTimer = setTimeout(function () {
+      shareHintTimer = null;
+      shareHintEl.textContent = '';
+    }, 2600);
+  }
+
+  // Copy without the async Clipboard API, for browsers that don't expose it.
+  function legacyCopy(text) {
+    try {
+      var ta = document.createElement('textarea');
+      ta.value = text;
+      ta.setAttribute('readonly', '');
+      ta.style.position = 'absolute';
+      ta.style.left = '-9999px';
+      document.body.appendChild(ta);
+      ta.select();
+      var ok = document.execCommand('copy');
+      document.body.removeChild(ta);
+      flashShareHint(ok ? 'Challenge link copied' : 'Copy this: ' + text);
+    } catch (e) {
+      flashShareHint('Copy this: ' + text);
+    }
+  }
+
+  // Two paths, both honor-system and server-free: the device share sheet where the
+  // browser offers it, a clipboard copy everywhere else. The link carries only ?best=<n>.
+  function shareChallenge(best) {
+    var text = 'My best Shut the Box score today was ' + best + '. Can you beat it?';
+    var url = CANONICAL + '?best=' + best;
+    if (navigator.share) {
+      navigator.share({ text: text, url: url }).then(noop, noop);
+      return;
+    }
+    var payload = text + ' ' + url;
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(payload).then(function () {
+        flashShareHint('Challenge link copied');
+      }, function () {
+        legacyCopy(payload);
+      });
+    } else {
+      legacyCopy(payload);
+    }
+  }
+
   for (var n = 1; n <= 12; n++) {
     tilesEl.appendChild(makeTile(n));
   }
 
+  initChallenge();
   initStats();
 
   function makeTile(n) {
@@ -419,6 +617,14 @@
 
   box.addEventListener('click', roll);
   document.getElementById('clear').addEventListener('click', clear);
+  challengeBtnEl.addEventListener('click', function () {
+    var bt = currentBestToday();
+    if (bt !== null) shareChallenge(bt);
+  });
+  rematchBtnEl.addEventListener('click', function () {
+    var bt = currentBestToday();
+    if (bt !== null) shareChallenge(bt);
+  });
 
   document.addEventListener('keydown', function (e) {
     if (e.key !== 'Enter' && e.key !== ' ') return;
