@@ -180,7 +180,7 @@
   <button id="clear" type="button">CLEAR</button>
   <div id="stats">
     <div id="statScore">Score: &ndash; - Today: &ndash;</div>
-    <div id="statSummary">Best: &ndash; &middot; Games: 0 &middot; Boxes shut: 0</div>
+    <div id="statSummary">Best: &ndash; &middot; Games: 0 &middot; Shut: 0</div>
     <div id="statStreak" class="streak" aria-live="polite">Streak: 0 days</div>
   </div>
   <footer id="footer">
@@ -332,7 +332,7 @@
     var bestTodayText = bt === null ? '–' : String(bt);
     statScoreEl.textContent = 'Score: ' + scoreText + ' - Today: ' + bestTodayText;
     statSummaryEl.textContent = 'Best: ' + bestText + ' · Games: ' + stats.games +
-      ' · Boxes shut: ' + stats.boxesShut;
+      ' · Shut: ' + stats.boxesShut;
     renderStatusLine();
   }
 
