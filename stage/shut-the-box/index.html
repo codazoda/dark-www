@@ -1,0 +1,678 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="icon-180.png">
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#000000">
+<title>Shut the Box</title>
+<meta name="description" content="A pocket Shut the Box board. Roll two dice, shut the numbered tiles, empty the box. Instant, private, no account. Beat your best score today and challenge a friend to beat it too.">
+<link rel="canonical" href="https://dark.joeldare.com/shut-the-box/">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Shut the Box">
+<meta property="og:title" content="Shut the Box">
+<meta property="og:description" content="Roll two dice, shut the numbered tiles, empty the box. Instant, private, no account. Beat your best score today and challenge a friend.">
+<meta property="og:url" content="https://dark.joeldare.com/shut-the-box/">
+<meta property="og:image" content="https://dark.joeldare.com/shut-the-box/icon-512.png">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Shut the Box">
+<meta name="twitter:description" content="Roll two dice, shut the numbered tiles, empty the box. Beat your best score today and challenge a friend.">
+<meta name="twitter:image" content="https://dark.joeldare.com/shut-the-box/icon-512.png">
+<style>
+  :root { color-scheme: dark; }
+  * { box-sizing: border-box; }
+  html, body { height: 100%; }
+  body {
+    margin: 0;
+    padding: 12px;
+    background: #000;
+    color: #fff;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    -webkit-tap-highlight-color: transparent;
+  }
+  button {
+    font: inherit;
+    color: inherit;
+    background: none;
+    border: 2px solid #fff;
+    border-radius: 0;
+    cursor: pointer;
+  }
+  button:focus-visible { outline: 2px dashed #fff; outline-offset: 3px; }
+
+  /* Incoming challenge: one slim line above the board reading "Beat N", in the page's
+     existing muted text style with no box, fill, or accent colour. It keeps a fixed
+     slot (min-height + visibility, never display) so its presence or absence never
+     shifts the board. */
+  #challenge {
+    min-height: 1.4em;
+    text-align: center;
+    font-size: clamp(11px, 2vw, 14px);
+    color: rgba(255, 255, 255, .6);
+    letter-spacing: normal;
+    visibility: hidden;
+  }
+  #challenge.on { visibility: visible; }
+
+  /* Tiles: twelve tall rectangles, number centered near the top. */
+  #tiles { display: grid; grid-template-columns: repeat(12, 1fr); gap: 6px; }
+  .tile {
+    aspect-ratio: 3 / 4;
+    max-height: 22vh;
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    padding-top: .3em;
+    font-size: clamp(14px, 2.4vw, 28px);
+  }
+  /* Shut: outline and number both darken to 25% visible (not gone), tile keeps its space and stays clickable. */
+  .tile[aria-pressed="true"] { border-color: rgba(255, 255, 255, .25); }
+  .tile[aria-pressed="true"] span { opacity: .25; }
+
+  /* Dice box: fills what's left below the tiles. */
+  #box {
+    flex: 1;
+    min-height: 110px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+  }
+  #prompt { letter-spacing: .2em; font-size: clamp(12px, 2.4vw, 20px); }
+  #instructions {
+    display: block;
+    font-size: clamp(11px, 2vw, 14px);
+    color: rgba(255, 255, 255, .6);
+    letter-spacing: normal;
+    max-width: 32em;
+    text-align: center;
+  }
+  #dice { display: none; gap: 10vmin; }
+  /* Shown for a moment when a roll is refused because no tile was shut since the last one. */
+  #rollHint {
+    display: none;
+    font-size: clamp(11px, 2vw, 14px);
+    color: rgba(255, 255, 255, .45);
+    letter-spacing: normal;
+  }
+  #box.rolled #rollHint { display: block; min-height: 1.3em; }
+  #box.rolled #dice { display: flex; }
+  #box.rolled #prompt { display: none; }
+  #box.rolled #instructions { display: none; }
+  /* Rolling: dice stay hidden a moment before the new roll appears, so a repeat of the same numbers still reads as a fresh roll. */
+  #box.rolling #prompt { display: none; }
+  #box.rolling #instructions { display: none; }
+  .die {
+    width: clamp(72px, 26vmin, 160px);
+    aspect-ratio: 1;
+    border: 2px solid #fff;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    grid-template-rows: repeat(3, 1fr);
+    padding: 9%;
+    gap: 4%;
+  }
+  .pip { border-radius: 50%; background: #fff; visibility: hidden; }
+  .pip.on { visibility: visible; }
+
+  #clear { align-self: center; padding: .6em 2em; letter-spacing: .2em; }
+
+  #stats {
+    text-align: center;
+    font-size: clamp(11px, 2vw, 14px);
+    line-height: 1.7;
+    color: rgba(255, 255, 255, .6);
+  }
+  /* The bottom status line lives in one fixed slot. During play it shows the daily
+     streak — the one stat worth coming back for, and the page's only splash of colour.
+     For the moment after a round is recorded it becomes a blue, hyperlink-style
+     "You scored N, challenge a friend" that fires the same share as the old button did,
+     then reverts to the streak on the next roll. Same slot, same height either way, so
+     the bottom of the board never shifts. */
+  #statStreak { min-height: 1.7em; }
+  #statStreak.streak {
+    color: #ffb000;
+    font-weight: bold;
+    letter-spacing: .08em;
+  }
+  #statStreak .status-link {
+    font: inherit;
+    border: 0;
+    padding: 0;
+    background: none;
+    color: #4ea1ff;
+    letter-spacing: normal;
+    text-decoration: underline;
+    cursor: pointer;
+  }
+
+  #footer {
+    text-align: center;
+    font-size: clamp(10px, 1.8vw, 12px);
+    color: rgba(255, 255, 255, .4);
+    line-height: 1.6;
+  }
+  #footer a { color: rgba(255, 255, 255, .6); }
+  #footer p { margin: .3em 0; }
+
+  /* Twelve tiles across a phone are too thin to tap; wrap to two rows of six. */
+  @media (max-width: 600px) {
+    #tiles { grid-template-columns: repeat(6, 1fr); }
+    .tile { font-size: clamp(16px, 5vw, 28px); }
+  }
+</style>
+</head>
+<body>
+  <p id="challenge" aria-live="polite"></p>
+  <div id="tiles"></div>
+  <button id="box" type="button" aria-label="Roll the dice">
+    <span id="instructions">Tap tiles that add up to your roll to shut them. Score is a sum of open tiles. Empty the board to win. Stuck? CLEAR starts a new round.</span>
+    <span id="prompt">CLICK TO ROLL</span>
+    <span id="dice" role="img" aria-label="No dice rolled yet"></span>
+    <span id="rollHint" aria-live="polite"></span>
+  </button>
+  <button id="clear" type="button">CLEAR</button>
+  <div id="stats">
+    <div id="statScore">Score: &ndash;</div>
+    <div id="statSummary">Best: &ndash; &middot; Games: 0 &middot; Boxes shut: 0 &middot; Best today: &ndash;</div>
+    <div id="statStreak" class="streak" aria-live="polite">Streak: 0 days</div>
+  </div>
+  <footer id="footer">
+    <p id="amazon">Like Shut the Box? <a href="https://amzn.to/45SaAk9" target="_blank" rel="noopener nofollow sponsored">Get the physical game on Amazon.</a></p>
+    <p id="disclosure">As an Amazon Associate this site earns from qualifying purchases.</p>
+    <p><a href="making-of.html">How this game was built</a></p>
+  </footer>
+<script>
+  var STATS_KEY = "shutTheBox.stats";
+  var LEGACY_SESSION_KEY = "shutTheBox.session";
+  var LEGACY_RECOVERY_KEY = "shutTheBox.recovery";
+  var DAY_MS = 24 * 60 * 60 * 1000;
+  // Highest possible open-tile score: 1 + 2 + ... + 12. Also the ceiling for an incoming challenge value.
+  var MAX_SCORE = 78;
+  var CANONICAL = "https://dark.joeldare.com/shut-the-box/";
+
+  // Pip slots lit for each face, as indexes into a 3x3 grid read left to right.
+  var FACES = [[4], [0, 8], [0, 4, 8], [0, 2, 6, 8], [0, 2, 4, 6, 8], [0, 2, 3, 5, 6, 8]];
+
+  var box = document.getElementById('box');
+  var diceEl = document.getElementById('dice');
+  var rollHintEl = document.getElementById('rollHint');
+  var tilesEl = document.getElementById('tiles');
+  var statScoreEl = document.getElementById('statScore');
+  var statSummaryEl = document.getElementById('statSummary');
+  var statStreakEl = document.getElementById('statStreak');
+  var challengeEl = document.getElementById('challenge');
+
+  // The bottom status line has two states, both rendered into #statStreak:
+  //   'streak' — "Streak: N days" in yellow, shown during play and on first load.
+  //   'scored' — a blue, hyperlink-style button reading "You scored N, challenge a
+  //              friend" (or a challenge-aware variant), shown for the moment after a
+  //              round is recorded. Clicking it shares today's best, exactly as the
+  //              retired CHALLENGE A FRIEND button did.
+  // statusText holds the current 'scored' label so a transient share confirmation can
+  // flash over it and then restore it.
+  var statusMode = 'streak';
+  var statusText = '';
+  var statusLinkEl = document.createElement('button');
+  statusLinkEl.type = 'button';
+  statusLinkEl.className = 'status-link';
+  statusLinkEl.addEventListener('click', function () {
+    var bt = currentBestToday();
+    if (bt !== null) shareChallenge(bt);
+  });
+
+  // Stats are opt-in and local only: no round is recorded until CLEAR is pressed with at least one roll behind it.
+  // bestToday / bestTodayDate hold the lowest score recorded on the current local calendar day; they reset
+  // naturally the first time a round is recorded (or the display is read) on a new date.
+  var stats = { best: null, games: 0, boxesShut: 0, streak: 0, lastPlayedDate: '', bestToday: null, bestTodayDate: '' };
+  var rolledSinceClear = false;
+
+  // Set from ?best=<n> on load when the value is a plain integer in [0, MAX_SCORE]; null for normal play.
+  var challengeTarget = null;
+
+  // The one enforced rule: after a roll you must shut at least one tile before
+  // rolling again. Tracked by comparing the shut-tile count now against its value
+  // at the last roll, so reopening the tile you just shut re-blocks the roll too.
+  var hasRolledThisRound = false;
+  var shutCountAtRoll = 0;
+  var rollHintTimer = null;
+  var shareHintTimer = null;
+
+  function noop() {}
+
+  function loadJSON(key) {
+    try {
+      return JSON.parse(localStorage.getItem(key));
+    } catch (e) {
+      return null;
+    }
+  }
+
+  // Defaults every field independently so a corrupt or partial record can't block loading.
+  function sanitizeStats(obj) {
+    if (!obj || typeof obj !== 'object') return null;
+    return {
+      best: (typeof obj.best === 'number' && isFinite(obj.best) && obj.best >= 0) ? obj.best : null,
+      games: (typeof obj.games === 'number' && isFinite(obj.games) && obj.games >= 0) ? Math.floor(obj.games) : 0,
+      boxesShut: (typeof obj.boxesShut === 'number' && isFinite(obj.boxesShut) && obj.boxesShut >= 0) ? Math.floor(obj.boxesShut) : 0,
+      streak: (typeof obj.streak === 'number' && isFinite(obj.streak) && obj.streak >= 0) ? Math.floor(obj.streak) : 0,
+      lastPlayedDate: (typeof obj.lastPlayedDate === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(obj.lastPlayedDate)) ? obj.lastPlayedDate : '',
+      bestToday: (typeof obj.bestToday === 'number' && isFinite(obj.bestToday) && obj.bestToday >= 0) ? Math.floor(obj.bestToday) : null,
+      bestTodayDate: (typeof obj.bestTodayDate === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(obj.bestTodayDate)) ? obj.bestTodayDate : ''
+    };
+  }
+
+  function saveStats() {
+    try {
+      localStorage.setItem(STATS_KEY, JSON.stringify({
+        best: stats.best,
+        games: stats.games,
+        boxesShut: stats.boxesShut,
+        streak: stats.streak,
+        lastPlayedDate: stats.lastPlayedDate,
+        bestToday: stats.bestToday,
+        bestTodayDate: stats.bestTodayDate
+      }));
+      return true;
+    } catch (e) {
+      // Storage unavailable (e.g. private browsing quota) — stats just won't persist.
+      return false;
+    }
+  }
+
+  // One-time migration from the retired 24-hour/7-day tiers: take whichever legacy
+  // record expired later (even if both are already expired), then drop the old keys.
+  function migrateLegacyStats() {
+    var session = loadJSON(LEGACY_SESSION_KEY);
+    var recovery = loadJSON(LEGACY_RECOVERY_KEY);
+    if (!session && !recovery) return false;
+    var sessionExpiry = (session && typeof session.expiresAt === 'number') ? session.expiresAt : -Infinity;
+    var recoveryExpiry = (recovery && typeof recovery.expiresAt === 'number') ? recovery.expiresAt : -Infinity;
+    var chosen = recoveryExpiry > sessionExpiry ? recovery : session;
+    var sanitized = sanitizeStats(chosen);
+    if (!sanitized) return false;
+    stats = sanitized;
+    if (saveStats()) {
+      try {
+        localStorage.removeItem(LEGACY_SESSION_KEY);
+        localStorage.removeItem(LEGACY_RECOVERY_KEY);
+      } catch (e) {
+        // Non-fatal: legacy keys just linger unused.
+      }
+    }
+    return true;
+  }
+
+  // Calendar-date arithmetic in UTC millis so DST shifts never distort the day count.
+  function dateToUTCms(dateStr) {
+    var m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(dateStr);
+    if (!m) return null;
+    var y = Number(m[1]), mo = Number(m[2]), d = Number(m[3]);
+    var ms = Date.UTC(y, mo - 1, d);
+    var check = new Date(ms);
+    if (check.getUTCFullYear() !== y || check.getUTCMonth() !== mo - 1 || check.getUTCDate() !== d) return null;
+    return ms;
+  }
+
+  // The lowest score recorded so far on the current local day, or null if none yet today.
+  function currentBestToday() {
+    return stats.bestTodayDate === todayString() ? stats.bestToday : null;
+  }
+
+  function renderStats() {
+    var scoreText = String(computeScore());
+    var bestText = stats.best === null ? '–' : String(stats.best);
+    var bt = currentBestToday();
+    var bestTodayText = bt === null ? '–' : String(bt);
+    statScoreEl.textContent = 'Score: ' + scoreText;
+    statSummaryEl.textContent = 'Best: ' + bestText + ' · Games: ' + stats.games +
+      ' · Boxes shut: ' + stats.boxesShut + ' · Best today: ' + bestTodayText;
+    renderStatusLine();
+  }
+
+  // Paint #statStreak for the current statusMode. In 'scored' mode the persistent
+  // link button is (re)attached and its label refreshed; in 'streak' mode setting
+  // textContent drops the button and restores the plain streak text. Both branches
+  // skip a write when the content already matches, so renderStats() calling through
+  // here on every tile tap doesn't re-fire the aria-live announcement.
+  function renderStatusLine() {
+    if (statusMode === 'scored') {
+      statStreakEl.className = 'scored';
+      if (statStreakEl.firstChild !== statusLinkEl) {
+        statStreakEl.textContent = '';
+        statStreakEl.appendChild(statusLinkEl);
+      }
+      // Don't stomp a share confirmation that's mid-flash (see flashShareHint).
+      if (!shareHintTimer && statusLinkEl.textContent !== statusText) statusLinkEl.textContent = statusText;
+    } else {
+      statStreakEl.className = 'streak';
+      var streakText = 'Streak: ' + stats.streak + ' day' + (stats.streak === 1 ? '' : 's');
+      if (statStreakEl.textContent !== streakText) statStreakEl.textContent = streakText;
+    }
+  }
+
+  // Switch the status line to its post-round 'scored' state. Mirrors the wording the
+  // retired #result line used, with "challenge a friend" / "Challenge them back" folded
+  // onto the end so the whole line reads as one link (issue #65's "You scored 78,
+  // challenge a friend"). Falls back to the streak if there is no best-today to share.
+  function setStatusScored(score) {
+    var line;
+    if (challengeTarget !== null) {
+      if (score < challengeTarget) {
+        line = 'You scored ' + score + ' — you beat ' + challengeTarget + '! Challenge them back';
+      } else if (score === challengeTarget) {
+        line = 'You scored ' + score + ' — a tie with ' + challengeTarget + '. Challenge them back';
+      } else {
+        line = 'You scored ' + score + ' — ' + challengeTarget + ' still stands. Challenge them back';
+      }
+    } else if (score === 0) {
+      line = 'You shut the box — challenge a friend';
+    } else {
+      line = 'You scored ' + score + ', challenge a friend!';
+    }
+    if (currentBestToday() === null) {
+      resetStatusLine();
+      return;
+    }
+    statusMode = 'scored';
+    statusText = line;
+    renderStatusLine();
+  }
+
+  // Back to the streak. Called on the next roll and whenever there is nothing to share.
+  function resetStatusLine() {
+    statusMode = 'streak';
+    statusText = '';
+    renderStatusLine();
+  }
+
+  function todayString() {
+    var d = new Date();
+    return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+  }
+
+  function computeScore() {
+    var t = tilesEl.children;
+    var score = 0;
+    for (var i = 0; i < t.length; i++) {
+      if (t[i].getAttribute('aria-pressed') !== 'true') score += i + 1;
+    }
+    return score;
+  }
+
+  // A day counts as played on its first dice roll, not on pressing CLEAR to finish a
+  // round. Called from every roll; the date guard makes every call after the first of
+  // the day a no-op. This is what keeps a streak alive when you play but close the tab
+  // without clearing, or clear at the start of the next session instead of the end.
+  function markPlayedToday() {
+    var today = todayString();
+    if (stats.lastPlayedDate === today) return;
+    var lastMs = dateToUTCms(stats.lastPlayedDate);
+    var todayMs = dateToUTCms(today);
+    if (lastMs !== null && todayMs !== null && todayMs - lastMs === DAY_MS) {
+      stats.streak += 1;
+    } else {
+      // First-ever play, a missed day, an invalid stored date, or the clock moving backward.
+      stats.streak = 1;
+    }
+    stats.lastPlayedDate = today;
+    saveStats();
+    renderStats();
+  }
+
+  function recordRound(score) {
+    stats.games += 1;
+    stats.best = stats.best === null ? score : Math.min(stats.best, score);
+    if (score === 0) stats.boxesShut += 1;
+
+    // Best today: start a fresh low when the date has rolled over, then keep the minimum.
+    var today = todayString();
+    if (stats.bestTodayDate !== today) {
+      stats.bestToday = null;
+      stats.bestTodayDate = today;
+    }
+    stats.bestToday = stats.bestToday === null ? score : Math.min(stats.bestToday, score);
+
+    saveStats();
+  }
+
+  function initStats() {
+    var existing = sanitizeStats(loadJSON(STATS_KEY));
+    if (existing) {
+      stats = existing;
+    } else {
+      migrateLegacyStats();
+    }
+    renderStats();
+  }
+
+  // Parse an incoming challenge from the query string. Accept only a single plain
+  // integer in [0, MAX_SCORE]; anything missing, repeated, signed, fractional, or
+  // out of range returns null and the page just plays normally.
+  function parseChallenge() {
+    var params;
+    try {
+      params = new URLSearchParams(window.location.search);
+    } catch (e) {
+      return null;
+    }
+    var all = params.getAll('best');
+    if (all.length !== 1) return null;
+    var raw = all[0];
+    if (!/^\d+$/.test(raw)) return null;
+    var n = Number(raw);
+    if (!isFinite(n) || n < 0 || n > MAX_SCORE) return null;
+    return n;
+  }
+
+  function initChallenge() {
+    challengeTarget = parseChallenge();
+    if (challengeTarget === null) return;
+    challengeEl.textContent = 'Beat ' + challengeTarget;
+    challengeEl.className = 'on';
+  }
+
+  // Flash a short confirmation ("Challenge link copied") over the status link, then
+  // restore its "You scored…" label. A no-op unless the status line is in 'scored'
+  // state, and it never adds a line of its own, so the bottom of the board holds still.
+  function flashShareHint(text) {
+    if (statusMode !== 'scored') return;
+    statusLinkEl.textContent = text;
+    if (shareHintTimer) clearTimeout(shareHintTimer);
+    shareHintTimer = setTimeout(function () {
+      shareHintTimer = null;
+      if (statusMode === 'scored') statusLinkEl.textContent = statusText;
+    }, 2600);
+  }
+
+  // Copy without the async Clipboard API, for browsers that don't expose it.
+  function legacyCopy(text) {
+    try {
+      var ta = document.createElement('textarea');
+      ta.value = text;
+      ta.setAttribute('readonly', '');
+      ta.style.position = 'absolute';
+      ta.style.left = '-9999px';
+      document.body.appendChild(ta);
+      ta.select();
+      var ok = document.execCommand('copy');
+      document.body.removeChild(ta);
+      flashShareHint(ok ? 'Challenge link copied' : 'Copy this: ' + text);
+    } catch (e) {
+      flashShareHint('Copy this: ' + text);
+    }
+  }
+
+  // Two paths, both honor-system and server-free: the device share sheet where the
+  // browser offers it, a clipboard copy everywhere else. The link carries only ?best=<n>.
+  function shareChallenge(best) {
+    var text = 'My best Shut the Box score today was ' + best + '. Can you beat it?';
+    var url = CANONICAL + '?best=' + best;
+    if (navigator.share) {
+      navigator.share({ text: text, url: url }).then(noop, noop);
+      return;
+    }
+    var payload = text + ' ' + url;
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(payload).then(function () {
+        flashShareHint('Challenge link copied');
+      }, function () {
+        legacyCopy(payload);
+      });
+    } else {
+      legacyCopy(payload);
+    }
+  }
+
+  for (var n = 1; n <= 12; n++) {
+    tilesEl.appendChild(makeTile(n));
+  }
+
+  initChallenge();
+  initStats();
+
+  function makeTile(n) {
+    var b = document.createElement('button');
+    b.type = 'button';
+    b.className = 'tile';
+    b.setAttribute('aria-pressed', 'false');
+    var label = document.createElement('span');
+    label.textContent = n;
+    b.appendChild(label);
+    b.addEventListener('click', function () {
+      // No rules here: a shut tile opens again, so a misclick costs nothing.
+      var shut = b.getAttribute('aria-pressed') === 'true';
+      b.setAttribute('aria-pressed', shut ? 'false' : 'true');
+      // Shutting a tile satisfies the roll-again rule, so drop any "shut a tile" hint.
+      if (!shut) clearRollHint();
+      renderStats();
+    });
+    return b;
+  }
+
+  var dice = [makeDie(), makeDie()];
+
+  function makeDie() {
+    var d = document.createElement('span');
+    d.className = 'die';
+    for (var i = 0; i < 9; i++) {
+      var p = document.createElement('span');
+      p.className = 'pip';
+      d.appendChild(p);
+    }
+    diceEl.appendChild(d);
+    return d;
+  }
+
+  function draw(die, face) {
+    var on = FACES[face - 1];
+    for (var i = 0; i < 9; i++) {
+      die.children[i].className = on.indexOf(i) > -1 ? 'pip on' : 'pip';
+    }
+  }
+
+  function rnd() {
+    return Math.floor(Math.random() * 6) + 1;
+  }
+
+  var rollTimer = null;
+
+  function shutCount() {
+    var t = tilesEl.children;
+    var c = 0;
+    for (var i = 0; i < t.length; i++) {
+      if (t[i].getAttribute('aria-pressed') === 'true') c++;
+    }
+    return c;
+  }
+
+  function showRollHint() {
+    rollHintEl.textContent = 'Shut a tile before you roll again.';
+    if (rollHintTimer) clearTimeout(rollHintTimer);
+    rollHintTimer = setTimeout(function () {
+      rollHintTimer = null;
+      rollHintEl.textContent = '';
+    }, 1600);
+  }
+
+  function clearRollHint() {
+    if (rollHintTimer) {
+      clearTimeout(rollHintTimer);
+      rollHintTimer = null;
+    }
+    rollHintEl.textContent = '';
+  }
+
+  function roll() {
+    // Can't roll again until a tile has been shut since the last roll. The first
+    // roll of a round is always allowed.
+    if (hasRolledThisRound && shutCount() <= shutCountAtRoll) {
+      showRollHint();
+      return;
+    }
+    if (rollTimer) clearTimeout(rollTimer);
+    rolledSinceClear = true;
+    hasRolledThisRound = true;
+    shutCountAtRoll = shutCount();
+    clearRollHint();
+    resetStatusLine();
+    markPlayedToday();
+    // Hide whatever's showing first, so back-to-back rolls of the same numbers still look like something happened.
+    box.className = 'rolling';
+    box.setAttribute('aria-label', 'Rolling dice');
+    diceEl.setAttribute('aria-label', 'Rolling dice');
+    rollTimer = setTimeout(function () {
+      rollTimer = null;
+      var a = rnd(), b = rnd();
+      draw(dice[0], a);
+      draw(dice[1], b);
+      diceEl.setAttribute('aria-label', 'Dice: ' + a + ' and ' + b);
+      box.setAttribute('aria-label', 'Roll the dice. Showing ' + a + ' and ' + b + '.');
+      box.className = 'rolled';
+    }, 200);
+  }
+
+  function clear() {
+    if (rollTimer) {
+      clearTimeout(rollTimer);
+      rollTimer = null;
+    }
+    if (rolledSinceClear) {
+      var score = computeScore();
+      recordRound(score);
+      setStatusScored(score);
+    }
+    rolledSinceClear = false;
+    hasRolledThisRound = false;
+    shutCountAtRoll = 0;
+    clearRollHint();
+    var t = tilesEl.children;
+    for (var i = 0; i < t.length; i++) {
+      t[i].setAttribute('aria-pressed', 'false');
+    }
+    renderStats();
+    box.className = '';
+    box.setAttribute('aria-label', 'Roll the dice');
+    diceEl.setAttribute('aria-label', 'No dice rolled yet');
+  }
+
+  box.addEventListener('click', roll);
+  document.getElementById('clear').addEventListener('click', clear);
+
+  document.addEventListener('keydown', function (e) {
+    if (e.key !== 'Enter' && e.key !== ' ') return;
+    // A focused button owns these keys: Enter on a tile shuts it, it doesn't roll.
+    if (e.target && e.target.closest && e.target.closest('button')) return;
+    e.preventDefault();
+    roll();
+  });
+</script>
+<script src="https://counter.joeldare.com/consentless.js" async></script>
+</body>
+</html>
