@@ -129,31 +129,27 @@
     line-height: 1.7;
     color: rgba(255, 255, 255, .6);
   }
-  /* The daily streak is the one stat worth coming back for, so it gets the page's only splash of color. */
-  #statStreak {
+  /* The bottom status line lives in one fixed slot. During play it shows the daily
+     streak — the one stat worth coming back for, and the page's only splash of colour.
+     For the moment after a round is recorded it becomes a blue, hyperlink-style
+     "You scored N, challenge a friend" that fires the same share as the old button did,
+     then reverts to the streak on the next roll. Same slot, same height either way, so
+     the bottom of the board never shifts. */
+  #statStreak { min-height: 1.7em; }
+  #statStreak.streak {
     color: #ffb000;
     font-weight: bold;
     letter-spacing: .08em;
   }
-
-  /* End-of-round result area: a plain line reporting the round just recorded, with the
-     one share-style action beside it (CHALLENGE A FRIEND, or CHALLENGE THEM BACK during
-     an active challenge). Hidden until a round is recorded on the current day, and
-     hidden again the moment the next roll starts, so nothing in the loop is visible on
-     first load or during play. #shareAction reuses the CLEAR control's own styling —
-     no new colour, weight, or container. */
-  #result { display: none; text-align: center; }
-  #result.on { display: block; }
-  #resultText {
-    font-size: clamp(11px, 2vw, 14px);
-    color: rgba(255, 255, 255, .6);
-  }
-  #shareAction { padding: .6em 2em; letter-spacing: .2em; margin-top: .5em; }
-  #shareHint {
-    display: block;
-    min-height: 1.3em;
-    font-size: clamp(11px, 2vw, 14px);
-    color: rgba(255, 255, 255, .45);
+  #statStreak .status-link {
+    font: inherit;
+    border: 0;
+    padding: 0;
+    background: none;
+    color: #4ea1ff;
+    letter-spacing: normal;
+    text-decoration: underline;
+    cursor: pointer;
   }
 
   #footer {
@@ -182,15 +178,10 @@
     <span id="rollHint" aria-live="polite"></span>
   </button>
   <button id="clear" type="button">CLEAR</button>
-  <div id="result" aria-live="polite">
-    <span id="resultText"></span>
-    <div><button id="shareAction" type="button" hidden></button></div>
-    <span id="shareHint" aria-live="polite"></span>
-  </div>
   <div id="stats">
     <div id="statScore">Score: &ndash;</div>
     <div id="statSummary">Best: &ndash; &middot; Games: 0 &middot; Boxes shut: 0 &middot; Best today: &ndash;</div>
-    <div id="statStreak">Streak: 0 days</div>
+    <div id="statStreak" class="streak" aria-live="polite">Streak: 0 days</div>
   </div>
   <footer id="footer">
     <p id="amazon">Like Shut the Box? <a href="https://amzn.to/45SaAk9" target="_blank" rel="noopener nofollow sponsored">Get the physical game on Amazon.</a></p>
@@ -217,10 +208,24 @@
   var statSummaryEl = document.getElementById('statSummary');
   var statStreakEl = document.getElementById('statStreak');
   var challengeEl = document.getElementById('challenge');
-  var resultEl = document.getElementById('result');
-  var resultTextEl = document.getElementById('resultText');
-  var shareActionEl = document.getElementById('shareAction');
-  var shareHintEl = document.getElementById('shareHint');
+
+  // The bottom status line has two states, both rendered into #statStreak:
+  //   'streak' — "Streak: N days" in yellow, shown during play and on first load.
+  //   'scored' — a blue, hyperlink-style button reading "You scored N, challenge a
+  //              friend" (or a challenge-aware variant), shown for the moment after a
+  //              round is recorded. Clicking it shares today's best, exactly as the
+  //              retired CHALLENGE A FRIEND button did.
+  // statusText holds the current 'scored' label so a transient share confirmation can
+  // flash over it and then restore it.
+  var statusMode = 'streak';
+  var statusText = '';
+  var statusLinkEl = document.createElement('button');
+  statusLinkEl.type = 'button';
+  statusLinkEl.className = 'status-link';
+  statusLinkEl.addEventListener('click', function () {
+    var bt = currentBestToday();
+    if (bt !== null) shareChallenge(bt);
+  });
 
   // Stats are opt-in and local only: no round is recorded until CLEAR is pressed with at least one roll behind it.
   // bestToday / bestTodayDate hold the lowest score recorded on the current local calendar day; they reset
@@ -328,7 +333,63 @@
     statScoreEl.textContent = 'Score: ' + scoreText;
     statSummaryEl.textContent = 'Best: ' + bestText + ' · Games: ' + stats.games +
       ' · Boxes shut: ' + stats.boxesShut + ' · Best today: ' + bestTodayText;
-    statStreakEl.textContent = 'Streak: ' + stats.streak + ' day' + (stats.streak === 1 ? '' : 's');
+    renderStatusLine();
+  }
+
+  // Paint #statStreak for the current statusMode. In 'scored' mode the persistent
+  // link button is (re)attached and its label refreshed; in 'streak' mode setting
+  // textContent drops the button and restores the plain streak text. Both branches
+  // skip a write when the content already matches, so renderStats() calling through
+  // here on every tile tap doesn't re-fire the aria-live announcement.
+  function renderStatusLine() {
+    if (statusMode === 'scored') {
+      statStreakEl.className = 'scored';
+      if (statStreakEl.firstChild !== statusLinkEl) {
+        statStreakEl.textContent = '';
+        statStreakEl.appendChild(statusLinkEl);
+      }
+      // Don't stomp a share confirmation that's mid-flash (see flashShareHint).
+      if (!shareHintTimer && statusLinkEl.textContent !== statusText) statusLinkEl.textContent = statusText;
+    } else {
+      statStreakEl.className = 'streak';
+      var streakText = 'Streak: ' + stats.streak + ' day' + (stats.streak === 1 ? '' : 's');
+      if (statStreakEl.textContent !== streakText) statStreakEl.textContent = streakText;
+    }
+  }
+
+  // Switch the status line to its post-round 'scored' state. Mirrors the wording the
+  // retired #result line used, with "challenge a friend" / "Challenge them back" folded
+  // onto the end so the whole line reads as one link (issue #65's "You scored 78,
+  // challenge a friend"). Falls back to the streak if there is no best-today to share.
+  function setStatusScored(score) {
+    var line;
+    if (challengeTarget !== null) {
+      if (score < challengeTarget) {
+        line = 'You scored ' + score + ' — you beat ' + challengeTarget + '! Challenge them back';
+      } else if (score === challengeTarget) {
+        line = 'You scored ' + score + ' — a tie with ' + challengeTarget + '. Challenge them back';
+      } else {
+        line = 'You scored ' + score + ' — ' + challengeTarget + ' still stands. Challenge them back';
+      }
+    } else if (score === 0) {
+      line = 'You shut the box — challenge a friend';
+    } else {
+      line = 'You scored ' + score + ', challenge a friend';
+    }
+    if (currentBestToday() === null) {
+      resetStatusLine();
+      return;
+    }
+    statusMode = 'scored';
+    statusText = line;
+    renderStatusLine();
+  }
+
+  // Back to the streak. Called on the next roll and whenever there is nothing to share.
+  function resetStatusLine() {
+    statusMode = 'streak';
+    statusText = '';
+    renderStatusLine();
   }
 
   function todayString() {
@@ -417,51 +478,16 @@
     challengeEl.className = 'on';
   }
 
-  // The end-of-round result area. It reports the round just recorded and carries the
-  // single share-style action. During an active challenge the line also says whether
-  // the round beat the target and the action becomes CHALLENGE THEM BACK. Only ever
-  // one action is shown.
-  function showResult(score) {
-    var line;
-    if (challengeTarget !== null) {
-      if (score < challengeTarget) {
-        line = 'You scored ' + score + ' — you beat ' + challengeTarget + '!';
-      } else if (score === challengeTarget) {
-        line = 'You scored ' + score + ' — a tie with ' + challengeTarget + '.';
-      } else {
-        line = 'You scored ' + score + ' — ' + challengeTarget + ' still stands.';
-      }
-    } else if (score === 0) {
-      line = 'You shut the box!';
-    } else {
-      line = 'You scored ' + score + '.';
-    }
-    resultTextEl.textContent = line;
-
-    // A share always makes sense here: a round was just recorded today, so best-today
-    // exists. The rematch variant only differs by label. Guard for null anyway.
-    var bt = currentBestToday();
-    if (bt === null) {
-      shareActionEl.hidden = true;
-    } else {
-      shareActionEl.hidden = false;
-      shareActionEl.textContent = challengeTarget !== null ? 'CHALLENGE THEM BACK' : 'CHALLENGE A FRIEND';
-    }
-    shareHintEl.textContent = '';
-    resultEl.className = 'on';
-  }
-
-  function hideResult() {
-    resultEl.className = '';
-    shareHintEl.textContent = '';
-  }
-
+  // Flash a short confirmation ("Challenge link copied") over the status link, then
+  // restore its "You scored…" label. A no-op unless the status line is in 'scored'
+  // state, and it never adds a line of its own, so the bottom of the board holds still.
   function flashShareHint(text) {
-    shareHintEl.textContent = text;
+    if (statusMode !== 'scored') return;
+    statusLinkEl.textContent = text;
     if (shareHintTimer) clearTimeout(shareHintTimer);
     shareHintTimer = setTimeout(function () {
       shareHintTimer = null;
-      shareHintEl.textContent = '';
+      if (statusMode === 'scored') statusLinkEl.textContent = statusText;
     }, 2600);
   }
 
@@ -595,7 +621,7 @@
     hasRolledThisRound = true;
     shutCountAtRoll = shutCount();
     clearRollHint();
-    hideResult();
+    resetStatusLine();
     markPlayedToday();
     // Hide whatever's showing first, so back-to-back rolls of the same numbers still look like something happened.
     box.className = 'rolling';
@@ -620,7 +646,7 @@
     if (rolledSinceClear) {
       var score = computeScore();
       recordRound(score);
-      showResult(score);
+      setStatusScored(score);
     }
     rolledSinceClear = false;
     hasRolledThisRound = false;
@@ -638,10 +664,6 @@
 
   box.addEventListener('click', roll);
   document.getElementById('clear').addEventListener('click', clear);
-  shareActionEl.addEventListener('click', function () {
-    var bt = currentBestToday();
-    if (bt !== null) shareChallenge(bt);
-  });
 
   document.addEventListener('keydown', function (e) {
     if (e.key !== 'Enter' && e.key !== ' ') return;
