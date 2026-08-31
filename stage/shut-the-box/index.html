@@ -132,7 +132,7 @@
   /* The bottom status line lives in one fixed slot. During play it shows the daily
      streak — the one stat worth coming back for, and the page's only splash of colour.
      For the moment after a round is recorded it becomes a blue, hyperlink-style
-     "You scored N. Challenge a friend!" that fires the same share as the old button did,
+     "You scored N, challenge a friend" that fires the same share as the old button did,
      then reverts to the streak on the next roll. Same slot, same height either way, so
      the bottom of the board never shifts. */
   #statStreak { min-height: 1.7em; }
@@ -179,8 +179,8 @@
   </button>
   <button id="clear" type="button">CLEAR</button>
   <div id="stats">
-    <div id="statScore">Score: &ndash;</div>
-    <div id="statSummary">Best: &ndash; &middot; Games: 0 &middot; Boxes shut: 0 &middot; Best today: &ndash;</div>
+    <div id="statScore">Score: &ndash; - Today: &ndash;</div>
+    <div id="statSummary">Best: &ndash; &middot; Games: 0 &middot; Boxes shut: 0</div>
     <div id="statStreak" class="streak" aria-live="polite">Streak: 0 days</div>
   </div>
   <footer id="footer">
@@ -211,8 +211,8 @@
 
   // The bottom status line has two states, both rendered into #statStreak:
   //   'streak' — "Streak: N days" in yellow, shown during play and on first load.
-  //   'scored' — a blue, hyperlink-style button reading "You scored N. Challenge a
-  //              friend!" (or a challenge-aware variant), shown for the moment after a
+  //   'scored' — a blue, hyperlink-style button reading "You scored N, challenge a
+  //              friend" (or a challenge-aware variant), shown for the moment after a
   //              round is recorded. Clicking it shares today's best, exactly as the
   //              retired CHALLENGE A FRIEND button did.
   // statusText holds the current 'scored' label so a transient share confirmation can
@@ -330,9 +330,9 @@
     var bestText = stats.best === null ? '–' : String(stats.best);
     var bt = currentBestToday();
     var bestTodayText = bt === null ? '–' : String(bt);
-    statScoreEl.textContent = 'Score: ' + scoreText;
+    statScoreEl.textContent = 'Score: ' + scoreText + ' - Today: ' + bestTodayText;
     statSummaryEl.textContent = 'Best: ' + bestText + ' · Games: ' + stats.games +
-      ' · Boxes shut: ' + stats.boxesShut + ' · Best today: ' + bestTodayText;
+      ' · Boxes shut: ' + stats.boxesShut;
     renderStatusLine();
   }
 
@@ -359,8 +359,8 @@
 
   // Switch the status line to its post-round 'scored' state. Mirrors the wording the
   // retired #result line used, with "challenge a friend" / "Challenge them back" folded
-  // onto the end so the whole line reads as one link (issue #66's "You scored 78.
-  // Challenge a friend!"). Falls back to the streak if there is no best-today to share.
+  // onto the end so the whole line reads as one link (issue #65's "You scored 78,
+  // challenge a friend"). Falls back to the streak if there is no best-today to share.
   function setStatusScored(score) {
     var line;
     if (challengeTarget !== null) {
@@ -374,7 +374,7 @@
     } else if (score === 0) {
       line = 'You shut the box — challenge a friend';
     } else {
-      line = 'You scored ' + score + '. Challenge a friend!';
+      line = 'You scored ' + score + ', challenge a friend!';
     }
     if (currentBestToday() === null) {
       resetStatusLine();
