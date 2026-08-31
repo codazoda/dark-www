@@ -8,18 +8,6 @@
 <link rel="manifest" href="manifest.json">
 <meta name="theme-color" content="#000000">
 <title>Shut the Box</title>
-<meta name="description" content="A pocket Shut the Box board. Roll two dice, shut the numbered tiles, empty the box. Instant, private, no account. Beat your best score today and challenge a friend to beat it too.">
-<link rel="canonical" href="https://dark.joeldare.com/shut-the-box/">
-<meta property="og:type" content="website">
-<meta property="og:site_name" content="Shut the Box">
-<meta property="og:title" content="Shut the Box">
-<meta property="og:description" content="Roll two dice, shut the numbered tiles, empty the box. Instant, private, no account. Beat your best score today and challenge a friend.">
-<meta property="og:url" content="https://dark.joeldare.com/shut-the-box/">
-<meta property="og:image" content="https://dark.joeldare.com/shut-the-box/icon-512.png">
-<meta name="twitter:card" content="summary">
-<meta name="twitter:title" content="Shut the Box">
-<meta name="twitter:description" content="Roll two dice, shut the numbered tiles, empty the box. Beat your best score today and challenge a friend.">
-<meta name="twitter:image" content="https://dark.joeldare.com/shut-the-box/icon-512.png">
 <style>
   :root { color-scheme: dark; }
   * { box-sizing: border-box; }
@@ -44,20 +32,6 @@
     cursor: pointer;
   }
   button:focus-visible { outline: 2px dashed #fff; outline-offset: 3px; }
-
-  /* Incoming challenge: one slim line above the board reading "Beat N", in the page's
-     existing muted text style with no box, fill, or accent colour. It keeps a fixed
-     slot (min-height + visibility, never display) so its presence or absence never
-     shifts the board. */
-  #challenge {
-    min-height: 1.4em;
-    text-align: center;
-    font-size: clamp(11px, 2vw, 14px);
-    color: rgba(255, 255, 255, .6);
-    letter-spacing: normal;
-    visibility: hidden;
-  }
-  #challenge.on { visibility: visible; }
 
   /* Tiles: twelve tall rectangles, number centered near the top. */
   #tiles { display: grid; grid-template-columns: repeat(12, 1fr); gap: 6px; }
@@ -136,35 +110,6 @@
     letter-spacing: .08em;
   }
 
-  /* End-of-round result area: a plain line reporting the round just recorded, with the
-     one share-style action beside it (CHALLENGE A FRIEND, or CHALLENGE THEM BACK during
-     an active challenge). Hidden until a round is recorded on the current day, and
-     hidden again the moment the next roll starts, so nothing in the loop is visible on
-     first load or during play. #shareAction reuses the CLEAR control's own styling —
-     no new colour, weight, or container. */
-  #result { display: none; text-align: center; }
-  #result.on { display: block; }
-  #resultText {
-    font-size: clamp(11px, 2vw, 14px);
-    color: rgba(255, 255, 255, .6);
-  }
-  #shareAction { padding: .6em 2em; letter-spacing: .2em; margin-top: .5em; }
-  #shareHint {
-    display: block;
-    min-height: 1.3em;
-    font-size: clamp(11px, 2vw, 14px);
-    color: rgba(255, 255, 255, .45);
-  }
-
-  #footer {
-    text-align: center;
-    font-size: clamp(10px, 1.8vw, 12px);
-    color: rgba(255, 255, 255, .4);
-    line-height: 1.6;
-  }
-  #footer a { color: rgba(255, 255, 255, .6); }
-  #footer p { margin: .3em 0; }
-
   /* Twelve tiles across a phone are too thin to tap; wrap to two rows of six. */
   @media (max-width: 600px) {
     #tiles { grid-template-columns: repeat(6, 1fr); }
@@ -173,7 +118,6 @@
 </style>
 </head>
 <body>
-  <p id="challenge" aria-live="polite"></p>
   <div id="tiles"></div>
   <button id="box" type="button" aria-label="Roll the dice">
     <span id="instructions">Tap tiles that add up to your roll to shut them. Score is a sum of open tiles. Empty the board to win. Stuck? CLEAR starts a new round.</span>
@@ -182,29 +126,16 @@
     <span id="rollHint" aria-live="polite"></span>
   </button>
   <button id="clear" type="button">CLEAR</button>
-  <div id="result" aria-live="polite">
-    <span id="resultText"></span>
-    <div><button id="shareAction" type="button" hidden></button></div>
-    <span id="shareHint" aria-live="polite"></span>
-  </div>
   <div id="stats">
     <div id="statScore">Score: &ndash;</div>
-    <div id="statSummary">Best: &ndash; &middot; Games: 0 &middot; Boxes shut: 0 &middot; Best today: &ndash;</div>
+    <div id="statSummary">Best: &ndash; &middot; Games: 0 &middot; Boxes shut: 0</div>
     <div id="statStreak">Streak: 0 days</div>
   </div>
-  <footer id="footer">
-    <p id="amazon">Like Shut the Box? <a href="https://amzn.to/45SaAk9" target="_blank" rel="noopener nofollow sponsored">Get the physical game on Amazon.</a></p>
-    <p id="disclosure">As an Amazon Associate this site earns from qualifying purchases.</p>
-    <p><a href="making-of.html">How this game was built</a></p>
-  </footer>
 <script>
   var STATS_KEY = "shutTheBox.stats";
   var LEGACY_SESSION_KEY = "shutTheBox.session";
   var LEGACY_RECOVERY_KEY = "shutTheBox.recovery";
   var DAY_MS = 24 * 60 * 60 * 1000;
-  // Highest possible open-tile score: 1 + 2 + ... + 12. Also the ceiling for an incoming challenge value.
-  var MAX_SCORE = 78;
-  var CANONICAL = "https://dark.joeldare.com/shut-the-box/";
 
   // Pip slots lit for each face, as indexes into a 3x3 grid read left to right.
   var FACES = [[4], [0, 8], [0, 4, 8], [0, 2, 6, 8], [0, 2, 4, 6, 8], [0, 2, 3, 5, 6, 8]];
@@ -216,20 +147,10 @@
   var statScoreEl = document.getElementById('statScore');
   var statSummaryEl = document.getElementById('statSummary');
   var statStreakEl = document.getElementById('statStreak');
-  var challengeEl = document.getElementById('challenge');
-  var resultEl = document.getElementById('result');
-  var resultTextEl = document.getElementById('resultText');
-  var shareActionEl = document.getElementById('shareAction');
-  var shareHintEl = document.getElementById('shareHint');
 
   // Stats are opt-in and local only: no round is recorded until CLEAR is pressed with at least one roll behind it.
-  // bestToday / bestTodayDate hold the lowest score recorded on the current local calendar day; they reset
-  // naturally the first time a round is recorded (or the display is read) on a new date.
-  var stats = { best: null, games: 0, boxesShut: 0, streak: 0, lastPlayedDate: '', bestToday: null, bestTodayDate: '' };
+  var stats = { best: null, games: 0, boxesShut: 0, streak: 0, lastPlayedDate: '' };
   var rolledSinceClear = false;
-
-  // Set from ?best=<n> on load when the value is a plain integer in [0, MAX_SCORE]; null for normal play.
-  var challengeTarget = null;
 
   // The one enforced rule: after a roll you must shut at least one tile before
   // rolling again. Tracked by comparing the shut-tile count now against its value
@@ -237,9 +158,6 @@
   var hasRolledThisRound = false;
   var shutCountAtRoll = 0;
   var rollHintTimer = null;
-  var shareHintTimer = null;
-
-  function noop() {}
 
   function loadJSON(key) {
     try {
@@ -257,9 +175,7 @@
       games: (typeof obj.games === 'number' && isFinite(obj.games) && obj.games >= 0) ? Math.floor(obj.games) : 0,
       boxesShut: (typeof obj.boxesShut === 'number' && isFinite(obj.boxesShut) && obj.boxesShut >= 0) ? Math.floor(obj.boxesShut) : 0,
       streak: (typeof obj.streak === 'number' && isFinite(obj.streak) && obj.streak >= 0) ? Math.floor(obj.streak) : 0,
-      lastPlayedDate: (typeof obj.lastPlayedDate === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(obj.lastPlayedDate)) ? obj.lastPlayedDate : '',
-      bestToday: (typeof obj.bestToday === 'number' && isFinite(obj.bestToday) && obj.bestToday >= 0) ? Math.floor(obj.bestToday) : null,
-      bestTodayDate: (typeof obj.bestTodayDate === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(obj.bestTodayDate)) ? obj.bestTodayDate : ''
+      lastPlayedDate: (typeof obj.lastPlayedDate === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(obj.lastPlayedDate)) ? obj.lastPlayedDate : ''
     };
   }
 
@@ -270,9 +186,7 @@
         games: stats.games,
         boxesShut: stats.boxesShut,
         streak: stats.streak,
-        lastPlayedDate: stats.lastPlayedDate,
-        bestToday: stats.bestToday,
-        bestTodayDate: stats.bestTodayDate
+        lastPlayedDate: stats.lastPlayedDate
       }));
       return true;
     } catch (e) {
@@ -315,19 +229,11 @@
     return ms;
   }
 
-  // The lowest score recorded so far on the current local day, or null if none yet today.
-  function currentBestToday() {
-    return stats.bestTodayDate === todayString() ? stats.bestToday : null;
-  }
-
   function renderStats() {
     var scoreText = String(computeScore());
     var bestText = stats.best === null ? '–' : String(stats.best);
-    var bt = currentBestToday();
-    var bestTodayText = bt === null ? '–' : String(bt);
     statScoreEl.textContent = 'Score: ' + scoreText;
-    statSummaryEl.textContent = 'Best: ' + bestText + ' · Games: ' + stats.games +
-      ' · Boxes shut: ' + stats.boxesShut + ' · Best today: ' + bestTodayText;
+    statSummaryEl.textContent = 'Best: ' + bestText + ' · Games: ' + stats.games + ' · Boxes shut: ' + stats.boxesShut;
     statStreakEl.textContent = 'Streak: ' + stats.streak + ' day' + (stats.streak === 1 ? '' : 's');
   }
 
@@ -365,19 +271,11 @@
     renderStats();
   }
 
-  function recordRound(score) {
+  function recordRound() {
+    var score = computeScore();
     stats.games += 1;
     stats.best = stats.best === null ? score : Math.min(stats.best, score);
     if (score === 0) stats.boxesShut += 1;
-
-    // Best today: start a fresh low when the date has rolled over, then keep the minimum.
-    var today = todayString();
-    if (stats.bestTodayDate !== today) {
-      stats.bestToday = null;
-      stats.bestTodayDate = today;
-    }
-    stats.bestToday = stats.bestToday === null ? score : Math.min(stats.bestToday, score);
-
     saveStats();
   }
 
@@ -391,124 +289,10 @@
     renderStats();
   }
 
-  // Parse an incoming challenge from the query string. Accept only a single plain
-  // integer in [0, MAX_SCORE]; anything missing, repeated, signed, fractional, or
-  // out of range returns null and the page just plays normally.
-  function parseChallenge() {
-    var params;
-    try {
-      params = new URLSearchParams(window.location.search);
-    } catch (e) {
-      return null;
-    }
-    var all = params.getAll('best');
-    if (all.length !== 1) return null;
-    var raw = all[0];
-    if (!/^\d+$/.test(raw)) return null;
-    var n = Number(raw);
-    if (!isFinite(n) || n < 0 || n > MAX_SCORE) return null;
-    return n;
-  }
-
-  function initChallenge() {
-    challengeTarget = parseChallenge();
-    if (challengeTarget === null) return;
-    challengeEl.textContent = 'Beat ' + challengeTarget;
-    challengeEl.className = 'on';
-  }
-
-  // The end-of-round result area. It reports the round just recorded and carries the
-  // single share-style action. During an active challenge the line also says whether
-  // the round beat the target and the action becomes CHALLENGE THEM BACK. Only ever
-  // one action is shown.
-  function showResult(score) {
-    var line;
-    if (challengeTarget !== null) {
-      if (score < challengeTarget) {
-        line = 'You scored ' + score + ' — you beat ' + challengeTarget + '!';
-      } else if (score === challengeTarget) {
-        line = 'You scored ' + score + ' — a tie with ' + challengeTarget + '.';
-      } else {
-        line = 'You scored ' + score + ' — ' + challengeTarget + ' still stands.';
-      }
-    } else if (score === 0) {
-      line = 'You shut the box!';
-    } else {
-      line = 'You scored ' + score + '.';
-    }
-    resultTextEl.textContent = line;
-
-    // A share always makes sense here: a round was just recorded today, so best-today
-    // exists. The rematch variant only differs by label. Guard for null anyway.
-    var bt = currentBestToday();
-    if (bt === null) {
-      shareActionEl.hidden = true;
-    } else {
-      shareActionEl.hidden = false;
-      shareActionEl.textContent = challengeTarget !== null ? 'CHALLENGE THEM BACK' : 'CHALLENGE A FRIEND';
-    }
-    shareHintEl.textContent = '';
-    resultEl.className = 'on';
-  }
-
-  function hideResult() {
-    resultEl.className = '';
-    shareHintEl.textContent = '';
-  }
-
-  function flashShareHint(text) {
-    shareHintEl.textContent = text;
-    if (shareHintTimer) clearTimeout(shareHintTimer);
-    shareHintTimer = setTimeout(function () {
-      shareHintTimer = null;
-      shareHintEl.textContent = '';
-    }, 2600);
-  }
-
-  // Copy without the async Clipboard API, for browsers that don't expose it.
-  function legacyCopy(text) {
-    try {
-      var ta = document.createElement('textarea');
-      ta.value = text;
-      ta.setAttribute('readonly', '');
-      ta.style.position = 'absolute';
-      ta.style.left = '-9999px';
-      document.body.appendChild(ta);
-      ta.select();
-      var ok = document.execCommand('copy');
-      document.body.removeChild(ta);
-      flashShareHint(ok ? 'Challenge link copied' : 'Copy this: ' + text);
-    } catch (e) {
-      flashShareHint('Copy this: ' + text);
-    }
-  }
-
-  // Two paths, both honor-system and server-free: the device share sheet where the
-  // browser offers it, a clipboard copy everywhere else. The link carries only ?best=<n>.
-  function shareChallenge(best) {
-    var text = 'My best Shut the Box score today was ' + best + '. Can you beat it?';
-    var url = CANONICAL + '?best=' + best;
-    if (navigator.share) {
-      navigator.share({ text: text, url: url }).then(noop, noop);
-      return;
-    }
-    var payload = text + ' ' + url;
-    if (navigator.clipboard && navigator.clipboard.writeText) {
-      navigator.clipboard.writeText(payload).then(function () {
-        flashShareHint('Challenge link copied');
-      }, function () {
-        legacyCopy(payload);
-      });
-    } else {
-      legacyCopy(payload);
-    }
-  }
-
   for (var n = 1; n <= 12; n++) {
     tilesEl.appendChild(makeTile(n));
   }
 
-  initChallenge();
   initStats();
 
   function makeTile(n) {
@@ -595,7 +379,6 @@
     hasRolledThisRound = true;
     shutCountAtRoll = shutCount();
     clearRollHint();
-    hideResult();
     markPlayedToday();
     // Hide whatever's showing first, so back-to-back rolls of the same numbers still look like something happened.
     box.className = 'rolling';
@@ -618,9 +401,7 @@
       rollTimer = null;
     }
     if (rolledSinceClear) {
-      var score = computeScore();
-      recordRound(score);
-      showResult(score);
+      recordRound();
     }
     rolledSinceClear = false;
     hasRolledThisRound = false;
@@ -638,10 +419,6 @@
 
   box.addEventListener('click', roll);
   document.getElementById('clear').addEventListener('click', clear);
-  shareActionEl.addEventListener('click', function () {
-    var bt = currentBestToday();
-    if (bt !== null) shareChallenge(bt);
-  });
 
   document.addEventListener('keydown', function (e) {
     if (e.key !== 'Enter' && e.key !== ' ') return;
