@@ -45,16 +45,19 @@
   }
   button:focus-visible { outline: 2px dashed #fff; outline-offset: 3px; }
 
-  /* Challenge banner: only shown when the page is opened from a ?best= link. */
+  /* Incoming challenge: one slim line above the board reading "Beat N", in the page's
+     existing muted text style with no box, fill, or accent colour. It keeps a fixed
+     slot (min-height + visibility, never display) so its presence or absence never
+     shifts the board. */
   #challenge {
-    display: none;
-    border: 2px solid #fff;
-    padding: .5em .8em;
+    min-height: 1.4em;
     text-align: center;
-    font-size: clamp(13px, 2.6vw, 18px);
-    letter-spacing: .12em;
+    font-size: clamp(11px, 2vw, 14px);
+    color: rgba(255, 255, 255, .6);
+    letter-spacing: normal;
+    visibility: hidden;
   }
-  #challenge.on { display: block; }
+  #challenge.on { visibility: visible; }
 
   /* Tiles: twelve tall rectangles, number centered near the top. */
   #tiles { display: grid; grid-template-columns: repeat(12, 1fr); gap: 6px; }
@@ -133,17 +136,25 @@
     letter-spacing: .08em;
   }
 
-  /* Challenge-a-friend sits with the best-today line; both hidden until a round is recorded today. */
-  #bestToday { display: none; }
-  #challengeWrap { display: none; margin-top: .4em; }
-  #challengeBtn { padding: .5em 1.4em; letter-spacing: .12em; }
+  /* End-of-round result area: a plain line reporting the round just recorded, with the
+     one share-style action beside it (CHALLENGE A FRIEND, or CHALLENGE THEM BACK during
+     an active challenge). Hidden until a round is recorded on the current day, and
+     hidden again the moment the next roll starts, so nothing in the loop is visible on
+     first load or during play. #shareAction reuses the CLEAR control's own styling —
+     no new colour, weight, or container. */
+  #result { display: none; text-align: center; }
+  #result.on { display: block; }
+  #resultText {
+    font-size: clamp(11px, 2vw, 14px);
+    color: rgba(255, 255, 255, .6);
+  }
+  #shareAction { padding: .6em 2em; letter-spacing: .2em; margin-top: .5em; }
   #shareHint {
     display: block;
     min-height: 1.3em;
+    font-size: clamp(11px, 2vw, 14px);
     color: rgba(255, 255, 255, .45);
   }
-  #challengeResult { display: none; margin-top: .4em; color: #fff; }
-  #rematchBtn { padding: .4em 1.2em; letter-spacing: .12em; margin-top: .3em; }
 
   #footer {
     text-align: center;
@@ -171,19 +182,15 @@
     <span id="rollHint" aria-live="polite"></span>
   </button>
   <button id="clear" type="button">CLEAR</button>
+  <div id="result" aria-live="polite">
+    <span id="resultText"></span>
+    <div><button id="shareAction" type="button" hidden></button></div>
+    <span id="shareHint" aria-live="polite"></span>
+  </div>
   <div id="stats">
     <div id="statScore">Score: &ndash;</div>
-    <div id="statSummary">Best: &ndash; &middot; Games: 0 &middot; Boxes shut: 0</div>
+    <div id="statSummary">Best: &ndash; &middot; Games: 0 &middot; Boxes shut: 0 &middot; Best today: &ndash;</div>
     <div id="statStreak">Streak: 0 days</div>
-    <div id="bestToday"></div>
-    <div id="challengeWrap">
-      <button id="challengeBtn" type="button">CHALLENGE A FRIEND</button>
-      <span id="shareHint" aria-live="polite"></span>
-    </div>
-    <div id="challengeResult" aria-live="polite">
-      <span id="challengeResultText"></span>
-      <div><button id="rematchBtn" type="button">CHALLENGE THEM BACK</button></div>
-    </div>
   </div>
   <footer id="footer">
     <p id="amazon">Like Shut the Box? <a href="https://amzn.to/45SaAk9" target="_blank" rel="noopener nofollow sponsored">Get the physical game on Amazon.</a></p>
@@ -210,13 +217,10 @@
   var statSummaryEl = document.getElementById('statSummary');
   var statStreakEl = document.getElementById('statStreak');
   var challengeEl = document.getElementById('challenge');
-  var bestTodayEl = document.getElementById('bestToday');
-  var challengeWrapEl = document.getElementById('challengeWrap');
-  var challengeBtnEl = document.getElementById('challengeBtn');
+  var resultEl = document.getElementById('result');
+  var resultTextEl = document.getElementById('resultText');
+  var shareActionEl = document.getElementById('shareAction');
   var shareHintEl = document.getElementById('shareHint');
-  var challengeResultEl = document.getElementById('challengeResult');
-  var challengeResultTextEl = document.getElementById('challengeResultText');
-  var rematchBtnEl = document.getElementById('rematchBtn');
 
   // Stats are opt-in and local only: no round is recorded until CLEAR is pressed with at least one roll behind it.
   // bestToday / bestTodayDate hold the lowest score recorded on the current local calendar day; they reset
@@ -319,19 +323,12 @@
   function renderStats() {
     var scoreText = String(computeScore());
     var bestText = stats.best === null ? '–' : String(stats.best);
-    statScoreEl.textContent = 'Score: ' + scoreText;
-    statSummaryEl.textContent = 'Best: ' + bestText + ' · Games: ' + stats.games + ' · Boxes shut: ' + stats.boxesShut;
-    statStreakEl.textContent = 'Streak: ' + stats.streak + ' day' + (stats.streak === 1 ? '' : 's');
-
     var bt = currentBestToday();
-    if (bt === null) {
-      bestTodayEl.style.display = 'none';
-      challengeWrapEl.style.display = 'none';
-    } else {
-      bestTodayEl.textContent = 'Best today: ' + bt;
-      bestTodayEl.style.display = 'block';
-      challengeWrapEl.style.display = 'block';
-    }
+    var bestTodayText = bt === null ? '–' : String(bt);
+    statScoreEl.textContent = 'Score: ' + scoreText;
+    statSummaryEl.textContent = 'Best: ' + bestText + ' · Games: ' + stats.games +
+      ' · Boxes shut: ' + stats.boxesShut + ' · Best today: ' + bestTodayText;
+    statStreakEl.textContent = 'Streak: ' + stats.streak + ' day' + (stats.streak === 1 ? '' : 's');
   }
 
   function todayString() {
@@ -368,8 +365,7 @@
     renderStats();
   }
 
-  function recordRound() {
-    var score = computeScore();
+  function recordRound(score) {
     stats.games += 1;
     stats.best = stats.best === null ? score : Math.min(stats.best, score);
     if (score === 0) stats.boxesShut += 1;
@@ -383,8 +379,6 @@
     stats.bestToday = stats.bestToday === null ? score : Math.min(stats.bestToday, score);
 
     saveStats();
-
-    if (challengeTarget !== null) showChallengeResult(score);
   }
 
   function initStats() {
@@ -423,19 +417,43 @@
     challengeEl.className = 'on';
   }
 
-  function showChallengeResult(score) {
-    var msg;
-    if (score < challengeTarget) {
-      msg = 'You scored ' + score + ' — you beat ' + challengeTarget + '!';
-    } else if (score === challengeTarget) {
-      msg = 'You scored ' + score + ' — a tie with ' + challengeTarget + '.';
+  // The end-of-round result area. It reports the round just recorded and carries the
+  // single share-style action. During an active challenge the line also says whether
+  // the round beat the target and the action becomes CHALLENGE THEM BACK. Only ever
+  // one action is shown.
+  function showResult(score) {
+    var line;
+    if (challengeTarget !== null) {
+      if (score < challengeTarget) {
+        line = 'You scored ' + score + ' — you beat ' + challengeTarget + '!';
+      } else if (score === challengeTarget) {
+        line = 'You scored ' + score + ' — a tie with ' + challengeTarget + '.';
+      } else {
+        line = 'You scored ' + score + ' — ' + challengeTarget + ' still stands.';
+      }
+    } else if (score === 0) {
+      line = 'You shut the box!';
     } else {
-      msg = 'You scored ' + score + ' — ' + challengeTarget + ' still stands.';
+      line = 'You scored ' + score + '.';
     }
-    challengeResultTextEl.textContent = msg;
-    // A rematch only makes sense once the recipient has a best-today of their own to send back.
-    rematchBtnEl.style.display = currentBestToday() === null ? 'none' : 'inline-block';
-    challengeResultEl.style.display = 'block';
+    resultTextEl.textContent = line;
+
+    // A share always makes sense here: a round was just recorded today, so best-today
+    // exists. The rematch variant only differs by label. Guard for null anyway.
+    var bt = currentBestToday();
+    if (bt === null) {
+      shareActionEl.hidden = true;
+    } else {
+      shareActionEl.hidden = false;
+      shareActionEl.textContent = challengeTarget !== null ? 'CHALLENGE THEM BACK' : 'CHALLENGE A FRIEND';
+    }
+    shareHintEl.textContent = '';
+    resultEl.className = 'on';
+  }
+
+  function hideResult() {
+    resultEl.className = '';
+    shareHintEl.textContent = '';
   }
 
   function flashShareHint(text) {
@@ -577,6 +595,7 @@
     hasRolledThisRound = true;
     shutCountAtRoll = shutCount();
     clearRollHint();
+    hideResult();
     markPlayedToday();
     // Hide whatever's showing first, so back-to-back rolls of the same numbers still look like something happened.
     box.className = 'rolling';
@@ -599,7 +618,9 @@
       rollTimer = null;
     }
     if (rolledSinceClear) {
-      recordRound();
+      var score = computeScore();
+      recordRound(score);
+      showResult(score);
     }
     rolledSinceClear = false;
     hasRolledThisRound = false;
@@ -617,11 +638,7 @@
 
   box.addEventListener('click', roll);
   document.getElementById('clear').addEventListener('click', clear);
-  challengeBtnEl.addEventListener('click', function () {
-    var bt = currentBestToday();
-    if (bt !== null) shareChallenge(bt);
-  });
-  rematchBtnEl.addEventListener('click', function () {
+  shareActionEl.addEventListener('click', function () {
     var bt = currentBestToday();
     if (bt !== null) shareChallenge(bt);
   });
