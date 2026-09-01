@@ -110,13 +110,15 @@
   .pip { border-radius: 50%; background: #fff; visibility: hidden; }
   .pip.on { visibility: visible; }
 
-  /* Score row: "Score: N" pinned left, "· Today: M" pinned right, CLEAR centered
-     between them on the same line. */
+  /* Score row: "Score: N" pinned left, "Today: M" pinned right, CLEAR centered
+     between them on the same line. The side padding keeps a little breathing room
+     to the left of "Score" and the right of "Today". */
   #scoreRow {
     display: grid;
     grid-template-columns: 1fr auto 1fr;
     align-items: center;
     gap: 8px;
+    padding: 0 10px;
     font-size: clamp(12px, 2vw, 14px);
     color: rgba(255, 255, 255, .6);
   }
@@ -136,26 +138,19 @@
     color: rgba(255, 255, 255, .6);
   }
 
-  /* Real flex child that reserves room for the fixed #footer. A trailing body
-     padding or last-child margin is dropped when the flex column overflows on a
-     short viewport; an explicit-height flex item is not. */
-  #footerSpace {
-    flex: 0 0 auto;
-    height: calc(58px + env(safe-area-inset-bottom, 0px));
-  }
-  /* The bottom status line lives in one fixed slot. During play it shows the daily
-     streak — the one stat worth coming back for, and the page's only splash of colour.
+  /* The status line lives in one slot. During play it shows the daily streak —
+     the one stat worth coming back for, and the page's only splash of colour.
      For the moment after a round is recorded it becomes a blue, hyperlink-style
      "Your best today is N. Challenge a friend!" that fires the same share as the old
      button did, then reverts to the streak on the next roll. Same slot, same height
      either way, so the bottom of the board never shifts. */
-  #statStreak { min-height: 1.7em; }
-  #statStreak.streak {
+  #status { min-height: 1.7em; }
+  #status.streak {
     color: #ffb000;
     font-weight: bold;
     letter-spacing: .08em;
   }
-  #statStreak .status-link {
+  #status .status-link {
     font: inherit;
     border: 0;
     padding: 0;
@@ -166,23 +161,15 @@
     cursor: pointer;
   }
 
-  /* One compact affiliate line, fixed to the bottom of the viewport. #footerSpace
-     reserves matching room in the layout so it never covers the board. */
-  #footer {
-    position: fixed;
-    left: 0;
-    right: 0;
-    bottom: 0;
+  /* One compact affiliate line in normal flow, just below the status line: same
+     text as before, muted grey, underlined, no rule or border of its own. */
+  #affiliate {
     margin: 0;
-    padding: 8px 12px calc(8px + env(safe-area-inset-bottom, 0px));
-    background: #000;
-    border-top: 1px solid rgba(255, 255, 255, .15);
     text-align: center;
-    font-size: 12px;
+    font-size: clamp(12px, 2vw, 14px);
     line-height: 1.4;
-    color: rgba(255, 255, 255, .4);
   }
-  #footer a { color: rgba(255, 255, 255, .6); }
+  #affiliate a { color: rgba(255, 255, 255, .6); text-decoration: underline; }
 
   /* Twelve tiles across a phone are too thin to tap; wrap to two rows of six. */
   @media (max-width: 600px) {
@@ -205,16 +192,13 @@
   <div id="scoreRow">
     <span id="statScore">Score: &ndash;</span>
     <button id="clear" type="button">CLEAR</button>
-    <span id="statToday">&middot; Today: &ndash;</span>
+    <span id="statToday">Today: &ndash;</span>
   </div>
   <div id="stats">
     <div id="statSummary">Best: &ndash; &middot; Games: 0 &middot; Shut: 0</div>
-    <div id="statStreak" class="streak" aria-live="polite">Streak: 0 days</div>
+    <div id="status" class="streak" aria-live="polite">Streak: 0 days</div>
+    <p id="affiliate"><a href="https://amzn.to/45SaAk9" target="_blank" rel="noopener nofollow sponsored">Buy Shut the Box on Amazon (affiliate link)</a></p>
   </div>
-  <div id="footerSpace" aria-hidden="true"></div>
-  <footer id="footer">
-    <a href="https://amzn.to/45SaAk9" target="_blank" rel="noopener nofollow sponsored">Buy Shut the Box on Amazon (affiliate link)</a>
-  </footer>
 <script>
   var STATS_KEY = "shutTheBox.stats";
   var LEGACY_SESSION_KEY = "shutTheBox.session";
@@ -234,9 +218,9 @@
   var statScoreEl = document.getElementById('statScore');
   var statTodayEl = document.getElementById('statToday');
   var statSummaryEl = document.getElementById('statSummary');
-  var statStreakEl = document.getElementById('statStreak');
+  var statusEl = document.getElementById('status');
 
-  // The bottom status line has two states, both rendered into #statStreak:
+  // The bottom status line has two states, both rendered into #status:
   //   'streak' — "Streak: N days" in yellow, shown during play and on first load.
   //   'scored' — a blue, hyperlink-style button reading "Your best today is N.
   //              Challenge a friend!", shown for the moment after a round is recorded.
@@ -358,30 +342,30 @@
     var bt = currentBestToday();
     var bestTodayText = bt === null ? '–' : String(bt);
     statScoreEl.textContent = 'Score: ' + scoreText;
-    statTodayEl.textContent = '· Today: ' + bestTodayText;
+    statTodayEl.textContent = 'Today: ' + bestTodayText;
     statSummaryEl.textContent = 'Best: ' + bestText + ' · Games: ' + stats.games +
       ' · Shut: ' + stats.boxesShut;
     renderStatusLine();
   }
 
-  // Paint #statStreak for the current statusMode. In 'scored' mode the persistent
+  // Paint #status for the current statusMode. In 'scored' mode the persistent
   // link button is (re)attached and its label refreshed; in 'streak' mode setting
   // textContent drops the button and restores the plain streak text. Both branches
   // skip a write when the content already matches, so renderStats() calling through
   // here on every tile tap doesn't re-fire the aria-live announcement.
   function renderStatusLine() {
     if (statusMode === 'scored') {
-      statStreakEl.className = 'scored';
-      if (statStreakEl.firstChild !== statusLinkEl) {
-        statStreakEl.textContent = '';
-        statStreakEl.appendChild(statusLinkEl);
+      statusEl.className = 'scored';
+      if (statusEl.firstChild !== statusLinkEl) {
+        statusEl.textContent = '';
+        statusEl.appendChild(statusLinkEl);
       }
       // Don't stomp a share confirmation that's mid-flash (see flashShareHint).
       if (!shareHintTimer && statusLinkEl.textContent !== statusText) statusLinkEl.textContent = statusText;
     } else {
-      statStreakEl.className = 'streak';
+      statusEl.className = 'streak';
       var streakText = 'Streak: ' + stats.streak + ' day' + (stats.streak === 1 ? '' : 's');
-      if (statStreakEl.textContent !== streakText) statStreakEl.textContent = streakText;
+      if (statusEl.textContent !== streakText) statusEl.textContent = streakText;
     }
   }
 
