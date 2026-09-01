@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <rect width="512" height="512" fill="#000"/>
+  <!-- Die showing 2 (a dead number in Drop Dead), tilted left -->
+  <g transform="translate(180,215) rotate(-16)">
+    <rect x="-92" y="-92" width="184" height="184" rx="30" fill="#000" stroke="#fff" stroke-width="26"/>
+    <circle cx="-44" cy="-44" r="20" fill="#fff"/>
+    <circle cx="44" cy="44" r="20" fill="#fff"/>
+  </g>
+  <!-- Die showing 5 (the other dead number), tilted right -->
+  <g transform="translate(322,300) rotate(20)">
+    <rect x="-92" y="-92" width="184" height="184" rx="30" fill="#000" stroke="#fff" stroke-width="26"/>
+    <circle cx="-44" cy="-44" r="20" fill="#fff"/>
+    <circle cx="44" cy="-44" r="20" fill="#fff"/>
+    <circle cx="0" cy="0" r="20" fill="#fff"/>
+    <circle cx="-44" cy="44" r="20" fill="#fff"/>
+    <circle cx="44" cy="44" r="20" fill="#fff"/>
+  </g>
+</svg>

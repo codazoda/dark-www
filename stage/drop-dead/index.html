@@ -1,0 +1,736 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="icon-180.png">
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#000000">
+<title>Drop Dead</title>
+<meta name="description" content="Drop Dead, the forced-roll dice game. Roll five dice; any 2 or 5 kills those dice and scores nothing. Clean rolls add up. Play until every die is dead. Instant, private, no account. Or pass the phone and play with friends.">
+<link rel="canonical" href="https://dark.joeldare.com/drop-dead/">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Drop Dead">
+<meta property="og:title" content="Drop Dead">
+<meta property="og:description" content="The forced-roll dice game. Roll five dice; any 2 or 5 dies and scores nothing. Clean rolls add up. Play until every die is dead. Pass the phone and play with friends.">
+<meta property="og:url" content="https://dark.joeldare.com/drop-dead/">
+<meta property="og:image" content="https://dark.joeldare.com/drop-dead/icon-512.png">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Drop Dead">
+<meta name="twitter:description" content="The forced-roll dice game. Any 2 or 5 dies and scores nothing. Play until every die is dead. Pass the phone and play with friends.">
+<meta name="twitter:image" content="https://dark.joeldare.com/drop-dead/icon-512.png">
+<style>
+  :root { color-scheme: dark; }
+  * { box-sizing: border-box; }
+  html, body { height: 100%; }
+  body {
+    margin: 0;
+    padding: 12px;
+    padding: max(12px, env(safe-area-inset-top)) max(12px, env(safe-area-inset-right)) max(12px, env(safe-area-inset-bottom)) max(12px, env(safe-area-inset-left));
+    background: #000;
+    color: #fff;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    display: flex;
+    flex-direction: column;
+    gap: clamp(8px, 2.4vh, 18px);
+    overflow: hidden;
+    -webkit-tap-highlight-color: transparent;
+  }
+  button {
+    font: inherit;
+    color: inherit;
+    background: none;
+    border: 2px solid #fff;
+    border-radius: 0;
+    cursor: pointer;
+  }
+  button:focus-visible { outline: 2px dashed #fff; outline-offset: 3px; }
+  .link {
+    border: 0;
+    padding: 8px;
+    background: none;
+    color: rgba(255, 255, 255, .65);
+    text-decoration: underline;
+    letter-spacing: normal;
+    min-height: 44px;
+  }
+  .link:focus-visible { outline: 2px dashed #fff; outline-offset: 2px; }
+
+  #game {
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: clamp(10px, 3vh, 24px);
+    text-align: center;
+  }
+  .screen { display: none; flex-direction: column; align-items: center; gap: clamp(10px, 3vh, 24px); width: 100%; }
+  .screen.active { display: flex; }
+
+  /* ---- Dice board ---- */
+  #diceArea {
+    border: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: clamp(8px, 2vh, 16px);
+    width: 100%;
+  }
+  #instructions {
+    display: block;
+    font-size: clamp(12px, 2vw, 14px);
+    color: rgba(255, 255, 255, .6);
+    max-width: 34em;
+    line-height: 1.5;
+  }
+  /* Five equal grid tracks always add up to the row minus gaps — the dice can't
+     spill past the screen edge no matter how narrow the phone. */
+  #dice {
+    display: grid;
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    justify-items: center;
+    gap: clamp(4px, 1.6vw, 10px);
+    width: 100%;
+    max-width: 430px;
+  }
+  .die {
+    width: 100%;
+    max-width: 84px;
+    aspect-ratio: 1;
+    border: 2px solid #fff;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    grid-template-rows: repeat(3, 1fr);
+    padding: 10%;
+    gap: 6%;
+    transition: border-color .35s ease, opacity .35s ease;
+  }
+  .pip { border-radius: 50%; background: #fff; visibility: hidden; }
+  .pip.on { visibility: visible; }
+  /* A die knocked out this roll: dimmed but still readable for a moment. */
+  .die.dead { border-color: rgba(255, 255, 255, .32); opacity: .55; }
+  .die.dead .pip.on { background: rgba(255, 255, 255, .5); }
+  /* Then it becomes an empty outlined slot so the pool visibly shrinks. */
+  .die.empty { border-color: rgba(255, 255, 255, .22); }
+  .die.empty .pip { visibility: hidden; }
+  /* During the brief roll, live dice blank out so a repeat of the same face still reads as a new roll. */
+  #diceArea.rolling .die.live .pip { visibility: hidden; }
+  @media (prefers-reduced-motion: no-preference) {
+    #diceArea.rolling .die.live { animation: shake .2s linear; }
+    @keyframes shake {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-8%); }
+    }
+  }
+
+  #status { min-height: 1.4em; font-size: clamp(12px, 2vw, 14px); color: rgba(255, 255, 255, .55); letter-spacing: normal; }
+
+  /* ---- Score ---- */
+  #score { display: flex; flex-direction: column; align-items: center; gap: 2px; }
+  #scoreLabel { font-size: clamp(11px, 1.8vw, 13px); letter-spacing: .28em; color: rgba(255, 255, 255, .55); }
+  #scoreValue { font-size: clamp(44px, 15vh, 96px); line-height: 1; font-weight: bold; font-variant-numeric: tabular-nums; }
+  #scoreNote { min-height: 1.4em; font-size: clamp(12px, 2vw, 14px); color: rgba(255, 255, 255, .6); }
+  #scoreNote.best { color: #ffb000; font-weight: bold; letter-spacing: .06em; }
+
+  /* ---- Primary action ---- */
+  #primary {
+    padding: .7em 2.4em;
+    letter-spacing: .22em;
+    font-size: clamp(15px, 3.4vw, 18px);
+    min-height: 44px;
+  }
+
+  /* ---- Solo stats ---- */
+  #stats { font-size: clamp(12px, 2vw, 14px); line-height: 1.7; color: rgba(255, 255, 255, .6); }
+  #streak { color: #ffb000; font-weight: bold; letter-spacing: .06em; }
+
+  /* ---- Group scoreboard strip ---- */
+  #groupbar { display: none; flex-wrap: wrap; justify-content: center; gap: .4em 1em; font-size: clamp(12px, 2vw, 14px); color: rgba(255, 255, 255, .6); }
+  body.group #groupbar { display: flex; }
+  body.group #stats { display: none; }
+  .gb-cur { color: #fff; border-bottom: 2px solid #ffb000; }
+
+  /* ---- Setup / pass / results ---- */
+  h1.big { margin: 0; font-size: clamp(24px, 7vw, 40px); letter-spacing: .12em; }
+  .sub { font-size: clamp(13px, 2.4vw, 15px); color: rgba(255, 255, 255, .65); max-width: 30em; line-height: 1.5; }
+  #countRow { display: flex; gap: clamp(8px, 3vw, 16px); flex-wrap: wrap; justify-content: center; }
+  .count {
+    width: clamp(52px, 15vw, 72px);
+    aspect-ratio: 1;
+    font-size: clamp(20px, 6vw, 28px);
+  }
+  .count[aria-pressed="true"] { background: #fff; color: #000; }
+  #results ol { list-style: none; margin: 0; padding: 0; width: min(22em, 90vw); }
+  #results li {
+    display: flex;
+    justify-content: space-between;
+    padding: .5em .2em;
+    border-bottom: 1px solid rgba(255, 255, 255, .18);
+    font-size: clamp(14px, 3vw, 18px);
+  }
+  #results li.win { color: #ffb000; font-weight: bold; }
+  .row-actions { display: flex; gap: clamp(8px, 3vw, 16px); flex-wrap: wrap; justify-content: center; }
+  .row-actions button { padding: .7em 1.8em; letter-spacing: .18em; font-size: clamp(14px, 3vw, 16px); min-height: 44px; }
+
+  /* ---- Footer ---- */
+  #footer { display: none; flex-direction: column; align-items: center; gap: 2px; flex: 0 0 auto; }
+  #footer.show { display: flex; }
+  #footerRow { display: flex; gap: clamp(4px, 4vw, 24px); }
+  #footerRow .link { font-size: clamp(12px, 2vw, 14px); }
+  #shareHint { font-size: 12px; color: rgba(255, 255, 255, .42); letter-spacing: normal; }
+
+  .sr-only {
+    position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
+    overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0;
+  }
+
+  @media (max-width: 360px) {
+    #dice { gap: 4px; }
+  }
+  /* Short viewports (landscape phones): tighten everything so nothing clips or scrolls. */
+  @media (max-height: 480px) {
+    body { gap: 3px; padding: 8px; }
+    #game { gap: 5px; }
+    .screen { gap: 6px; }
+    #diceArea { gap: 5px; }
+    #dice { max-width: 300px; gap: 6px; }
+    .die { max-width: 52px; }
+    #scoreValue { font-size: clamp(26px, 13vh, 42px); }
+    #scoreLabel { letter-spacing: .18em; }
+    #scoreNote, #status { min-height: 1em; }
+    /* The first-load rule text is dropped in cramped landscape; portrait keeps it. */
+    #instructions { display: none; }
+    #primary { padding: .4em 1.8em; }
+    #stats { line-height: 1.45; }
+    #shareHint { display: none; }
+    #footer { gap: 0; }
+    h1.big { font-size: clamp(20px, 6vh, 30px); }
+  }
+</style>
+</head>
+<body>
+  <div id="game">
+
+    <!-- ============ PLAY (solo turn or one player's group turn) ============ -->
+    <section id="play" class="screen active">
+      <button id="diceArea" type="button" aria-label="Roll the dice">
+        <span id="instructions">Roll all five dice. Any <b>2</b> or <b>5</b> is dead — those dice are removed and the roll scores nothing. A roll with no 2 or 5 adds every die to your score. Keep rolling the survivors until all five are dead.</span>
+        <span id="dice" role="img" aria-label="Five dice, none rolled yet"></span>
+        <span id="status" aria-hidden="true"></span>
+      </button>
+
+      <div id="score">
+        <span id="scoreLabel">SCORE</span>
+        <span id="scoreValue">0</span>
+        <span id="scoreNote"></span>
+      </div>
+
+      <button id="primary" type="button">ROLL</button>
+
+      <div id="groupbar" aria-hidden="true"></div>
+      <div id="stats">
+        <div id="statLine">Previous &ndash; &middot; Best &ndash; &middot; Games 0</div>
+        <div id="streak">Streak 0 days</div>
+      </div>
+
+      <p id="announce" class="sr-only" role="status" aria-live="polite"></p>
+    </section>
+
+    <!-- ============ SETUP (choose player count) ============ -->
+    <section id="setup" class="screen">
+      <h1 class="big">PLAY WITH FRIENDS</h1>
+      <p class="sub">One phone, passed around the table. Each player takes a full Drop Dead round; highest score wins. Nothing is saved &mdash; your solo stats stay untouched.</p>
+      <div id="countRow" role="group" aria-label="Number of players"></div>
+      <div class="row-actions">
+        <button id="setupStart" type="button">START</button>
+        <button id="setupBack" type="button">BACK</button>
+      </div>
+    </section>
+
+    <!-- ============ PASS (hand the phone over) ============ -->
+    <section id="pass" class="screen">
+      <h1 class="big">PASS THE PHONE</h1>
+      <p class="sub" id="passWho">Player 1</p>
+      <button id="passGo" type="button">I'M READY</button>
+    </section>
+
+    <!-- ============ RESULTS (group game over) ============ -->
+    <section id="results" class="screen">
+      <h1 class="big">RESULTS</h1>
+      <ol id="resultsList"></ol>
+      <p class="sub" id="resultsWinner"></p>
+      <div class="row-actions">
+        <button id="resultsAgain" type="button">PLAY AGAIN</button>
+        <button id="resultsShare" type="button">SHARE</button>
+        <button id="resultsSolo" type="button">SOLO</button>
+      </div>
+    </section>
+
+  </div>
+
+  <div id="footer">
+    <div id="footerRow">
+      <button id="groupToggle" type="button" class="link">Play with friends</button>
+      <button id="shareBtn" type="button" class="link">Share</button>
+    </div>
+    <span id="shareHint">Touch phones to send it &mdash; AirDrop on iPhone, Quick Share on Android.</span>
+  </div>
+
+<script>
+  var STATS_KEY = "dropDead.stats";
+  var DAY_MS = 24 * 60 * 60 * 1000;
+  var CANONICAL = "https://dark.joeldare.com/drop-dead/";
+  var DICE = 5;
+  var MIN_PLAYERS = 2, MAX_PLAYERS = 6;
+
+  // Pip slots lit for each face, as indexes into a 3x3 grid read left to right.
+  var FACES = [[4], [0, 8], [0, 4, 8], [0, 2, 6, 8], [0, 2, 4, 6, 8], [0, 2, 3, 5, 6, 8]];
+
+  var $ = function (id) { return document.getElementById(id); };
+  var diceArea = $('diceArea'), diceEl = $('dice'), instructionsEl = $('instructions'), statusEl = $('status');
+  var scoreValueEl = $('scoreValue'), scoreNoteEl = $('scoreNote');
+  var primaryEl = $('primary'), announceEl = $('announce');
+  var statLineEl = $('statLine'), streakEl = $('streak'), groupbarEl = $('groupbar');
+  var footerEl = $('footer'), groupToggleEl = $('groupToggle');
+
+  function noop() {}
+  function prefersReduced() {
+    try { return window.matchMedia('(prefers-reduced-motion: reduce)').matches; } catch (e) { return false; }
+  }
+  function rnd() { return Math.floor(Math.random() * 6) + 1; }
+
+  // ---------- persistent stats (solo only) ----------
+  var stats = { best: null, previous: null, games: 0, streak: 0, lastPlayedDate: '' };
+
+  function loadJSON(key) {
+    try { return JSON.parse(localStorage.getItem(key)); } catch (e) { return null; }
+  }
+  // Every field defaulted independently so a partial or corrupt record still loads as "empty".
+  function sanitizeStats(o) {
+    if (!o || typeof o !== 'object') return null;
+    var num = function (v) { return (typeof v === 'number' && isFinite(v) && v >= 0); };
+    return {
+      best: num(o.best) ? Math.floor(o.best) : null,
+      previous: num(o.previous) ? Math.floor(o.previous) : null,
+      games: num(o.games) ? Math.floor(o.games) : 0,
+      streak: num(o.streak) ? Math.floor(o.streak) : 0,
+      lastPlayedDate: (typeof o.lastPlayedDate === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(o.lastPlayedDate)) ? o.lastPlayedDate : ''
+    };
+  }
+  function saveStats() {
+    try { localStorage.setItem(STATS_KEY, JSON.stringify(stats)); return true; } catch (e) { return false; }
+  }
+  function initStats() {
+    var existing = sanitizeStats(loadJSON(STATS_KEY));
+    if (existing) stats = existing;
+    renderStats();
+  }
+  function todayString() {
+    var d = new Date();
+    return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+  }
+  function dateToUTCms(s) {
+    var m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(s || '');
+    if (!m) return null;
+    var y = +m[1], mo = +m[2], d = +m[3];
+    var ms = Date.UTC(y, mo - 1, d);
+    var c = new Date(ms);
+    if (c.getUTCFullYear() !== y || c.getUTCMonth() !== mo - 1 || c.getUTCDate() !== d) return null;
+    return ms;
+  }
+  // A day counts as played on the first roll of a round. Guarded by date so every later call is a no-op.
+  function markPlayedToday() {
+    var today = todayString();
+    if (stats.lastPlayedDate === today) return;
+    var lastMs = dateToUTCms(stats.lastPlayedDate), todayMs = dateToUTCms(today);
+    if (lastMs !== null && todayMs !== null && todayMs - lastMs === DAY_MS) stats.streak += 1;
+    else stats.streak = 1;
+    stats.lastPlayedDate = today;
+    saveStats();
+    renderStats();
+  }
+  function recordRound(score) {
+    stats.games += 1;
+    stats.previous = score;
+    stats.best = (stats.best === null) ? score : Math.max(stats.best, score);
+    saveStats();
+    renderStats();
+  }
+  function renderStats() {
+    var dash = '–';
+    statLineEl.textContent = 'Previous ' + (stats.previous === null ? dash : stats.previous) +
+      ' · Best ' + (stats.best === null ? dash : stats.best) +
+      ' · Games ' + stats.games;
+    streakEl.textContent = 'Streak ' + stats.streak + ' day' + (stats.streak === 1 ? '' : 's');
+  }
+
+  // ---------- dice ----------
+  // state per slot: 'live' | 'dead' | 'empty'
+  var slots = [];
+  for (var i = 0; i < DICE; i++) {
+    var die = document.createElement('span');
+    die.className = 'die';
+    for (var p = 0; p < 9; p++) {
+      var pip = document.createElement('span');
+      pip.className = 'pip';
+      die.appendChild(pip);
+    }
+    diceEl.appendChild(die);
+    slots.push({ el: die, state: 'empty', face: 0, timer: null });
+  }
+  function setSlot(s, st) {
+    s.state = st;
+    s.el.className = 'die ' + st;
+  }
+  function drawFace(s, face) {
+    var on = FACES[face - 1];
+    for (var k = 0; k < 9; k++) s.el.children[k].className = (on.indexOf(k) > -1) ? 'pip on' : 'pip';
+  }
+  function flushDead() {
+    for (var j = 0; j < slots.length; j++) {
+      var s = slots[j];
+      if (s.timer) { clearTimeout(s.timer); s.timer = null; }
+      if (s.state === 'dead') setSlot(s, 'empty');
+    }
+  }
+  function scheduleEmpty(s) {
+    var delay = prefersReduced() ? 500 : 1100;
+    s.timer = setTimeout(function () {
+      s.timer = null;
+      if (s.state === 'dead') setSlot(s, 'empty');
+    }, delay);
+  }
+  function liveCount() {
+    var c = 0;
+    for (var j = 0; j < slots.length; j++) if (slots[j].state === 'live') c++;
+    return c;
+  }
+  function resetBoard() {
+    for (var j = 0; j < slots.length; j++) {
+      var s = slots[j];
+      if (s.timer) { clearTimeout(s.timer); s.timer = null; }
+      setSlot(s, 'live');
+      drawFace(s, 6);
+      for (var k = 0; k < 9; k++) s.el.children[k].className = 'pip';
+    }
+    diceEl.setAttribute('aria-label', 'Five dice, none rolled yet');
+  }
+
+  // ---------- game state ----------
+  var screen = 'play';           // 'play' | 'setup' | 'pass' | 'results'
+  var phase = 'ready';           // within play: 'ready' | 'playing' | 'gameover'
+  var mode = 'solo';             // 'solo' | 'group'
+  var roundScore = 0;
+  var rollNo = 0;
+  var rolling = false;
+  var madeBest = false;
+  // group
+  var roster = [];               // [{ name, score }]
+  var turnIndex = 0;
+  var chosenCount = MIN_PLAYERS;
+
+  function showScreen(name) {
+    screen = name;
+    var ids = ['play', 'setup', 'pass', 'results'];
+    for (var j = 0; j < ids.length; j++) $(ids[j]).classList.toggle('active', ids[j] === name);
+    footerEl.classList.toggle('show', name === 'play');
+  }
+
+  function setScore(v) { scoreValueEl.textContent = String(v); }
+
+  function updatePrimary() {
+    if (phase === 'ready') { primaryEl.textContent = 'ROLL'; return; }
+    if (phase === 'playing') { primaryEl.textContent = 'ROLL AGAIN'; return; }
+    // gameover
+    if (mode === 'group') {
+      primaryEl.textContent = (turnIndex >= roster.length - 1) ? 'SEE RESULTS' : 'NEXT PLAYER';
+    } else {
+      primaryEl.textContent = 'NEW GAME';
+    }
+  }
+
+  function say(msg) { announceEl.textContent = msg; }
+
+  function faceWord(f) { return String(f); }
+
+  // Start a fresh round on the current play screen (used by solo NEW GAME and each group turn).
+  function startRound() {
+    flushDead();
+    resetBoard();
+    roundScore = 0;
+    rollNo = 0;
+    madeBest = false;
+    phase = 'ready';
+    setScore(0);
+    scoreNoteEl.className = '';
+    scoreNoteEl.textContent = (mode === 'group')
+      ? (roster[turnIndex].name + ' — roll to start')
+      : '';
+    instructionsEl.style.display = '';
+    diceArea.setAttribute('aria-label', 'Roll the dice');
+    updatePrimary();
+    renderGroupbar();
+  }
+
+  function roll() {
+    if (rolling || phase === 'gameover') return;
+    var first = (rollNo === 0);
+    flushDead();
+
+    var liveIdx = [];
+    for (var j = 0; j < slots.length; j++) {
+      if (first) { setSlot(slots[j], 'live'); liveIdx.push(j); }
+      else if (slots[j].state === 'live') liveIdx.push(j);
+    }
+    if (!liveIdx.length) return;
+
+    rolling = true;
+    rollNo += 1;
+    phase = 'playing';
+    instructionsEl.style.display = 'none';
+    if (mode === 'solo') markPlayedToday();
+    updatePrimary();
+
+    diceArea.classList.add('rolling');
+    diceArea.setAttribute('aria-label', 'Rolling');
+
+    var reveal = function () {
+      diceArea.classList.remove('rolling');
+      rolling = false;
+
+      var faces = [];
+      for (var a = 0; a < liveIdx.length; a++) {
+        var f = rnd();
+        var s = slots[liveIdx[a]];
+        s.face = f;
+        drawFace(s, f);
+        faces.push(f);
+      }
+      var deadNow = [];
+      for (var b = 0; b < liveIdx.length; b++) {
+        var fb = slots[liveIdx[b]].face;
+        if (fb === 2 || fb === 5) deadNow.push(liveIdx[b]);
+      }
+
+      var gained = 0, msg;
+      if (deadNow.length) {
+        for (var c = 0; c < deadNow.length; c++) {
+          setSlot(slots[deadNow[c]], 'dead');
+          scheduleEmpty(slots[deadNow[c]]);
+        }
+        msg = 'Roll ' + rollNo + ': ' + faces.join(', ') + '. ' +
+          deadNow.length + (deadNow.length === 1 ? ' die' : ' dice') + ' dead, no score.';
+      } else {
+        for (var d = 0; d < faces.length; d++) gained += faces[d];
+        roundScore += gained;
+        setScore(roundScore);
+        msg = 'Roll ' + rollNo + ': ' + faces.join(', ') + '. No 2 or 5. Scored ' + gained + '. Total ' + roundScore + '.';
+      }
+
+      var left = liveCount();
+      diceEl.setAttribute('aria-label', 'Dice ' + faces.join(', ') + '. ' + left + ' still alive.');
+      if (left > 0) msg += ' ' + left + (left === 1 ? ' die' : ' dice') + ' left.';
+      statusEl.textContent = deadNow.length
+        ? (deadNow.length === 1 ? 'One die dead' : deadNow.length + ' dice dead') + ' · no score'
+        : '+' + gained + ' · ' + left + ' left';
+
+      if (left === 0) finishRound(msg);
+      else { say(msg); updatePrimary(); }
+    };
+
+    if (prefersReduced()) reveal();
+    else setTimeout(reveal, 200);
+  }
+
+  function finishRound(rollMsg) {
+    phase = 'gameover';
+    statusEl.textContent = 'All dead · final ' + roundScore;
+    if (mode === 'solo') {
+      var wasBest = (stats.best === null || roundScore > stats.best);
+      recordRound(roundScore);
+      madeBest = wasBest;
+      if (wasBest && stats.games > 1) {
+        scoreNoteEl.className = 'best';
+        scoreNoteEl.textContent = 'NEW BEST';
+        say(rollMsg + ' All dice dead. Final score ' + roundScore + '. New best!');
+      } else {
+        scoreNoteEl.className = '';
+        scoreNoteEl.textContent = 'Best ' + stats.best;
+        say(rollMsg + ' All dice dead. Final score ' + roundScore + '.');
+      }
+    } else {
+      roster[turnIndex].score = roundScore;
+      scoreNoteEl.className = '';
+      scoreNoteEl.textContent = roster[turnIndex].name + ' scored ' + roundScore;
+      say(rollMsg + ' All dice dead. ' + roster[turnIndex].name + ' finished on ' + roundScore + '.');
+      renderGroupbar();
+    }
+    updatePrimary();
+  }
+
+  // ---------- group flow ----------
+  function renderGroupbar() {
+    if (mode !== 'group') return;
+    groupbarEl.innerHTML = '';
+    for (var j = 0; j < roster.length; j++) {
+      var span = document.createElement('span');
+      var r = roster[j];
+      span.textContent = r.name + ' ' + (r.score === null ? '–' : r.score);
+      if (j === turnIndex && phase !== 'gameover') span.className = 'gb-cur';
+      groupbarEl.appendChild(span);
+    }
+  }
+  function buildCountRow() {
+    var row = $('countRow');
+    row.innerHTML = '';
+    for (var n = MIN_PLAYERS; n <= MAX_PLAYERS; n++) {
+      (function (n) {
+        var b = document.createElement('button');
+        b.type = 'button';
+        b.className = 'count';
+        b.textContent = n;
+        b.setAttribute('aria-pressed', String(n === chosenCount));
+        b.addEventListener('click', function () {
+          chosenCount = n;
+          var kids = row.children;
+          for (var k = 0; k < kids.length; k++) kids[k].setAttribute('aria-pressed', String(+kids[k].textContent === n));
+        });
+        row.appendChild(b);
+      })(n);
+    }
+  }
+  function openSetup() {
+    buildCountRow();
+    showScreen('setup');
+  }
+  function startGroupGame() {
+    roster = [];
+    for (var j = 0; j < chosenCount; j++) roster.push({ name: 'Player ' + (j + 1), score: null });
+    turnIndex = 0;
+    mode = 'group';
+    document.body.classList.add('group');
+    groupToggleEl.textContent = 'Exit to solo';
+    goPass();
+  }
+  function goPass() {
+    $('passWho').textContent = roster[turnIndex].name;
+    showScreen('pass');
+  }
+  function beginTurn() {
+    showScreen('play');
+    startRound();
+  }
+  function advanceTurn() {
+    if (turnIndex >= roster.length - 1) { showResults(); return; }
+    turnIndex += 1;
+    goPass();
+  }
+  function showResults() {
+    var ranked = roster.slice().sort(function (a, b) { return b.score - a.score; });
+    var top = ranked[0].score;
+    var list = $('resultsList');
+    list.innerHTML = '';
+    for (var j = 0; j < ranked.length; j++) {
+      var li = document.createElement('li');
+      var win = ranked[j].score === top;
+      li.className = win ? 'win' : '';
+      var name = document.createElement('span');
+      name.textContent = ranked[j].name + (win ? ' ★' : '');
+      var sc = document.createElement('span');
+      sc.textContent = ranked[j].score;
+      li.appendChild(name);
+      li.appendChild(sc);
+      list.appendChild(li);
+    }
+    var winners = ranked.filter(function (r) { return r.score === top; });
+    $('resultsWinner').textContent = winners.length > 1
+      ? ('Tie at ' + top + ' — ' + winners.map(function (r) { return r.name; }).join(' & '))
+      : (ranked[0].name + ' wins with ' + top + '.');
+    showScreen('results');
+    say('Results. ' + $('resultsWinner').textContent);
+  }
+  function exitToSolo() {
+    mode = 'solo';
+    document.body.classList.remove('group');
+    groupToggleEl.textContent = 'Play with friends';
+    roster = [];
+    turnIndex = 0;
+    showScreen('play');
+    startRound();
+  }
+
+  // ---------- primary action router ----------
+  function primaryAction() {
+    if (screen !== 'play') return;
+    if (phase === 'gameover') {
+      if (mode === 'group') advanceTurn();
+      else startRound();
+      return;
+    }
+    roll();
+  }
+
+  // ---------- share ----------
+  function flashHint(el, text, revert) {
+    el.textContent = text;
+    setTimeout(function () { el.textContent = revert; }, 2600);
+  }
+  function shareGame(hintEl) {
+    var url = CANONICAL + '?via=share';
+    var text = 'Drop Dead — a fast forced-roll dice game. Roll five, dodge every 2 and 5.';
+    var revert = hintEl ? hintEl.textContent : '';
+    if (navigator.share) { navigator.share({ title: 'Drop Dead', text: text, url: url }).then(noop, noop); return; }
+    var payload = text + ' ' + url;
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(payload).then(
+        function () { if (hintEl) flashHint(hintEl, 'Link copied — now touch phones to send it.', revert); },
+        function () { window.prompt('Copy this link:', payload); }
+      );
+    } else {
+      window.prompt('Copy this link:', payload);
+    }
+  }
+
+  // ---------- wire up ----------
+  primaryEl.addEventListener('click', primaryAction);
+  diceArea.addEventListener('click', function () {
+    // The dice board is a second surface for the same action, except "start new game" —
+    // that stays on the labelled button so a stray tap can't wipe a finished round.
+    if (screen === 'play' && phase !== 'gameover') roll();
+  });
+  document.addEventListener('keydown', function (e) {
+    if (e.key !== 'Enter' && e.key !== ' ') return;
+    if (e.target && e.target.closest && e.target.closest('button')) return; // a focused button owns the key
+    if (screen !== 'play') return;
+    e.preventDefault();
+    primaryAction();
+  });
+
+  groupToggleEl.addEventListener('click', function () {
+    if (mode === 'group') exitToSolo();
+    else openSetup();
+  });
+  $('shareBtn').addEventListener('click', function () { shareGame($('shareHint')); });
+  $('setupStart').addEventListener('click', startGroupGame);
+  $('setupBack').addEventListener('click', function () { showScreen('play'); });
+  $('passGo').addEventListener('click', beginTurn);
+  $('resultsAgain').addEventListener('click', function () {
+    for (var j = 0; j < roster.length; j++) roster[j].score = null;
+    turnIndex = 0;
+    goPass();
+  });
+  $('resultsShare').addEventListener('click', function () { shareGame($('shareHint')); });
+  $('resultsSolo').addEventListener('click', exitToSolo);
+
+  // ---------- boot ----------
+  initStats();
+  startRound();
+  footerEl.classList.add('show');
+</script>
+<script src="https://counter.joeldare.com/consentless.js" async></script>
+</body>
+</html>
