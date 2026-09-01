@@ -1,0 +1,109 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<meta name="theme-color" content="#000000">
+<title>How to play Drop Dead</title>
+<meta name="description" content="The rules of Drop Dead, the forced-roll dice game, and how this instant, private, no-account version was built as one static HTML file.">
+<link rel="canonical" href="https://dark.joeldare.com/drop-dead/how-to-play.html">
+<meta property="og:type" content="article">
+<meta property="og:title" content="How to play Drop Dead">
+<meta property="og:description" content="The rules of the forced-roll dice game, and how this version was built as one static HTML file with no build step and no backend.">
+<meta property="og:url" content="https://dark.joeldare.com/drop-dead/how-to-play.html">
+<meta property="og:image" content="https://dark.joeldare.com/drop-dead/icon-512.png">
+<style>
+  :root { color-scheme: dark; }
+  body {
+    margin: 0 auto;
+    padding: 24px 16px 64px;
+    max-width: 40em;
+    background: #000;
+    color: #fff;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    line-height: 1.7;
+  }
+  a { color: #fff; }
+  h1 { font-size: 1.5em; line-height: 1.3; }
+  h2 { font-size: 1.1em; margin-top: 2em; }
+  ul { padding-left: 1.2em; }
+  li { margin: .4em 0; }
+  code { background: rgba(255, 255, 255, .1); padding: .1em .3em; }
+  .meta { color: rgba(255, 255, 255, .5); font-size: .9em; }
+  .streak { color: #ffb000; }
+  nav { margin-bottom: 2em; font-size: .9em; }
+</style>
+</head>
+<body>
+  <nav><a href="./">&larr; Play Drop Dead</a></nav>
+
+  <h1>How to play Drop Dead</h1>
+  <p class="meta">Joel Dare &middot; 2026-09-01</p>
+
+  <p>
+    <em>Drop Dead</em> is a traditional dice game with no decisions in it. You
+    roll, you cross your fingers, you roll again. This version opens instantly
+    on your phone, keeps nothing on a server, and never asks you to sign in.
+  </p>
+
+  <h2>The rules</h2>
+  <ul>
+    <li>Start a round with <strong>five dice</strong> and a score of <strong>0</strong>.</li>
+    <li>Tap the dice, or press <strong>Enter</strong> or <strong>Space</strong>, to roll every die that is still alive.</li>
+    <li>If a roll shows <strong>any 2 or any 5</strong>, that roll scores nothing, and every die showing a 2 or a 5 is dead. Those dice are greyed out and sit out the rest of the round.</li>
+    <li>If a roll shows <strong>no 2 and no 5</strong>, add the sum of those dice to your round score.</li>
+    <li>There is no hold, no pass, no stopping. Keep rolling the survivors until all five dice are dead.</li>
+    <li>When the last die dies the round ends and records itself. Higher scores are better.</li>
+  </ul>
+  <p>
+    The primary button tells you where you are: <code>ROLL</code>, then
+    <code>ROLL AGAIN</code>, then <code>NEW GAME</code> once the round is over.
+  </p>
+
+  <h2>Stats</h2>
+  <p>
+    The game keeps your current and previous score, your all-time best, games
+    played, and a <span class="streak">daily play streak</span> &mdash; all in
+    your browser's <code>localStorage</code>, never sent anywhere. A day counts
+    as played on its first roll; consecutive local calendar days extend the
+    streak and a missed day resets it. A round only counts when the last die
+    dies, so starting or abandoning one changes nothing.
+  </p>
+
+  <h2>Play with friends</h2>
+  <p>
+    <strong>Play with friends</strong> runs a pass-and-play game on one phone:
+    2 to 6 players, each takes a full Drop Dead round, highest score wins.
+    Between turns a &ldquo;pass the phone&rdquo; screen waits for the next
+    player. Group games are entirely separate from your solo stats and streak.
+    The players are the network &mdash; <strong>Share</strong> just hands the
+    game link to someone nearby (touch phones together for AirDrop on iPhone or
+    Quick Share on Android), it carries no game state.
+  </p>
+
+  <h2>How it was made</h2>
+  <p>
+    The whole game is a single <code>index.html</code> with its CSS and
+    JavaScript inline. No framework, no bundler, no <code>npm install</code>,
+    nothing to compile. It is served as static files, so there is no backend to
+    patch and nothing to fall over. The only network call is a
+    privacy-preserving page-view counter that sees a URL and a timestamp and
+    nothing else; block it and the game plays exactly the same.
+  </p>
+  <p>
+    It is built to feel like this factory's <a href="https://dark.joeldare.com/shut-the-box/">Shut
+    the Box</a> board &mdash; black background, white monospaced type, square
+    outlined pip dice, amber only for the streak &mdash; but it shares no code
+    with it.
+  </p>
+  <p>
+    Drop Dead is built and run through <a href="https://dark.joeldare.com/">Dark</a>,
+    a small software factory where each project is one focused, static,
+    long-lived thing. If you like the game on screen,
+    <a href="https://amzn.to/4qKqrus" target="_blank" rel="noopener nofollow sponsored">dice
+    games on Amazon</a> are good on a table. As an Amazon Associate I earn from
+    qualifying purchases.
+  </p>
+</body>
+</html>

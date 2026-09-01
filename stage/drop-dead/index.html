@@ -71,21 +71,13 @@
   .screen.active { display: flex; }
 
   /* ---- Dice board ---- */
-  #diceArea {
-    border: 0;
-    padding: 0;
+  #diceArea { border: 0; padding: 0; width: 100%; display: block; }
+  #diceWrap {
     display: flex;
     flex-direction: column;
     align-items: center;
     gap: clamp(8px, 2vh, 16px);
     width: 100%;
-  }
-  #instructions {
-    display: block;
-    font-size: clamp(12px, 2vw, 14px);
-    color: rgba(255, 255, 255, .6);
-    max-width: 34em;
-    line-height: 1.5;
   }
   /* Five equal grid tracks always add up to the row minus gaps — the dice can't
      spill past the screen edge no matter how narrow the phone. */
@@ -111,10 +103,11 @@
   }
   .pip { border-radius: 50%; background: #fff; visibility: hidden; }
   .pip.on { visibility: visible; }
-  /* A die knocked out this roll: dimmed but still readable for a moment. */
-  .die.dead { border-color: rgba(255, 255, 255, .32); opacity: .55; }
-  .die.dead .pip.on { background: rgba(255, 255, 255, .5); }
-  /* Then it becomes an empty outlined slot so the pool visibly shrinks. */
+  /* A die that rolled a 2 or 5: greyed out for the rest of the round, but its
+     face stays on screen so the dead pool reads at a glance with no layout jump. */
+  .die.dead { border-color: rgba(255, 255, 255, .32); opacity: .5; }
+  .die.dead .pip.on { background: #fff; visibility: visible; }
+  /* An empty outlined slot — the state every die starts in before the first roll. */
   .die.empty { border-color: rgba(255, 255, 255, .22); }
   .die.empty .pip { visibility: hidden; }
   /* During the brief roll, live dice blank out so a repeat of the same face still reads as a new roll. */
@@ -128,6 +121,11 @@
   }
 
   #status { min-height: 1.4em; font-size: clamp(12px, 2vw, 14px); color: rgba(255, 255, 255, .55); letter-spacing: normal; }
+  /* Padding gives the link a 44px-tall tap target; the negative margin keeps the
+     status line the same height whether it holds the link or roll text. */
+  #status a { display: inline-block; padding: 12px 6px; margin: -12px 0; color: inherit; text-decoration: underline; }
+  #status a:hover { color: #fff; }
+  #status a:focus-visible { outline: 2px dashed #fff; outline-offset: 2px; color: #fff; }
 
   /* ---- Score ---- */
   #score { display: flex; flex-direction: column; align-items: center; gap: 2px; }
@@ -147,6 +145,9 @@
   /* ---- Solo stats ---- */
   #stats { font-size: clamp(12px, 2vw, 14px); line-height: 1.7; color: rgba(255, 255, 255, .6); }
   #streak { color: #ffb000; font-weight: bold; letter-spacing: .06em; }
+  #shopLink { margin-top: .5em; }
+  #shopLink a { color: rgba(255, 255, 255, .5); text-decoration: underline; }
+  #shopLink a:hover, #shopLink a:focus-visible { color: rgba(255, 255, 255, .8); }
 
   /* ---- Group scoreboard strip ---- */
   #groupbar { display: none; flex-wrap: wrap; justify-content: center; gap: .4em 1em; font-size: clamp(12px, 2vw, 14px); color: rgba(255, 255, 255, .6); }
@@ -202,8 +203,8 @@
     #scoreValue { font-size: clamp(26px, 13vh, 42px); }
     #scoreLabel { letter-spacing: .18em; }
     #scoreNote, #status { min-height: 1em; }
-    /* The first-load rule text is dropped in cramped landscape; portrait keeps it. */
-    #instructions { display: none; }
+    /* The affiliate line is dropped in cramped landscape so nothing scrolls; portrait keeps it. */
+    #shopLink { display: none; }
     #primary { padding: .4em 1.8em; }
     #stats { line-height: 1.45; }
     #shareHint { display: none; }
@@ -217,11 +218,12 @@
 
     <!-- ============ PLAY (solo turn or one player's group turn) ============ -->
     <section id="play" class="screen active">
-      <button id="diceArea" type="button" aria-label="Roll the dice">
-        <span id="instructions">Roll all five dice. Any <b>2</b> or <b>5</b> is dead — those dice are removed and the roll scores nothing. A roll with no 2 or 5 adds every die to your score. Keep rolling the survivors until all five are dead.</span>
-        <span id="dice" role="img" aria-label="Five dice, none rolled yet"></span>
-        <span id="status" aria-hidden="true"></span>
-      </button>
+      <div id="diceWrap">
+        <button id="diceArea" type="button" aria-label="Roll the dice">
+          <span id="dice" role="img" aria-label="Five dice, none rolled yet"></span>
+        </button>
+        <div id="status"><a id="howToPlay" href="how-to-play.html">How to Play</a></div>
+      </div>
 
       <div id="score">
         <span id="scoreLabel">SCORE</span>
@@ -235,6 +237,7 @@
       <div id="stats">
         <div id="statLine">Previous &ndash; &middot; Best &ndash; &middot; Games 0</div>
         <div id="streak">Streak 0 days</div>
+        <div id="shopLink"><a href="https://amzn.to/4qKqrus" target="_blank" rel="noopener nofollow sponsored">Like this game? Shop dice games (paid link)</a></div>
       </div>
 
       <p id="announce" class="sr-only" role="status" aria-live="polite"></p>
@@ -291,7 +294,9 @@
   var FACES = [[4], [0, 8], [0, 4, 8], [0, 2, 6, 8], [0, 2, 4, 6, 8], [0, 2, 3, 5, 6, 8]];
 
   var $ = function (id) { return document.getElementById(id); };
-  var diceArea = $('diceArea'), diceEl = $('dice'), instructionsEl = $('instructions'), statusEl = $('status');
+  var diceArea = $('diceArea'), diceEl = $('dice'), statusEl = $('status');
+  // The status line holds this link until the first roll of a round, then roll text replaces it.
+  var HOW_TO_PLAY_LINK = '<a id="howToPlay" href="how-to-play.html">How to Play</a>';
   var scoreValueEl = $('scoreValue'), scoreNoteEl = $('scoreNote');
   var primaryEl = $('primary'), announceEl = $('announce');
   var statLineEl = $('statLine'), streakEl = $('streak'), groupbarEl = $('groupbar');
@@ -380,7 +385,7 @@
       die.appendChild(pip);
     }
     diceEl.appendChild(die);
-    slots.push({ el: die, state: 'empty', face: 0, timer: null });
+    slots.push({ el: die, state: 'empty', face: 0 });
   }
   function setSlot(s, st) {
     s.state = st;
@@ -390,20 +395,6 @@
     var on = FACES[face - 1];
     for (var k = 0; k < 9; k++) s.el.children[k].className = (on.indexOf(k) > -1) ? 'pip on' : 'pip';
   }
-  function flushDead() {
-    for (var j = 0; j < slots.length; j++) {
-      var s = slots[j];
-      if (s.timer) { clearTimeout(s.timer); s.timer = null; }
-      if (s.state === 'dead') setSlot(s, 'empty');
-    }
-  }
-  function scheduleEmpty(s) {
-    var delay = prefersReduced() ? 500 : 1100;
-    s.timer = setTimeout(function () {
-      s.timer = null;
-      if (s.state === 'dead') setSlot(s, 'empty');
-    }, delay);
-  }
   function liveCount() {
     var c = 0;
     for (var j = 0; j < slots.length; j++) if (slots[j].state === 'live') c++;
@@ -412,9 +403,7 @@
   function resetBoard() {
     for (var j = 0; j < slots.length; j++) {
       var s = slots[j];
-      if (s.timer) { clearTimeout(s.timer); s.timer = null; }
       setSlot(s, 'live');
-      drawFace(s, 6);
       for (var k = 0; k < 9; k++) s.el.children[k].className = 'pip';
     }
     diceEl.setAttribute('aria-label', 'Five dice, none rolled yet');
@@ -459,7 +448,6 @@
 
   // Start a fresh round on the current play screen (used by solo NEW GAME and each group turn).
   function startRound() {
-    flushDead();
     resetBoard();
     roundScore = 0;
     rollNo = 0;
@@ -470,7 +458,7 @@
     scoreNoteEl.textContent = (mode === 'group')
       ? (roster[turnIndex].name + ' — roll to start')
       : '';
-    instructionsEl.style.display = '';
+    statusEl.innerHTML = HOW_TO_PLAY_LINK;
     diceArea.setAttribute('aria-label', 'Roll the dice');
     updatePrimary();
     renderGroupbar();
@@ -479,7 +467,6 @@
   function roll() {
     if (rolling || phase === 'gameover') return;
     var first = (rollNo === 0);
-    flushDead();
 
     var liveIdx = [];
     for (var j = 0; j < slots.length; j++) {
@@ -491,7 +478,7 @@
     rolling = true;
     rollNo += 1;
     phase = 'playing';
-    instructionsEl.style.display = 'none';
+    if (first) statusEl.textContent = '';
     if (mode === 'solo') markPlayedToday();
     updatePrimary();
 
@@ -520,7 +507,6 @@
       if (deadNow.length) {
         for (var c = 0; c < deadNow.length; c++) {
           setSlot(slots[deadNow[c]], 'dead');
-          scheduleEmpty(slots[deadNow[c]]);
         }
         msg = 'Roll ' + rollNo + ': ' + faces.join(', ') + '. ' +
           deadNow.length + (deadNow.length === 1 ? ' die' : ' dice') + ' dead, no score.';
@@ -704,7 +690,7 @@
   });
   document.addEventListener('keydown', function (e) {
     if (e.key !== 'Enter' && e.key !== ' ') return;
-    if (e.target && e.target.closest && e.target.closest('button')) return; // a focused button owns the key
+    if (e.target && e.target.closest && e.target.closest('button, a')) return; // a focused button or link owns the key
     if (screen !== 'play') return;
     e.preventDefault();
     primaryAction();
