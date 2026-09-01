@@ -153,10 +153,11 @@
     font-weight: bold;
     letter-spacing: .08em;
   }
-  /* Incoming ?best= challenge: plain status-line text in the shared slot, no
-     colour, weight, link, or new element — it just holds the line through the
+  /* Incoming ?best= challenge: plain status-line text in the shared slot — no
+     weight, link, or new element, just bright white (like the board borders) so
+     it reads clearly against the muted stats block. It holds the line through the
      challenged round, then the streak/scored states take over as usual. */
-  #status.challenge { letter-spacing: normal; }
+  #status.challenge { color: #fff; letter-spacing: normal; }
   #status .status-link {
     font: inherit;
     border: 0;
