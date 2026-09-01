@@ -45,8 +45,9 @@
   }
   button:focus-visible { outline: 2px dashed #fff; outline-offset: 3px; }
 
-  /* An incoming ?best= challenge is announced once in a native alert() on load and
-     then stripped from the address bar — there is no on-page challenge element. */
+  /* An incoming ?best= challenge is shown in the #status line for the whole first
+     round (see #status.challenge below) and stripped from the address bar on load —
+     no alert, banner, or other on-page challenge element. */
 
   /* Tiles: twelve tall rectangles, number centered near the top. */
   #tiles { display: grid; grid-template-columns: repeat(12, 1fr); gap: 6px; }
@@ -142,14 +143,21 @@
      the one stat worth coming back for, and the page's only splash of colour.
      For the moment after a round is recorded it becomes a blue, hyperlink-style
      "Your best today is N. Challenge a friend!" that fires the same share as the old
-     button did, then reverts to the streak on the next roll. Same slot, same height
-     either way, so the bottom of the board never shifts. */
+     button did, then reverts to the streak on the next roll. When the page was
+     opened from a ?best= link it instead holds a plain "Your friend's best today
+     is N. Can you beat it?" for the whole first round. Same slot, same height in
+     every state, so the bottom of the board never shifts. */
   #status { min-height: 1.7em; }
   #status.streak {
     color: #ffb000;
     font-weight: bold;
     letter-spacing: .08em;
   }
+  /* Incoming ?best= challenge: plain status-line text in the shared slot — no
+     weight, link, or new element, just bright white (like the board borders) so
+     it reads clearly against the muted stats block. It holds the line through the
+     challenged round, then the streak/scored states take over as usual. */
+  #status.challenge { color: #fff; letter-spacing: normal; }
   #status .status-link {
     font: inherit;
     border: 0;
@@ -220,12 +228,16 @@
   var statSummaryEl = document.getElementById('statSummary');
   var statusEl = document.getElementById('status');
 
-  // The bottom status line has two states, both rendered into #status:
-  //   'streak' — "Streak: N days" in yellow, shown during play and on first load.
-  //   'scored' — a blue, hyperlink-style button reading "Your best today is N.
-  //              Challenge a friend!", shown for the moment after a round is recorded.
-  //              Clicking it shares today's best, exactly as the retired CHALLENGE A
-  //              FRIEND button did.
+  // The bottom status line has three states, all rendered into #status:
+  //   'streak'    — "Streak: N days" in yellow, shown during play and on first load.
+  //   'scored'    — a blue, hyperlink-style button reading "Your best today is N.
+  //                 Challenge a friend!", shown for the moment after a round is
+  //                 recorded. Clicking it shares today's best, exactly as the retired
+  //                 CHALLENGE A FRIEND button did.
+  //   'challenge' — plain "Your friend's best today is N. Can you beat it?", set on
+  //                 load from a valid ?best=<n> link and held for the whole first
+  //                 round (across every roll), then cleared when that round is
+  //                 recorded so 'scored' and then 'streak' take over as normal.
   // statusText holds the current 'scored' label so a transient share confirmation can
   // flash over it and then restore it.
   var statusMode = 'streak';
@@ -246,6 +258,11 @@
 
   // Set from ?best=<n> on load when the value is a plain integer in [0, MAX_SCORE]; null for normal play.
   var challengeTarget = null;
+  // True from a valid ?best=<n> link on load until the first round is recorded with
+  // CLEAR. While true the status line holds the 'challenge' state through every roll
+  // instead of reverting to the streak; recording the challenged round clears it and
+  // later rounds behave normally.
+  var challengeActive = false;
 
   // The one enforced rule: after a roll you must shut at least one tile before
   // rolling again. Tracked by comparing the shut-tile count now against its value
@@ -362,6 +379,10 @@
       }
       // Don't stomp a share confirmation that's mid-flash (see flashShareHint).
       if (!shareHintTimer && statusLinkEl.textContent !== statusText) statusLinkEl.textContent = statusText;
+    } else if (statusMode === 'challenge') {
+      statusEl.className = 'challenge';
+      var challengeText = 'Your friend’s best today is ' + challengeTarget + '. Can you beat it?';
+      if (statusEl.textContent !== challengeText) statusEl.textContent = challengeText;
     } else {
       statusEl.className = 'streak';
       var streakText = 'Streak: ' + stats.streak + ' day' + (stats.streak === 1 ? '' : 's');
@@ -387,6 +408,15 @@
   // Back to the streak. Called on the next roll and whenever there is nothing to share.
   function resetStatusLine() {
     statusMode = 'streak';
+    statusText = '';
+    renderStatusLine();
+  }
+
+  // Hold the incoming ?best= challenge on the status line. Called on load and on
+  // every roll of the challenged round so it never drops back to the streak
+  // mid-round; a no-op once challengeActive has been cleared.
+  function showChallengeStatus() {
+    statusMode = 'challenge';
     statusText = '';
     renderStatusLine();
   }
@@ -470,15 +500,18 @@
     return n;
   }
 
-  // A valid ?best=<n> link is announced once in a native alert (its OK button is the
-  // confirmation), then stripped from the visible URL without a reload. The parsed
-  // value is kept in challengeTarget for the round (the post-round status line uses the
-  // unconditional "Your best today is N" copy, but the target stays available for any
-  // score comparison). An invalid value shows no alert and is left in the URL untouched.
+  // A valid ?best=<n> link puts the status line into its 'challenge' state — "Your
+  // friend's best today is N. Can you beat it?" — for the whole first round, then
+  // strips the parameter from the visible URL without a reload. The parsed value is
+  // kept in challengeTarget (the post-round status line still uses the unconditional
+  // "Your best today is N" copy; the target stays available for any later score
+  // comparison). An invalid value changes nothing and is left in the URL untouched.
+  // The status line itself is painted by initStats() -> renderStats(), which runs next.
   function initChallenge() {
     challengeTarget = parseChallenge();
     if (challengeTarget === null) return;
-    window.alert('Your friend’s best today is ' + challengeTarget + '. Can you beat it?');
+    challengeActive = true;
+    statusMode = 'challenge';
     stripBestParam();
   }
 
@@ -638,7 +671,13 @@
     hasRolledThisRound = true;
     shutCountAtRoll = shutCount();
     clearRollHint();
-    resetStatusLine();
+    // An incoming challenge outranks the streak for the whole first round, so keep it
+    // on across every roll; otherwise a fresh roll drops the line back to the streak.
+    if (challengeActive) {
+      showChallengeStatus();
+    } else {
+      resetStatusLine();
+    }
     markPlayedToday();
     // Hide whatever's showing first, so back-to-back rolls of the same numbers still look like something happened.
     box.className = 'rolling';
@@ -663,6 +702,9 @@
     if (rolledSinceClear) {
       var score = computeScore();
       recordRound(score);
+      // The challenged round is now on the record: hand the line to the scored state,
+      // and let every round after this one show the normal streak.
+      challengeActive = false;
       setStatusScored();
     }
     rolledSinceClear = false;
