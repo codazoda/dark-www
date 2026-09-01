@@ -30,7 +30,6 @@
   ul { padding-left: 1.2em; }
   li { margin: .4em 0; }
   code { background: rgba(255, 255, 255, .1); padding: .1em .3em; }
-  .meta { color: rgba(255, 255, 255, .5); font-size: .9em; }
   .streak { color: #ffb000; }
   nav { margin-bottom: 2em; font-size: .9em; }
 </style>
@@ -39,7 +38,6 @@
   <nav><a href="./">&larr; Play Drop Dead</a></nav>
 
   <h1>How to play Drop Dead</h1>
-  <p class="meta">Joel Dare &middot; 2026-09-01</p>
 
   <p>
     <em>Drop Dead</em> is a traditional dice game with no decisions in it. You
@@ -65,7 +63,7 @@
   <p>
     The game keeps your current and previous score, your all-time best, games
     played, and a <span class="streak">daily play streak</span> &mdash; all in
-    your browser's <code>localStorage</code>, never sent anywhere. A day counts
+    your local browser storage, never sent anywhere. A day counts
     as played on its first roll; consecutive local calendar days extend the
     streak and a missed day resets it. A round only counts when the last die
     dies, so starting or abandoning one changes nothing.
@@ -73,13 +71,19 @@
 
   <h2>Play with friends</h2>
   <p>
-    <strong>Play with friends</strong> runs a pass-and-play game on one phone:
-    2 to 6 players, each takes a full Drop Dead round, highest score wins.
-    Between turns a &ldquo;pass the phone&rdquo; screen waits for the next
-    player. Group games are entirely separate from your solo stats and streak.
-    The players are the network &mdash; <strong>Share</strong> just hands the
-    game link to someone nearby (touch phones together for AirDrop on iPhone or
-    Quick Share on Android), it carries no game state.
+    <strong>Play with friends</strong> runs a single-phone game for 2 to 8
+    players. Sit the phone on the table and point it at whoever is up; that
+    player takes a full Drop Dead round, then a &ldquo;point the phone&rdquo;
+    screen waits while you turn it to the next player. Highest score wins the
+    round. Group games are kept entirely separate from your solo stats and
+    streak.
+  </p>
+  <p>
+    There is no server behind any of this. <strong>Share</strong> just hands the
+    game link to someone nearby &mdash; touch phones together for AirDrop on
+    iPhone or Quick Share on Android &mdash; so they can open their own copy. It
+    carries no game state; getting everyone playing is up to the people at the
+    table.
   </p>
 
   <h2>How it was made</h2>
@@ -99,8 +103,15 @@
   </p>
   <p>
     Drop Dead is built and run through <a href="https://dark.joeldare.com/">Dark</a>,
-    a small software factory where each project is one focused, static,
-    long-lived thing. If you like the game on screen,
+    a <em>Dark Software Factory</em>: a small setup where an AI agent takes an
+    idea from a GitHub issue, plans it, builds it as one focused static project,
+    and stages it for review &mdash; no product managers, no meetings, no
+    servers to babysit. Joel writes up how it works in
+    <a href="https://joeldare.com/creating-a-minimal-dark-factory">Creating a
+    minimal dark factory</a>.
+  </p>
+  <p>
+    If you like the game on screen,
     <a href="https://amzn.to/4qKqrus" target="_blank" rel="noopener nofollow sponsored">dice
     games on Amazon</a> are good on a table. As an Amazon Associate I earn from
     qualifying purchases.

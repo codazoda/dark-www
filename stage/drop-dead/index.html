@@ -8,7 +8,7 @@
 <link rel="manifest" href="manifest.json">
 <meta name="theme-color" content="#000000">
 <title>Drop Dead</title>
-<meta name="description" content="Drop Dead, the forced-roll dice game. Roll five dice; any 2 or 5 kills those dice and scores nothing. Clean rolls add up. Play until every die is dead. Instant, private, no account. Or pass the phone and play with friends.">
+<meta name="description" content="Drop Dead, the forced-roll dice game. Roll five dice; any 2 or 5 kills those dice and scores nothing. Clean rolls add up. Play until every die is dead. Instant, private, no account. Or gather friends around one phone and play a round each.">
 <link rel="canonical" href="https://dark.joeldare.com/drop-dead/">
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="Drop Dead">
@@ -46,6 +46,7 @@
     cursor: pointer;
   }
   button:focus-visible { outline: 2px dashed #fff; outline-offset: 3px; }
+  button:disabled { opacity: .35; cursor: default; }
   .link {
     border: 0;
     padding: 8px;
@@ -135,7 +136,8 @@
   #scoreNote.best { color: #ffb000; font-weight: bold; letter-spacing: .06em; }
 
   /* ---- Primary action ---- */
-  #primary {
+  /* #passGo ("I'M READY") shares the primary button's spacing so the two read as the same control. */
+  #primary, #passGo {
     padding: .7em 2.4em;
     letter-spacing: .22em;
     font-size: clamp(15px, 3.4vw, 18px);
@@ -205,7 +207,10 @@
     #scoreNote, #status { min-height: 1em; }
     /* The affiliate line is dropped in cramped landscape so nothing scrolls; portrait keeps it. */
     #shopLink { display: none; }
-    #primary { padding: .4em 1.8em; }
+    #primary, #passGo { padding: .4em 1.8em; }
+    /* Up to 7 count buttons (2–8) must still fit a landscape phone without scrolling. */
+    .count { width: clamp(40px, 11vw, 52px); font-size: clamp(16px, 5vw, 20px); }
+    #countRow { gap: 6px; }
     #stats { line-height: 1.45; }
     #shareHint { display: none; }
     #footer { gap: 0; }
@@ -246,18 +251,19 @@
     <!-- ============ SETUP (choose player count) ============ -->
     <section id="setup" class="screen">
       <h1 class="big">PLAY WITH FRIENDS</h1>
-      <p class="sub">One phone, passed around the table. Each player takes a full Drop Dead round; highest score wins. Nothing is saved &mdash; your solo stats stay untouched.</p>
-      <div id="countRow" role="group" aria-label="Number of players"></div>
+      <p class="sub">One phone on the table, pointed at each player in turn. Each player takes a full Drop Dead round; highest score wins. Nothing is saved &mdash; your solo stats stay untouched.</p>
+      <p class="sub" id="countLabel">Number of players:</p>
+      <div id="countRow" role="group" aria-labelledby="countLabel"></div>
       <div class="row-actions">
         <button id="setupStart" type="button">START</button>
         <button id="setupBack" type="button">BACK</button>
       </div>
     </section>
 
-    <!-- ============ PASS (hand the phone over) ============ -->
+    <!-- ============ PASS (point the phone at the next player) ============ -->
     <section id="pass" class="screen">
-      <h1 class="big">PASS THE PHONE</h1>
-      <p class="sub" id="passWho">Player 1</p>
+      <h1 class="big">POINT THE PHONE</h1>
+      <p class="sub">Leave it on the table and turn it to face <strong id="passWho">Player 1</strong>.</p>
       <button id="passGo" type="button">I'M READY</button>
     </section>
 
@@ -288,7 +294,10 @@
   var DAY_MS = 24 * 60 * 60 * 1000;
   var CANONICAL = "https://dark.joeldare.com/drop-dead/";
   var DICE = 5;
-  var MIN_PLAYERS = 2, MAX_PLAYERS = 6;
+  var MIN_PLAYERS = 2, MAX_PLAYERS = 8;
+  // After a group round ends, ignore the primary button for this long so a fast
+  // tapper can't skip past the next player or the results before they mean to.
+  var ADVANCE_LOCK_MS = 800;
 
   // Pip slots lit for each face, as indexes into a 3x3 grid read left to right.
   var FACES = [[4], [0, 8], [0, 4, 8], [0, 2, 6, 8], [0, 2, 4, 6, 8], [0, 2, 3, 5, 6, 8]];
@@ -421,6 +430,7 @@
   var roster = [];               // [{ name, score }]
   var turnIndex = 0;
   var chosenCount = MIN_PLAYERS;
+  var advanceReadyAt = 0;        // Date.now() before which the group primary action is ignored
 
   function showScreen(name) {
     screen = name;
@@ -453,6 +463,7 @@
     rollNo = 0;
     madeBest = false;
     phase = 'ready';
+    primaryEl.disabled = false;
     setScore(0);
     scoreNoteEl.className = '';
     scoreNoteEl.textContent = (mode === 'group')
@@ -554,8 +565,17 @@
       scoreNoteEl.textContent = roster[turnIndex].name + ' scored ' + roundScore;
       say(rollMsg + ' All dice dead. ' + roster[turnIndex].name + ' finished on ' + roundScore + '.');
       renderGroupbar();
+      lockAdvance();
     }
     updatePrimary();
+  }
+
+  // Briefly ignore + disable the primary button after a group round so a fast
+  // tapper mid-roll can't skip past the next player or the results screen.
+  function lockAdvance() {
+    advanceReadyAt = Date.now() + ADVANCE_LOCK_MS;
+    primaryEl.disabled = true;
+    setTimeout(function () { primaryEl.disabled = false; }, ADVANCE_LOCK_MS);
   }
 
   // ---------- group flow ----------
@@ -635,7 +655,7 @@
     var winners = ranked.filter(function (r) { return r.score === top; });
     $('resultsWinner').textContent = winners.length > 1
       ? ('Tie at ' + top + ' — ' + winners.map(function (r) { return r.name; }).join(' & '))
-      : (ranked[0].name + ' wins with ' + top + '.');
+      : (ranked[0].name + ' wins this round with ' + top + '.');
     showScreen('results');
     say('Results. ' + $('resultsWinner').textContent);
   }
@@ -653,8 +673,10 @@
   function primaryAction() {
     if (screen !== 'play') return;
     if (phase === 'gameover') {
-      if (mode === 'group') advanceTurn();
-      else startRound();
+      if (mode === 'group') {
+        if (Date.now() < advanceReadyAt) return;
+        advanceTurn();
+      } else startRound();
       return;
     }
     roll();
