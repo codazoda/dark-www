@@ -3,13 +3,6 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<script>
-  /* Apply a saved theme choice before first paint to avoid a flash. */
-  try {
-    var savedTheme = localStorage.getItem('pen-art-theme');
-    if (savedTheme) document.documentElement.setAttribute('data-theme', savedTheme);
-  } catch (e) {}
-</script>
 <link rel="icon" href="icon.svg" type="image/svg+xml">
 <title>Pen Art Shop — limited pen-plotter originals, $25</title>
 <meta name="description" content="Hand-plotted 4×6 pen-plotter art cards. Each series is 26 variants: one retained prototype and 25 physical originals, $25 each with free U.S. shipping. Subscribers get a free printable scan of every series.">
@@ -31,22 +24,11 @@
     --lift: 0 12px 30px rgba(0,0,0,.07);
     color-scheme: light;
   }
-  /* Dark theme: explicit toggle choice. The artwork tiles keep a paper
-     background in both themes because the cards print on white stock. */
-  :root[data-theme="dark"] {
-    --paper: #17160f;
-    --ink: #ece7da;
-    --soft: #a49d8c;
-    --rule: #37342b;
-    --accent: #ece7da;
-    --card-bg: #201e16;
-    --art-bg: #fbfaf7;
-    --lift: 0 14px 34px rgba(0,0,0,.5);
-    color-scheme: dark;
-  }
-  /* Dark theme: system preference, unless the visitor forced light. */
+  /* Dark theme follows the visitor's system setting — no on-page switch.
+     The artwork tiles keep a paper background in both themes because the
+     cards print on white stock. */
   @media (prefers-color-scheme: dark) {
-    :root:not([data-theme="light"]) {
+    :root {
       --paper: #17160f;
       --ink: #ece7da;
       --soft: #a49d8c;
@@ -121,19 +103,6 @@
     padding: 12px 0;
   }
   header.site .home:hover { color: var(--ink); }
-
-  .theme-toggle {
-    font-family: inherit;
-    font-size: 14px;
-    color: var(--soft);
-    background: transparent;
-    border: 1px solid var(--rule);
-    border-radius: 999px;
-    padding: 8px 14px;
-    min-height: 44px;
-    cursor: pointer;
-  }
-  .theme-toggle:hover { color: var(--ink); border-color: var(--ink); }
 
   h1 {
     font-size: clamp(28px, 6vw, 44px);
@@ -244,13 +213,17 @@
   .catalog-terms { font-weight: 700; margin: 0 0 20px; }
   .catalog-terms .sep { color: var(--soft); font-weight: 400; margin: 0 .5em; }
 
+  /* Catalogue grid is always 2 columns, or 4 on wider screens — never 3 or 5. */
   .grid {
     list-style: none;
     margin: 0;
     padding: 0;
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    grid-template-columns: repeat(2, 1fr);
     gap: 24px;
+  }
+  @media (min-width: 720px) {
+    .grid { grid-template-columns: repeat(4, 1fr); }
   }
   .card {
     display: flex;
@@ -334,8 +307,7 @@
   <div class="wrap">
     <a class="name" href="/pen-art-shop/">Pen Art Shop</a>
     <div class="head-right">
-      <button type="button" id="theme-toggle" class="theme-toggle" aria-pressed="false" aria-label="Switch to dark theme">Dark</button>
-      <a class="home" href="https://dark.joeldare.com/">DARK</a>
+      <a class="home" href="#prints">Free Prints</a>
     </div>
   </div>
 </header>
@@ -732,41 +704,6 @@
     <span>Artwork © the artist. All rights reserved.</span>
   </div>
 </footer>
-
-<script>
-  /* Light/dark toggle. Default follows the OS setting; a click sets an
-     explicit choice and remembers it in localStorage. */
-  (function () {
-    var root = document.documentElement;
-    var KEY = 'pen-art-theme';
-    var mq = window.matchMedia('(prefers-color-scheme: dark)');
-    var btn = document.getElementById('theme-toggle');
-
-    function isDark() {
-      var choice = root.getAttribute('data-theme');
-      if (choice) return choice === 'dark';
-      return mq.matches;
-    }
-
-    function sync() {
-      var dark = isDark();
-      btn.textContent = dark ? 'Light' : 'Dark';
-      btn.setAttribute('aria-pressed', dark ? 'true' : 'false');
-      btn.setAttribute('aria-label',
-        dark ? 'Switch to light theme' : 'Switch to dark theme');
-    }
-
-    btn.addEventListener('click', function () {
-      var next = isDark() ? 'light' : 'dark';
-      root.setAttribute('data-theme', next);
-      try { localStorage.setItem(KEY, next); } catch (e) {}
-      sync();
-    });
-
-    mq.addEventListener('change', sync);
-    sync();
-  })();
-</script>
 
 </body>
 </html>
