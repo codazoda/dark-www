@@ -3,6 +3,13 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<script>
+  /* Apply a saved theme choice before first paint to avoid a flash. */
+  try {
+    var savedTheme = localStorage.getItem('pen-art-theme');
+    if (savedTheme) document.documentElement.setAttribute('data-theme', savedTheme);
+  } catch (e) {}
+</script>
 <link rel="icon" href="icon.svg" type="image/svg+xml">
 <title>Pen Art Shop — limited pen-plotter originals, $25</title>
 <meta name="description" content="Hand-plotted 4×6 pen-plotter art cards. Each series is 26 variants: one retained prototype and 25 physical originals, $25 each with free U.S. shipping. Subscribers get a free printable scan of every series.">
@@ -19,6 +26,37 @@
     --soft: #6b655c;
     --rule: #ddd8ce;
     --accent: #1c1a17;
+    --card-bg: #ffffff;
+    --art-bg: #fbfaf7;
+    --lift: 0 12px 30px rgba(0,0,0,.07);
+    color-scheme: light;
+  }
+  /* Dark theme: explicit toggle choice. The artwork tiles keep a paper
+     background in both themes because the cards print on white stock. */
+  :root[data-theme="dark"] {
+    --paper: #17160f;
+    --ink: #ece7da;
+    --soft: #a49d8c;
+    --rule: #37342b;
+    --accent: #ece7da;
+    --card-bg: #201e16;
+    --art-bg: #fbfaf7;
+    --lift: 0 14px 34px rgba(0,0,0,.5);
+    color-scheme: dark;
+  }
+  /* Dark theme: system preference, unless the visitor forced light. */
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --paper: #17160f;
+      --ink: #ece7da;
+      --soft: #a49d8c;
+      --rule: #37342b;
+      --accent: #ece7da;
+      --card-bg: #201e16;
+      --art-bg: #fbfaf7;
+      --lift: 0 14px 34px rgba(0,0,0,.5);
+      color-scheme: dark;
+    }
   }
   * { box-sizing: border-box; }
   html { -webkit-text-size-adjust: 100%; }
@@ -56,10 +94,11 @@
   }
   header.site .wrap {
     display: flex;
+    flex-wrap: wrap;
     justify-content: space-between;
     align-items: center;
     min-height: 56px;
-    gap: 16px;
+    gap: 8px 16px;
   }
   header.site .name {
     font-weight: 700;
@@ -67,6 +106,11 @@
     text-transform: uppercase;
     font-size: 14px;
     text-decoration: none;
+  }
+  header.site .head-right {
+    display: flex;
+    align-items: center;
+    gap: 14px;
   }
   header.site .home {
     font-size: 13px;
@@ -77,6 +121,19 @@
     padding: 12px 0;
   }
   header.site .home:hover { color: var(--ink); }
+
+  .theme-toggle {
+    font-family: inherit;
+    font-size: 14px;
+    color: var(--soft);
+    background: transparent;
+    border: 1px solid var(--rule);
+    border-radius: 999px;
+    padding: 8px 14px;
+    min-height: 44px;
+    cursor: pointer;
+  }
+  .theme-toggle:hover { color: var(--ink); border-color: var(--ink); }
 
   h1 {
     font-size: clamp(28px, 6vw, 44px);
@@ -113,10 +170,9 @@
   .hero figure {
     margin: 0;
     border: 1px solid var(--rule);
-    background: #fff;
-    box-shadow: 0 12px 30px rgba(0,0,0,.07);
+    background: var(--art-bg);
+    box-shadow: var(--lift);
   }
-  .hero figure img { width: 100%; }
   .price-line {
     font-size: 18px;
     font-weight: 700;
@@ -135,13 +191,23 @@
     min-height: 44px;
     border: 2px solid var(--accent);
   }
-  .btn:hover { background: #000; border-color: #000; }
+  .btn:hover { opacity: .85; }
   .btn.secondary {
     background: transparent;
     color: var(--ink);
   }
-  .btn.secondary:hover { background: var(--ink); color: var(--paper); }
-  .hero .btn { margin: 0 10px 10px 0; }
+  .btn.secondary:hover { opacity: 1; background: var(--ink); color: var(--paper); }
+
+  .hero-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-top: 1.4em;
+  }
+  .hero-actions .btn {
+    flex: 1 1 240px;
+    text-align: center;
+  }
 
   /* ---- Process ---- */
   .process .wrap { display: grid; gap: 32px; }
@@ -151,7 +217,7 @@
   .process figure {
     margin: 0;
     border: 1px solid var(--rule);
-    background: #fff;
+    background: var(--art-bg);
   }
   .process figcaption {
     font-size: 13px;
@@ -168,7 +234,7 @@
 
   /* ---- Catalog ---- */
   .note {
-    background: #fff;
+    background: var(--card-bg);
     border: 1px solid var(--rule);
     padding: 12px 14px;
     font-size: 14px;
@@ -190,10 +256,23 @@
     display: flex;
     flex-direction: column;
     border: 1px solid var(--rule);
-    background: #fff;
+    background: var(--card-bg);
   }
-  .card figure { margin: 0; border-bottom: 1px solid var(--rule); }
-  .card figure img { width: 100%; }
+  .card figure {
+    margin: 0;
+    border-bottom: 1px solid var(--rule);
+    background: var(--art-bg);
+  }
+
+  /* Every art image shows at the 4×6 card aspect. The placeholder SVGs are
+     already 4:6; real scans or photos dropped in are cropped to match. */
+  .hero figure img,
+  .process figure img,
+  .card figure img {
+    width: 100%;
+    aspect-ratio: 4 / 6;
+    object-fit: cover;
+  }
   .card .ident {
     margin: 12px 12px 2px;
     font-size: 13px;
@@ -220,7 +299,7 @@
     color: var(--paper);
     border: 2px solid var(--accent);
   }
-  .card .buy:hover { background: #000; }
+  .card .buy:hover { opacity: .85; }
   .card .buy-disabled {
     background: transparent;
     color: var(--soft);
@@ -233,7 +312,7 @@
   .prose p { max-width: 44rem; }
   .prose h3 { margin: 1.6em 0 .3em; font-size: 17px; }
   .prose ul { max-width: 44rem; padding-left: 1.2em; }
-  .prose a { color: var(--ink); }
+  .prose a:not(.btn) { color: var(--ink); }
 
   footer.site {
     padding: 32px 0 48px;
@@ -254,7 +333,10 @@
 <header class="site">
   <div class="wrap">
     <a class="name" href="/pen-art-shop/">Pen Art Shop</a>
-    <a class="home" href="https://dark.joeldare.com/">DARK</a>
+    <div class="head-right">
+      <button type="button" id="theme-toggle" class="theme-toggle" aria-pressed="false" aria-label="Switch to dark theme">Dark</button>
+      <a class="home" href="https://dark.joeldare.com/">DARK</a>
+    </div>
   </div>
 </header>
 
@@ -274,10 +356,10 @@
            on a pen plotter. Every card in a series shares a design and no two are
            the same line.</p>
         <p class="price-line">$25 per original <span class="sep">·</span> free U.S. shipping</p>
-        <p>
+        <div class="hero-actions">
           <a class="btn" href="#catalog">Browse available originals</a>
           <a class="btn secondary" href="#prints">Free prints for subscribers</a>
-        </p>
+        </div>
       </div>
     </div>
   </section>
@@ -597,8 +679,7 @@
          address.</p>
       <p>Signup, confirmation, and file delivery are handled entirely by
          <a href="https://sendfox.com/">SendFox</a>. No email address is ever
-         collected on this site, and the print files are never posted at a public
-         URL here.</p>
+         collected on this site.</p>
       <p class="note">
         Prototype build: the button below points at a placeholder SendFox URL.
         The real hosted form gets set up separately and linked here before launch.
@@ -618,8 +699,8 @@
       <h3>Shipping</h3>
       <p>Originals ship flat and protected within the United States, and U.S.
          shipping is included in the $25 price. Inventory and fulfilment are
-         handled by hand for this first series, so allow a little time for
-         dispatch. International shipping isn’t offered yet.</p>
+         handled by hand, so allow a little time for dispatch. International
+         shipping isn’t offered yet.</p>
 
       <h3>Printing the subscriber image at home</h3>
       <p>The subscriber scan is sized for a 4×6 print but prints cleanly larger.
@@ -651,6 +732,41 @@
     <span>Artwork © the artist. All rights reserved.</span>
   </div>
 </footer>
+
+<script>
+  /* Light/dark toggle. Default follows the OS setting; a click sets an
+     explicit choice and remembers it in localStorage. */
+  (function () {
+    var root = document.documentElement;
+    var KEY = 'pen-art-theme';
+    var mq = window.matchMedia('(prefers-color-scheme: dark)');
+    var btn = document.getElementById('theme-toggle');
+
+    function isDark() {
+      var choice = root.getAttribute('data-theme');
+      if (choice) return choice === 'dark';
+      return mq.matches;
+    }
+
+    function sync() {
+      var dark = isDark();
+      btn.textContent = dark ? 'Light' : 'Dark';
+      btn.setAttribute('aria-pressed', dark ? 'true' : 'false');
+      btn.setAttribute('aria-label',
+        dark ? 'Switch to light theme' : 'Switch to dark theme');
+    }
+
+    btn.addEventListener('click', function () {
+      var next = isDark() ? 'light' : 'dark';
+      root.setAttribute('data-theme', next);
+      try { localStorage.setItem(KEY, next); } catch (e) {}
+      sync();
+    });
+
+    mq.addEventListener('change', sync);
+    sync();
+  })();
+</script>
 
 </body>
 </html>
