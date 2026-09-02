@@ -1,0 +1,656 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<title>Pen Art Shop — limited pen-plotter originals, $25</title>
+<meta name="description" content="Hand-plotted 4×6 pen-plotter art cards. Each series is 26 variants: one retained prototype and 25 physical originals, $25 each with free U.S. shipping. Subscribers get a free printable scan of every series.">
+<link rel="canonical" href="https://dark.joeldare.com/pen-art-shop/">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Pen Art Shop">
+<meta property="og:title" content="Pen Art Shop — limited pen-plotter originals">
+<meta property="og:description" content="4×6 pen-plotter art. 25 physical originals per series, $25 each, free U.S. shipping. Free printable scan for subscribers.">
+<meta property="og:url" content="https://dark.joeldare.com/pen-art-shop/">
+<style>
+  :root {
+    --paper: #fbfaf7;
+    --ink: #1c1a17;
+    --soft: #6b655c;
+    --rule: #ddd8ce;
+    --accent: #1c1a17;
+  }
+  * { box-sizing: border-box; }
+  html { -webkit-text-size-adjust: 100%; }
+  body {
+    margin: 0;
+    background: var(--paper);
+    color: var(--ink);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    line-height: 1.6;
+    font-size: 17px;
+  }
+  a { color: inherit; }
+  img { display: block; max-width: 100%; height: auto; }
+
+  .skip {
+    position: absolute;
+    left: -9999px;
+    top: 0;
+    background: var(--ink);
+    color: var(--paper);
+    padding: 10px 16px;
+    z-index: 10;
+  }
+  .skip:focus { left: 8px; top: 8px; }
+
+  :focus-visible {
+    outline: 3px solid var(--ink);
+    outline-offset: 3px;
+  }
+
+  .wrap { max-width: 64rem; margin: 0 auto; padding: 0 20px; }
+
+  header.site {
+    border-bottom: 1px solid var(--rule);
+  }
+  header.site .wrap {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    min-height: 56px;
+    gap: 16px;
+  }
+  header.site .name {
+    font-weight: 700;
+    letter-spacing: .16em;
+    text-transform: uppercase;
+    font-size: 14px;
+    text-decoration: none;
+  }
+  header.site .home {
+    font-size: 13px;
+    letter-spacing: .12em;
+    text-transform: uppercase;
+    color: var(--soft);
+    text-decoration: none;
+    padding: 12px 0;
+  }
+  header.site .home:hover { color: var(--ink); }
+
+  h1 {
+    font-size: clamp(28px, 6vw, 44px);
+    line-height: 1.15;
+    letter-spacing: -.01em;
+    margin: 0 0 .5em;
+  }
+  h2 {
+    font-size: clamp(20px, 4vw, 26px);
+    letter-spacing: -.01em;
+    margin: 0 0 .6em;
+  }
+  .eyebrow {
+    text-transform: uppercase;
+    letter-spacing: .18em;
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--soft);
+    margin: 0 0 1em;
+  }
+
+  section { padding: 56px 0; border-bottom: 1px solid var(--rule); }
+  section:last-of-type { border-bottom: 0; }
+
+  /* ---- Hero ---- */
+  .hero .wrap {
+    display: grid;
+    gap: 36px;
+    align-items: center;
+  }
+  @media (min-width: 720px) {
+    .hero .wrap { grid-template-columns: 1fr 1fr; }
+  }
+  .hero figure {
+    margin: 0;
+    border: 1px solid var(--rule);
+    background: #fff;
+    box-shadow: 0 12px 30px rgba(0,0,0,.07);
+  }
+  .hero figure img { width: 100%; }
+  .price-line {
+    font-size: 18px;
+    font-weight: 700;
+    margin: 1em 0 1.2em;
+  }
+  .price-line .sep { color: var(--soft); font-weight: 400; margin: 0 .5em; }
+
+  .btn {
+    display: inline-block;
+    background: var(--accent);
+    color: var(--paper);
+    text-decoration: none;
+    font-weight: 700;
+    letter-spacing: .04em;
+    padding: 14px 22px;
+    min-height: 44px;
+    border: 2px solid var(--accent);
+  }
+  .btn:hover { background: #000; border-color: #000; }
+  .btn.secondary {
+    background: transparent;
+    color: var(--ink);
+  }
+  .btn.secondary:hover { background: var(--ink); color: var(--paper); }
+  .hero .btn { margin: 0 10px 10px 0; }
+
+  /* ---- Process ---- */
+  .process .wrap { display: grid; gap: 32px; }
+  @media (min-width: 720px) {
+    .process .wrap { grid-template-columns: 320px 1fr; align-items: start; }
+  }
+  .process figure {
+    margin: 0;
+    border: 1px solid var(--rule);
+    background: #fff;
+  }
+  .process figcaption {
+    font-size: 13px;
+    color: var(--soft);
+    padding: 10px 12px;
+    border-top: 1px solid var(--rule);
+  }
+  .process dl { margin: 0; }
+  .process dt {
+    font-weight: 700;
+    margin-top: 1.1em;
+  }
+  .process dd { margin: .2em 0 0; color: var(--ink); }
+
+  /* ---- Catalog ---- */
+  .note {
+    background: #fff;
+    border: 1px solid var(--rule);
+    padding: 12px 14px;
+    font-size: 14px;
+    color: var(--soft);
+    margin: 0 0 24px;
+  }
+  .catalog-terms { font-weight: 700; margin: 0 0 20px; }
+  .catalog-terms .sep { color: var(--soft); font-weight: 400; margin: 0 .5em; }
+
+  .grid {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    gap: 24px;
+  }
+  .card {
+    display: flex;
+    flex-direction: column;
+    border: 1px solid var(--rule);
+    background: #fff;
+  }
+  .card figure { margin: 0; border-bottom: 1px solid var(--rule); }
+  .card figure img { width: 100%; }
+  .card .ident {
+    margin: 12px 12px 2px;
+    font-size: 13px;
+    letter-spacing: .04em;
+  }
+  .card .avail {
+    margin: 0 12px;
+    font-size: 13px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .08em;
+  }
+  .card .avail[data-sold] { color: var(--soft); }
+  .card .price { margin: 2px 12px 12px; font-size: 15px; font-weight: 700; }
+  .card .buy {
+    margin: auto 12px 12px;
+    text-align: center;
+    text-decoration: none;
+    font-weight: 700;
+    letter-spacing: .03em;
+    padding: 12px 10px;
+    min-height: 44px;
+    background: var(--accent);
+    color: var(--paper);
+    border: 2px solid var(--accent);
+  }
+  .card .buy:hover { background: #000; }
+  .card .buy-disabled {
+    background: transparent;
+    color: var(--soft);
+    border-color: var(--rule);
+    cursor: not-allowed;
+  }
+  .card.sold figure img { opacity: .45; filter: grayscale(1); }
+
+  /* ---- Prose blocks ---- */
+  .prose p { max-width: 44rem; }
+  .prose h3 { margin: 1.6em 0 .3em; font-size: 17px; }
+  .prose ul { max-width: 44rem; padding-left: 1.2em; }
+  .prose a { color: var(--ink); }
+
+  footer.site {
+    padding: 32px 0 48px;
+    font-size: 13px;
+    color: var(--soft);
+  }
+  footer.site .wrap { display: flex; flex-wrap: wrap; gap: 8px 20px; justify-content: space-between; }
+
+  @media (prefers-reduced-motion: reduce) {
+    * { transition: none !important; scroll-behavior: auto !important; }
+  }
+</style>
+</head>
+<body>
+
+<a class="skip" href="#main">Skip to content</a>
+
+<header class="site">
+  <div class="wrap">
+    <a class="name" href="/pen-art-shop/">Pen Art Shop</a>
+    <a class="home" href="https://dark.joeldare.com/">DARK</a>
+  </div>
+</header>
+
+<main id="main">
+
+  <section class="hero" aria-labelledby="hero-h">
+    <div class="wrap">
+      <figure>
+        <img src="images/prototype.svg" width="400" height="600"
+             alt="Series 01 prototype: a single continuous pen-plotter line looping into a dense woven form on a 4×6 card (placeholder art).">
+      </figure>
+      <div>
+        <p class="eyebrow">Hand-plotted originals</p>
+        <h1 id="hero-h">One design. 25 originals. Then the plotter files are deleted.</h1>
+        <p>Each release turns one generative drawing into a series of 26: a single
+           prototype I keep and scan, and 25 physical 4×6 cards drawn one at a time
+           on a pen plotter. Every card in a series shares a design and no two are
+           the same line.</p>
+        <p class="price-line">$25 per original <span class="sep">·</span> free U.S. shipping</p>
+        <p>
+          <a class="btn" href="#catalog">Browse available originals</a>
+          <a class="btn secondary" href="#prints">Free prints for subscribers</a>
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <section class="process" aria-labelledby="process-h">
+    <div class="wrap">
+      <figure>
+        <img src="images/prototype.svg" width="400" height="600"
+             alt="The retained Series 01 prototype — the drawing scanned as the free subscriber print.">
+        <figcaption>Series 01 — the retained prototype, scanned as the subscriber print.</figcaption>
+      </figure>
+      <div>
+        <p class="eyebrow">How a series works</p>
+        <h2 id="process-h">26 variants, three roles</h2>
+        <dl>
+          <dt>1 prototype — kept, never sold</dt>
+          <dd>The first plot of a new design. Once it looks right I keep it in my
+              own collection and scan it at high resolution as the series’
+              “gold master.”</dd>
+          <dt>1 subscriber print — free, digital only</dt>
+          <dd>The printable scan derived from that prototype. Mailing-list
+              subscribers get it for every series to print at home. It is related
+              to the series but is not a copy of any original for sale.</dd>
+          <dt>25 originals — physical, $25 each</dt>
+          <dd>Drawn individually on the plotter to finish the edition. Each is
+              numbered (for example <em>Series 01 · 07 / 25</em>). After all 25 are
+              produced and checked, the generative source and production files are
+              deleted, so the physical edition can never be re-made.</dd>
+        </dl>
+      </div>
+    </div>
+  </section>
+
+  <section class="catalog" id="catalog" aria-labelledby="catalog-h">
+    <div class="wrap">
+      <p class="eyebrow">Series 01</p>
+      <h2 id="catalog-h">Available originals</h2>
+      <p class="catalog-terms">$25 each <span class="sep">·</span> free shipping within the United States</p>
+      <p class="note">
+        Prototype build: the artwork shown is placeholder pen-plotter output and
+        each “Buy” link points at a placeholder Stripe Checkout URL. Real scans,
+        photographs of the physical cards, and live Stripe links get dropped in
+        before launch.
+      </p>
+
+      <!--
+        INVENTORY IS MANUAL. To mark a piece sold with no other code change:
+        on its <li>, add the class "sold"  (class="card sold"),
+        change the availability line to   <p class="avail" data-sold>Sold</p>,
+        and replace the <a class="buy" ...>Buy — $25</a> with
+        <span class="buy buy-disabled" aria-disabled="true">Sold out</span>.
+        Nothing else references the item. Numbers 04 and 17 below are done this
+        way as worked examples.
+      -->
+      <ul class="grid">
+      <li class="card">
+        <figure>
+          <img src="images/variant-01.svg" width="400" height="600" loading="lazy"
+               alt="Series 01, original number 01 of 25 — a single continuous pen-plotter line drawing (placeholder art).">
+        </figure>
+        <p class="ident">Series 01 &middot; 01 / 25</p>
+        <p class="avail">Available</p>
+        <p class="price">$25</p>
+        <a class="buy" href="https://buy.stripe.com/PLACEHOLDER_01">Buy &mdash; $25</a>
+      </li>
+      <li class="card">
+        <figure>
+          <img src="images/variant-02.svg" width="400" height="600" loading="lazy"
+               alt="Series 01, original number 02 of 25 — a single continuous pen-plotter line drawing (placeholder art).">
+        </figure>
+        <p class="ident">Series 01 &middot; 02 / 25</p>
+        <p class="avail">Available</p>
+        <p class="price">$25</p>
+        <a class="buy" href="https://buy.stripe.com/PLACEHOLDER_02">Buy &mdash; $25</a>
+      </li>
+      <li class="card">
+        <figure>
+          <img src="images/variant-03.svg" width="400" height="600" loading="lazy"
+               alt="Series 01, original number 03 of 25 — a single continuous pen-plotter line drawing (placeholder art).">
+        </figure>
+        <p class="ident">Series 01 &middot; 03 / 25</p>
+        <p class="avail">Available</p>
+        <p class="price">$25</p>
+        <a class="buy" href="https://buy.stripe.com/PLACEHOLDER_03">Buy &mdash; $25</a>
+      </li>
+      <li class="card sold">
+        <figure>
+          <img src="images/variant-04.svg" width="400" height="600" loading="lazy"
+               alt="Series 01, original number 04 of 25 — a single continuous pen-plotter line drawing (placeholder art).">
+        </figure>
+        <p class="ident">Series 01 &middot; 04 / 25</p>
+        <p class="avail" data-sold>Sold</p>
+        <p class="price">$25</p>
+        <span class="buy buy-disabled" aria-disabled="true">Sold out</span>
+      </li>
+      <li class="card">
+        <figure>
+          <img src="images/variant-05.svg" width="400" height="600" loading="lazy"
+               alt="Series 01, original number 05 of 25 — a single continuous pen-plotter line drawing (placeholder art).">
+        </figure>
+        <p class="ident">Series 01 &middot; 05 / 25</p>
+        <p class="avail">Available</p>
+        <p class="price">$25</p>
+        <a class="buy" href="https://buy.stripe.com/PLACEHOLDER_05">Buy &mdash; $25</a>
+      </li>
+      <li class="card">
+        <figure>
+          <img src="images/variant-06.svg" width="400" height="600" loading="lazy"
+               alt="Series 01, original number 06 of 25 — a single continuous pen-plotter line drawing (placeholder art).">
+        </figure>
+        <p class="ident">Series 01 &middot; 06 / 25</p>
+        <p class="avail">Available</p>
+        <p class="price">$25</p>
+        <a class="buy" href="https://buy.stripe.com/PLACEHOLDER_06">Buy &mdash; $25</a>
+      </li>
+      <li class="card">
+        <figure>
+          <img src="images/variant-07.svg" width="400" height="600" loading="lazy"
+               alt="Series 01, original number 07 of 25 — a single continuous pen-plotter line drawing (placeholder art).">
+        </figure>
+        <p class="ident">Series 01 &middot; 07 / 25</p>
+        <p class="avail">Available</p>
+        <p class="price">$25</p>
+        <a class="buy" href="https://buy.stripe.com/PLACEHOLDER_07">Buy &mdash; $25</a>
+      </li>
+      <li class="card">
+        <figure>
+          <img src="images/variant-08.svg" width="400" height="600" loading="lazy"
+               alt="Series 01, original number 08 of 25 — a single continuous pen-plotter line drawing (placeholder art).">
+        </figure>
+        <p class="ident">Series 01 &middot; 08 / 25</p>
+        <p class="avail">Available</p>
+        <p class="price">$25</p>
+        <a class="buy" href="https://buy.stripe.com/PLACEHOLDER_08">Buy &mdash; $25</a>
+      </li>
+      <li class="card">
+        <figure>
+          <img src="images/variant-09.svg" width="400" height="600" loading="lazy"
+               alt="Series 01, original number 09 of 25 — a single continuous pen-plotter line drawing (placeholder art).">
+        </figure>
+        <p class="ident">Series 01 &middot; 09 / 25</p>
+        <p class="avail">Available</p>
+        <p class="price">$25</p>
+        <a class="buy" href="https://buy.stripe.com/PLACEHOLDER_09">Buy &mdash; $25</a>
+      </li>
+      <li class="card">
+        <figure>
+          <img src="images/variant-10.svg" width="400" height="600" loading="lazy"
+               alt="Series 01, original number 10 of 25 — a single continuous pen-plotter line drawing (placeholder art).">
+        </figure>
+        <p class="ident">Series 01 &middot; 10 / 25</p>
+        <p class="avail">Available</p>
+        <p class="price">$25</p>
+        <a class="buy" href="https://buy.stripe.com/PLACEHOLDER_10">Buy &mdash; $25</a>
+      </li>
+      <li class="card">
+        <figure>
+          <img src="images/variant-11.svg" width="400" height="600" loading="lazy"
+               alt="Series 01, original number 11 of 25 — a single continuous pen-plotter line drawing (placeholder art).">
+        </figure>
+        <p class="ident">Series 01 &middot; 11 / 25</p>
+        <p class="avail">Available</p>
+        <p class="price">$25</p>
+        <a class="buy" href="https://buy.stripe.com/PLACEHOLDER_11">Buy &mdash; $25</a>
+      </li>
+      <li class="card">
+        <figure>
+          <img src="images/variant-12.svg" width="400" height="600" loading="lazy"
+               alt="Series 01, original number 12 of 25 — a single continuous pen-plotter line drawing (placeholder art).">
+        </figure>
+        <p class="ident">Series 01 &middot; 12 / 25</p>
+        <p class="avail">Available</p>
+        <p class="price">$25</p>
+        <a class="buy" href="https://buy.stripe.com/PLACEHOLDER_12">Buy &mdash; $25</a>
+      </li>
+      <li class="card">
+        <figure>
+          <img src="images/variant-13.svg" width="400" height="600" loading="lazy"
+               alt="Series 01, original number 13 of 25 — a single continuous pen-plotter line drawing (placeholder art).">
+        </figure>
+        <p class="ident">Series 01 &middot; 13 / 25</p>
+        <p class="avail">Available</p>
+        <p class="price">$25</p>
+        <a class="buy" href="https://buy.stripe.com/PLACEHOLDER_13">Buy &mdash; $25</a>
+      </li>
+      <li class="card">
+        <figure>
+          <img src="images/variant-14.svg" width="400" height="600" loading="lazy"
+               alt="Series 01, original number 14 of 25 — a single continuous pen-plotter line drawing (placeholder art).">
+        </figure>
+        <p class="ident">Series 01 &middot; 14 / 25</p>
+        <p class="avail">Available</p>
+        <p class="price">$25</p>
+        <a class="buy" href="https://buy.stripe.com/PLACEHOLDER_14">Buy &mdash; $25</a>
+      </li>
+      <li class="card">
+        <figure>
+          <img src="images/variant-15.svg" width="400" height="600" loading="lazy"
+               alt="Series 01, original number 15 of 25 — a single continuous pen-plotter line drawing (placeholder art).">
+        </figure>
+        <p class="ident">Series 01 &middot; 15 / 25</p>
+        <p class="avail">Available</p>
+        <p class="price">$25</p>
+        <a class="buy" href="https://buy.stripe.com/PLACEHOLDER_15">Buy &mdash; $25</a>
+      </li>
+      <li class="card">
+        <figure>
+          <img src="images/variant-16.svg" width="400" height="600" loading="lazy"
+               alt="Series 01, original number 16 of 25 — a single continuous pen-plotter line drawing (placeholder art).">
+        </figure>
+        <p class="ident">Series 01 &middot; 16 / 25</p>
+        <p class="avail">Available</p>
+        <p class="price">$25</p>
+        <a class="buy" href="https://buy.stripe.com/PLACEHOLDER_16">Buy &mdash; $25</a>
+      </li>
+      <li class="card sold">
+        <figure>
+          <img src="images/variant-17.svg" width="400" height="600" loading="lazy"
+               alt="Series 01, original number 17 of 25 — a single continuous pen-plotter line drawing (placeholder art).">
+        </figure>
+        <p class="ident">Series 01 &middot; 17 / 25</p>
+        <p class="avail" data-sold>Sold</p>
+        <p class="price">$25</p>
+        <span class="buy buy-disabled" aria-disabled="true">Sold out</span>
+      </li>
+      <li class="card">
+        <figure>
+          <img src="images/variant-18.svg" width="400" height="600" loading="lazy"
+               alt="Series 01, original number 18 of 25 — a single continuous pen-plotter line drawing (placeholder art).">
+        </figure>
+        <p class="ident">Series 01 &middot; 18 / 25</p>
+        <p class="avail">Available</p>
+        <p class="price">$25</p>
+        <a class="buy" href="https://buy.stripe.com/PLACEHOLDER_18">Buy &mdash; $25</a>
+      </li>
+      <li class="card">
+        <figure>
+          <img src="images/variant-19.svg" width="400" height="600" loading="lazy"
+               alt="Series 01, original number 19 of 25 — a single continuous pen-plotter line drawing (placeholder art).">
+        </figure>
+        <p class="ident">Series 01 &middot; 19 / 25</p>
+        <p class="avail">Available</p>
+        <p class="price">$25</p>
+        <a class="buy" href="https://buy.stripe.com/PLACEHOLDER_19">Buy &mdash; $25</a>
+      </li>
+      <li class="card">
+        <figure>
+          <img src="images/variant-20.svg" width="400" height="600" loading="lazy"
+               alt="Series 01, original number 20 of 25 — a single continuous pen-plotter line drawing (placeholder art).">
+        </figure>
+        <p class="ident">Series 01 &middot; 20 / 25</p>
+        <p class="avail">Available</p>
+        <p class="price">$25</p>
+        <a class="buy" href="https://buy.stripe.com/PLACEHOLDER_20">Buy &mdash; $25</a>
+      </li>
+      <li class="card">
+        <figure>
+          <img src="images/variant-21.svg" width="400" height="600" loading="lazy"
+               alt="Series 01, original number 21 of 25 — a single continuous pen-plotter line drawing (placeholder art).">
+        </figure>
+        <p class="ident">Series 01 &middot; 21 / 25</p>
+        <p class="avail">Available</p>
+        <p class="price">$25</p>
+        <a class="buy" href="https://buy.stripe.com/PLACEHOLDER_21">Buy &mdash; $25</a>
+      </li>
+      <li class="card">
+        <figure>
+          <img src="images/variant-22.svg" width="400" height="600" loading="lazy"
+               alt="Series 01, original number 22 of 25 — a single continuous pen-plotter line drawing (placeholder art).">
+        </figure>
+        <p class="ident">Series 01 &middot; 22 / 25</p>
+        <p class="avail">Available</p>
+        <p class="price">$25</p>
+        <a class="buy" href="https://buy.stripe.com/PLACEHOLDER_22">Buy &mdash; $25</a>
+      </li>
+      <li class="card">
+        <figure>
+          <img src="images/variant-23.svg" width="400" height="600" loading="lazy"
+               alt="Series 01, original number 23 of 25 — a single continuous pen-plotter line drawing (placeholder art).">
+        </figure>
+        <p class="ident">Series 01 &middot; 23 / 25</p>
+        <p class="avail">Available</p>
+        <p class="price">$25</p>
+        <a class="buy" href="https://buy.stripe.com/PLACEHOLDER_23">Buy &mdash; $25</a>
+      </li>
+      <li class="card">
+        <figure>
+          <img src="images/variant-24.svg" width="400" height="600" loading="lazy"
+               alt="Series 01, original number 24 of 25 — a single continuous pen-plotter line drawing (placeholder art).">
+        </figure>
+        <p class="ident">Series 01 &middot; 24 / 25</p>
+        <p class="avail">Available</p>
+        <p class="price">$25</p>
+        <a class="buy" href="https://buy.stripe.com/PLACEHOLDER_24">Buy &mdash; $25</a>
+      </li>
+      <li class="card">
+        <figure>
+          <img src="images/variant-25.svg" width="400" height="600" loading="lazy"
+               alt="Series 01, original number 25 of 25 — a single continuous pen-plotter line drawing (placeholder art).">
+        </figure>
+        <p class="ident">Series 01 &middot; 25 / 25</p>
+        <p class="avail">Available</p>
+        <p class="price">$25</p>
+        <a class="buy" href="https://buy.stripe.com/PLACEHOLDER_25">Buy &mdash; $25</a>
+      </li>
+      </ul>
+    </div>
+  </section>
+
+  <section class="prose" id="prints" aria-labelledby="prints-h">
+    <div class="wrap">
+      <p class="eyebrow">Mailing list</p>
+      <h2 id="prints-h">A free printable image for every series</h2>
+      <p>Subscribe and you get the high-resolution scan of each series’ retained
+         prototype — a new decorative print to run off at home whenever you want
+         to change what’s on the wall. One image per series, free, for your email
+         address.</p>
+      <p>Signup, confirmation, and file delivery are handled entirely by
+         <a href="https://sendfox.com/">SendFox</a>. No email address is ever
+         collected on this site, and the print files are never posted at a public
+         URL here.</p>
+      <p class="note">
+        Prototype build: the button below points at a placeholder SendFox URL.
+        The real hosted form gets set up separately and linked here before launch.
+      </p>
+      <p><a class="btn" href="https://sendfox.com/pen-art-shop-PLACEHOLDER">Get the free prints</a></p>
+      <p>Downloads are for your own personal printing only. Copyright in every
+         drawing stays with the artist; subscribing is not a licence to
+         redistribute or sell the image or prints made from it.</p>
+    </div>
+  </section>
+
+  <section class="prose" id="info" aria-labelledby="info-h">
+    <div class="wrap">
+      <p class="eyebrow">Details</p>
+      <h2 id="info-h">Shipping, printing &amp; contact</h2>
+
+      <h3>Shipping</h3>
+      <p>Originals ship flat and protected within the United States, and U.S.
+         shipping is included in the $25 price. Inventory and fulfilment are
+         handled by hand for this first series, so allow a little time for
+         dispatch. International shipping isn’t offered yet.</p>
+
+      <h3>Printing the subscriber image at home</h3>
+      <p>The subscriber scan is sized for a 4×6 print but prints cleanly larger.
+         Any home printer or local print shop works. The file is for your personal
+         use only — please don’t share, redistribute, or sell it or prints of it.</p>
+
+      <h3>Payment</h3>
+      <p>Checkout, card payment, receipts, and the shipping address you enter are
+         all handled on Stripe’s hosted pages. This site has no cart, no accounts,
+         and no customer database.</p>
+
+      <h3>Contact</h3>
+      <p>Questions about a piece or an order:
+         <a href="mailto:orders@pen-art-shop.example">orders@pen-art-shop.example</a>
+         <em>(placeholder — real address set before launch)</em>.</p>
+
+      <h3>Privacy</h3>
+      <p>No advertising pixels, no behavioural analytics, no cookies, no visitor
+         identifiers on this site. Email addresses live only with SendFox; payment
+         and address details live only with Stripe.</p>
+    </div>
+  </section>
+
+</main>
+
+<footer class="site">
+  <div class="wrap">
+    <span>Pen Art Shop — hand-plotted 4×6 originals.</span>
+    <span>Artwork © the artist. All rights reserved.</span>
+  </div>
+</footer>
+
+</body>
+</html>
