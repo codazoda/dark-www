@@ -83,7 +83,7 @@
     max-width: 32em;
     text-align: center;
   }
-  #dice { display: none; gap: 10vmin; }
+  #dice { display: none; gap: 8vmin; }
   /* Shown for a moment when a roll is refused because no tile was shut since the last one. */
   #rollHint {
     display: none;
@@ -99,7 +99,7 @@
   #box.rolling #prompt { display: none; }
   #box.rolling #instructions { display: none; }
   .die {
-    width: clamp(72px, 26vmin, 160px);
+    width: clamp(60px, 20vmin, 128px);
     aspect-ratio: 1;
     border: 2px solid #fff;
     display: grid;
@@ -132,11 +132,22 @@
     font-size: clamp(14px, 3.4vw, 16px);
   }
 
+  /* The three bottom lines — summary, status/challenge, affiliate — sit in a
+     flex column with one shared gap, so the vertical spacing between them is
+     equal and a touch roomier than the old line-height stacking (which packed
+     the challenge and affiliate links tight together on a phone). The
+     margin-top adds a little breathing room below the CLEAR button so the
+     block doesn't crowd the score row. */
   #stats {
     text-align: center;
     font-size: clamp(12px, 2vw, 14px);
-    line-height: 1.7;
+    line-height: 1.4;
     color: rgba(255, 255, 255, .6);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 14px;
+    margin-top: 8px;
   }
 
   /* The status line lives in one slot. During play it shows the daily streak —
@@ -147,7 +158,12 @@
      opened from a ?best= link it instead holds a plain "Your friend's best today
      is N. Can you beat it?" for the whole first round. Same slot, same height in
      every state, so the bottom of the board never shifts. */
-  #status { min-height: 1.7em; }
+  #status {
+    min-height: 1.7em;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
   #status.streak {
     color: #ffb000;
     font-weight: bold;
