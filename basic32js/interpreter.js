@@ -21,6 +21,7 @@ export class BasicError extends Error {
 const RGB_TAG = 16777216; // 0x1000000 -- see BASIC.md's RGB() tagging notes
 const MAX_FOR_DEPTH = 16;
 const RUN_YIELD_EVERY = 50; // statements between forced yields back to the event loop
+const KEY_BREAK = 3; // Ctrl-C: stops a running program, never queued for INKEY
 
 const PALETTE = [
   0x000000, 0x0000aa, 0x00aa00, 0x00aaaa,
@@ -140,7 +141,20 @@ function resolveColor(v) {
 export class Interpreter {
   constructor(machine) {
     this.machine = machine;
+    /* Holds at most one key peeked off machine.inputGetc() by run()'s BREAK
+     * check before INKEY had a chance to consume it -- not reset by NEW,
+     * the same way the C core's g_pending_key outlives cmd_new(). */
+    this.pendingKey = -1;
     this.init();
+  }
+
+  nextKey() {
+    if (this.pendingKey !== -1) {
+      const k = this.pendingKey;
+      this.pendingKey = -1;
+      return k;
+    }
+    return this.machine.inputGetc();
   }
 
   init() {
@@ -284,6 +298,7 @@ export class Interpreter {
         cur.expect(')');
         return callFunction(name, arg);
       }
+      if (name === 'INKEY') return this.nextKey();
       if (name === 'TICK') return this.machine.uptimeMs();
       if (name === 'GWIDTH') return this.machine.graphicsWidth();
       if (name === 'GHEIGHT') return this.machine.graphicsHeight();
@@ -574,6 +589,19 @@ export class Interpreter {
         iterations++;
         this.jumped = false;
         this.flow = null;
+        /* Check for BREAK before every line, independent of whether this
+         * program ever calls INKEY itself -- a program reading its own
+         * buttons/keyboard through INKEY must still be interruptible. A
+         * non-BREAK key found here is held for the next INKEY rather than
+         * dropped, mirroring the C core's basic_run(). */
+        if (this.pendingKey === -1) {
+          const key = this.machine.inputGetc();
+          if (key === KEY_BREAK) {
+            this.out(`BREAK IN ${this.lines[this.pc].number}\n`);
+            break;
+          }
+          if (key !== -1) this.pendingKey = key;
+        }
         const cur = new Cursor(this.lines[this.pc].text);
         await this.execStatement(cur);
         if (this.flow && this.flow.type === 'goto') {

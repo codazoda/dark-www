@@ -218,11 +218,33 @@ export function createGraphics(canvas) {
   };
 }
 
+/* Bounded FIFO of pending key codes, the JS analog of the ESP32's
+ * button/BLE FreeRTOS queue and the POSIX host's raw keystroke read: a full
+ * queue drops the newest key rather than growing or overwriting state. */
+const KEY_QUEUE_MAX = 32;
+
+export function createKeyQueue(max = KEY_QUEUE_MAX) {
+  const q = [];
+  return {
+    push(code) {
+      if (q.length >= max) return;
+      q.push(code);
+    },
+    getc() {
+      return q.length ? q.shift() : -1;
+    },
+  };
+}
+
 /* Wires a console + graphics pair into the machine API the interpreter
- * expects. `onScreenChange` shows/hides the two surfaces. */
-export function createMachine(consoleApi, graphicsApi, onScreenChange) {
+ * expects. `onScreenChange` shows/hides the two surfaces. `keyQueue` (see
+ * createKeyQueue) backs inputGetc -- the app wires a keydown listener into
+ * its push() to act as this port's key source, the analog of the ESP32's
+ * buttons/BLE keyboard or the POSIX host's terminal. */
+export function createMachine(consoleApi, graphicsApi, onScreenChange, keyQueue) {
   const startTime = performance.now();
   return {
+    inputGetc() { return keyQueue.getc(); },
     consoleWrite(s) { consoleApi.write(s); },
     consoleClear() { consoleApi.clear(); },
     consoleLocate(row, col) { consoleApi.locate(row, col); },
