@@ -1,0 +1,136 @@
+:root {
+  color-scheme: light;
+  --text: #111;
+  --bg: #fff;
+  --border: #ccc;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+  color: var(--text);
+  background: var(--bg);
+}
+
+.site-header {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 0.5rem 1rem;
+  border-bottom: 1px solid var(--border);
+  flex-wrap: wrap;
+  flex-shrink: 0;
+}
+
+.site-header h1 {
+  font-size: 1.1rem;
+  margin: 0;
+}
+
+.home-link {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  padding: 0 0.4rem;
+  margin: 0 -0.4rem;
+  color: var(--text);
+  text-decoration: none;
+  font-size: 0.95rem;
+}
+
+.home-link:hover,
+.home-link:focus {
+  text-decoration: underline;
+}
+
+main {
+  flex: 1 1 auto;
+  min-height: 0;
+  padding: 1rem;
+}
+
+.intro {
+  font-size: 1rem;
+  max-width: 32em;
+}
+
+.drawing-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  max-width: 26rem;
+}
+
+.drawing-button {
+  display: flex;
+  align-items: center;
+  min-height: 44px;
+  padding: 0.6rem 1rem;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  color: var(--text);
+  text-decoration: none;
+  font-size: 1rem;
+  background: #fafafa;
+}
+
+.drawing-button:hover,
+.drawing-button:focus {
+  border-color: #888;
+  background: #f0f0f0;
+}
+
+.drawing-button:focus-visible {
+  outline: 2px solid #111;
+  outline-offset: 2px;
+}
+
+.empty-state {
+  color: #555;
+}
+
+.viewer-main {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  padding: 0.5rem;
+}
+
+#artwork {
+  max-width: 100%;
+  max-height: 100%;
+  width: auto;
+  height: auto;
+  object-fit: contain;
+  box-shadow: 0 0 0 1px var(--border);
+}
+
+.error {
+  max-width: 30rem;
+  padding: 1rem;
+  color: #900;
+  text-align: center;
+  font-size: 1rem;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * {
+    scroll-behavior: auto !important;
+  }
+}
