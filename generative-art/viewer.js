@@ -3,10 +3,13 @@ import { createRng, randomSeed, getBounds, buildDrawing } from "./renderer.js";
 
 const params = new URLSearchParams(location.search);
 const name = params.get("d") || "";
+const closed = params.get("closed") !== "0";
+const seedParam = params.get("seed");
 
 const img = document.getElementById("artwork");
 const errorBox = document.getElementById("error");
 const titleEl = document.getElementById("drawing-title");
+const toggleLink = document.getElementById("toggle-close-link");
 
 let currentUrl = null;
 
@@ -28,6 +31,7 @@ async function render() {
     titleEl.textContent = "Not found";
     document.title = "Not found — Generative Art";
     showError(`"${name || "(no drawing given)"}" isn't a known drawing. Go back to the index and pick one from the list.`);
+    toggleLink.hidden = true;
     return;
   }
 
@@ -43,19 +47,21 @@ async function render() {
     }
   } catch (err) {
     showError(`Couldn't load drawing "${name}": ${err.message}`);
+    toggleLink.hidden = true;
     return;
   }
 
-  const seed = randomSeed();
+  const seed = seedParam !== null && Number.isFinite(Number(seedParam)) ? Number(seedParam) : randomSeed();
   const rng = createRng(seed);
   const bounds = getBounds();
 
   let svg;
   try {
     const pathData = generate(rng, bounds);
-    svg = buildDrawing({ filename: name, seed, pathData });
+    svg = buildDrawing({ filename: name, seed, pathData, closePath: closed });
   } catch (err) {
     showError(`"${name}" produced an invalid drawing: ${err.message}`);
+    toggleLink.hidden = true;
     return;
   }
 
@@ -66,6 +72,14 @@ async function render() {
   img.src = url;
   img.hidden = false;
   errorBox.hidden = true;
+
+  const otherParams = new URLSearchParams({ d: name, seed: String(seed) });
+  if (closed) {
+    otherParams.set("closed", "0");
+  }
+  toggleLink.href = `draw.html?${otherParams.toString()}`;
+  toggleLink.textContent = closed ? "View unclosed" : "View closed";
+  toggleLink.hidden = false;
 }
 
 window.addEventListener("pagehide", revokeCurrent);
