@@ -113,9 +113,9 @@ function drawSignalCore(path, rng, bounds, cx, cy, radius, startAngle) {
   return { x: cx, y: cy, radius };
 }
 
-// Descending zigzag/segmented pulse trails converging from the top and
-// side edges toward the core. Each is a short chain of jittered straight
-// segments, deliberately angular rather than smooth.
+// Descending pulse trails converging from the top and side edges toward
+// the core. Each is either a short chain of jittered straight segments
+// (angular) or a single curved swoop, mixed at random.
 function drawDescendingPulses(path, rng, bounds, core) {
   const count = 4 + Math.floor(rng() * 3); // 4-6
   const ends = [];
@@ -142,17 +142,29 @@ function drawDescendingPulses(path, rng, bounds, core) {
     const tx = core.x + Math.cos(targetAngle) * targetDist;
     const ty = core.y + Math.sin(targetAngle) * targetDist;
 
-    const segments = 3 + Math.floor(rng() * 3); // 3-5
-    for (let s = 1; s <= segments; s++) {
-      const t = s / segments;
-      if (s === segments) {
-        path.lineTo(tx, ty);
-        break;
+    if (rng() < 0.45) {
+      // A curved swoop, an alternative to the angular zigzag below.
+      const bow = bounds.width * (0.06 + rng() * 0.08) * (rng() < 0.5 ? 1 : -1);
+      const midX = (sx + tx) / 2 + bow;
+      const midY = (sy + ty) / 2 + bow * 0.4;
+      const c1x = sx + (midX - sx) * (0.4 + rng() * 0.2);
+      const c1y = sy + (midY - sy) * (0.4 + rng() * 0.2);
+      const c2x = midX + (tx - midX) * (0.3 + rng() * 0.2);
+      const c2y = midY + (ty - midY) * (0.3 + rng() * 0.2);
+      path.curveTo(c1x, c1y, c2x, c2y, tx, ty);
+    } else {
+      const segments = 3 + Math.floor(rng() * 3); // 3-5
+      for (let s = 1; s <= segments; s++) {
+        const t = s / segments;
+        if (s === segments) {
+          path.lineTo(tx, ty);
+          break;
+        }
+        const jitter = bounds.width * 0.03 * (1 - t * 0.5);
+        const jx = sx + (tx - sx) * t + (rng() - 0.5) * jitter;
+        const jy = sy + (ty - sy) * t + (rng() - 0.5) * jitter * 0.5;
+        path.lineTo(jx, jy);
       }
-      const jitter = bounds.width * 0.03 * (1 - t * 0.5);
-      const jx = sx + (tx - sx) * t + (rng() - 0.5) * jitter;
-      const jy = sy + (ty - sy) * t + (rng() - 0.5) * jitter * 0.5;
-      path.lineTo(jx, jy);
     }
 
     ends.push({ x: tx, y: ty });
@@ -177,19 +189,23 @@ function drawCounterSignals(path, rng, bounds, towers, core) {
     const tx = core.x + Math.cos(targetAngle) * targetDist;
     const ty = core.y + Math.sin(targetAngle) * targetDist * 0.7 + bounds.height * 0.02;
 
-    const controlX = (tower.x + tx) / 2 + (rng() - 0.5) * bounds.width * 0.25;
-    const controlY = Math.min(tower.y, ty) - bounds.height * (0.05 + rng() * 0.1);
+    const liftY = Math.min(tower.y, ty) - bounds.height * (0.05 + rng() * 0.1);
+    const control1X = tower.x + (rng() - 0.5) * bounds.width * 0.12;
+    const control1Y = tower.y - bounds.height * (0.06 + rng() * 0.08);
+    const control2X = (tower.x + tx) / 2 + (rng() - 0.5) * bounds.width * 0.25;
+    const control2Y = liftY;
 
-    path.quadTo(controlX, controlY, tx, ty);
+    path.curveTo(control1X, control1Y, control2X, control2Y, tx, ty);
     ends.push({ x: tx, y: ty });
   }
 
   return ends;
 }
 
-// Layered polygonal interference rings dropped where trails converge —
-// a few of the pulse/counter-signal endpoints get a small concentric
-// burst instead of ending bare.
+// Layered interference rings dropped where trails converge — a few of the
+// pulse/counter-signal endpoints get a small concentric burst instead of
+// ending bare. Each layer is either a straight-edged polygon or a
+// scalloped ring bulging out between vertices, mixed at random.
 function drawBurstRings(path, rng, bounds, points) {
   if (points.length === 0) return;
   const burstCount = Math.min(points.length, 2 + Math.floor(rng() * 3)); // 2-4
@@ -204,12 +220,22 @@ function drawBurstRings(path, rng, bounds, points) {
     for (let layer = 1; layer <= layers; layer++) {
       const r = baseRadius * layer;
       const rot = rng() * Math.PI * 2;
+      const curved = rng() < 0.5;
       const first = pointOnCircle(center.x, center.y, r, rot);
       path.lineTo(first.x, first.y);
+      let prevAngle = rot;
       for (let s = 1; s <= sides; s++) {
         const angle = rot + (Math.PI * 2 * s) / sides;
         const p = pointOnCircle(center.x, center.y, r, angle);
-        path.lineTo(p.x, p.y);
+        if (curved) {
+          const midAngle = (prevAngle + angle) / 2;
+          const bulge = r * (1.15 + rng() * 0.25);
+          const ctrl = pointOnCircle(center.x, center.y, bulge, midAngle);
+          path.quadTo(ctrl.x, ctrl.y, p.x, p.y);
+        } else {
+          path.lineTo(p.x, p.y);
+        }
+        prevAngle = angle;
       }
     }
   }
@@ -226,7 +252,7 @@ function drawSparks(path, rng, bounds) {
     const len = bounds.width * (0.008 + rng() * 0.015);
 
     path.lineTo(x, y);
-    if (rng() < 0.3) {
+    if (rng() < 0.5) {
       const startAngle = rng() * Math.PI * 2;
       const endAngle = startAngle + Math.PI * (0.6 + rng() * 0.6);
       const r = len * 1.5;
@@ -305,6 +331,16 @@ class Path {
     const [qx, qy] = this.clamp(cx1, cy1);
     const [ex, ey] = this.clamp(x, y);
     this.commands.push(`Q${fmt(qx)},${fmt(qy)} ${fmt(ex)},${fmt(ey)}`);
+    this.x = ex;
+    this.y = ey;
+    return this;
+  }
+
+  curveTo(cx1, cy1, cx2, cy2, x, y) {
+    const [qx1, qy1] = this.clamp(cx1, cy1);
+    const [qx2, qy2] = this.clamp(cx2, cy2);
+    const [ex, ey] = this.clamp(x, y);
+    this.commands.push(`C${fmt(qx1)},${fmt(qy1)} ${fmt(qx2)},${fmt(qy2)} ${fmt(ex)},${fmt(ey)}`);
     this.x = ex;
     this.y = ey;
     return this;
