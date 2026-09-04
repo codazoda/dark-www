@@ -1,5 +1,5 @@
 import { DRAWINGS } from "./drawings.js";
-import { createRng, randomSeed, getBounds, buildDrawing } from "./renderer.js";
+import { createRng, randomSeed, getBounds, createPath, buildDrawing } from "./renderer.js";
 
 const params = new URLSearchParams(location.search);
 const name = params.get("d") || "";
@@ -57,8 +57,9 @@ async function render() {
 
   let svg;
   try {
-    const pathData = generate(rng, bounds);
-    svg = buildDrawing({ filename: name, seed, pathData, closePath: closed });
+    const path = createPath(bounds);
+    generate(rng, bounds, path);
+    svg = buildDrawing({ filename: name, seed, path, closePath: closed });
   } catch (err) {
     showError(`"${name}" produced an invalid drawing: ${err.message}`);
     toggleLink.hidden = true;

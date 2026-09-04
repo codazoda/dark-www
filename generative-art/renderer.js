@@ -1,6 +1,6 @@
-// Shared renderer: owns the 4x6in artboard, safe margins, path validation,
-// closure, and SVG serialization. Drawing modules only ever see `rng` and
-// `bounds` — they never touch any of this directly.
+// Shared renderer: owns the 4x6in artboard, safe margins, the `createPath`
+// builder that validates as drawing modules draw through it, closure, and
+// SVG serialization.
 
 const ARTBOARD_WIDTH_IN = 4;
 const ARTBOARD_HEIGHT_IN = 6;
@@ -10,8 +10,6 @@ const ARTBOARD_HEIGHT = ARTBOARD_HEIGHT_IN * UNITS_PER_INCH;
 const SAFE_MARGIN = 0.25 * UNITS_PER_INCH;
 const STROKE_WIDTH = 1.5;
 const CLOSE_PATH_DEFAULT = true;
-
-const ARG_COUNTS = { M: 2, L: 2, C: 6, Q: 4, Z: 0 };
 
 export function randomSeed() {
   return Math.floor(Math.random() * 0xffffffff);
@@ -37,70 +35,68 @@ export function getBounds() {
   };
 }
 
-export function parsePathData(d) {
-  if (typeof d !== "string" || d.trim() === "") {
-    throw new Error("path data is empty");
-  }
-  const tokens = d.match(/[MLCQZ]|-?\d*\.?\d+(?:[eE][+-]?\d+)?/g);
-  if (!tokens) {
-    throw new Error("path data contains no recognizable commands");
-  }
-  const commands = [];
-  let i = 0;
-  while (i < tokens.length) {
-    const cmd = tokens[i];
-    if (!(cmd in ARG_COUNTS)) {
-      throw new Error(`unsupported command "${cmd}" (only M, L, C, Q, Z are allowed)`);
-    }
-    i++;
-    const argCount = ARG_COUNTS[cmd];
-    const args = [];
-    for (let a = 0; a < argCount; a++) {
-      const raw = tokens[i++];
-      const value = Number(raw);
-      if (raw === undefined || !Number.isFinite(value)) {
-        throw new Error(`command "${cmd}" is missing a finite argument`);
-      }
-      args.push(value);
-    }
-    commands.push({ cmd, args });
-  }
-  return commands;
-}
-
-export function validatePath(commands, bounds) {
-  if (!Array.isArray(commands) || commands.length === 0) {
-    throw new Error("path has no commands");
-  }
-  if (commands[0].cmd !== "M") {
-    throw new Error("path must begin with a single move command");
-  }
-  for (let i = 1; i < commands.length; i++) {
-    const cmd = commands[i].cmd;
-    if (cmd === "M") {
-      throw new Error("path contains a second move command, which would lift the tool");
-    }
-    if (cmd === "Z" && i !== commands.length - 1) {
-      throw new Error("path close command must be the last command");
-    }
-  }
+// Builder drawing modules call directly instead of returning a `d` string
+// for the renderer to reparse. Validates every call against `bounds`, so a
+// bad coordinate throws right where it was produced. Lifting the pen (a
+// second `M`) is unrepresentable rather than rejected: there's no `moveTo`.
+export function createPath(bounds) {
   const minX = bounds.x;
   const minY = bounds.y;
   const maxX = bounds.x + bounds.width;
   const maxY = bounds.y + bounds.height;
-  for (const { cmd, args } of commands) {
-    if (cmd === "Z") continue;
+  const commands = [];
+  let penX = null;
+  let penY = null;
+
+  function checkFinite(method, args) {
+    if (args.some((v) => !Number.isFinite(v))) {
+      throw new Error(`${method}(${args.join(", ")}) has a non-finite coordinate`);
+    }
+  }
+
+  function checkBounds(method, args) {
     for (let p = 0; p < args.length; p += 2) {
       const x = args[p];
       const y = args[p + 1];
-      if (!Number.isFinite(x) || !Number.isFinite(y)) {
-        throw new Error("path contains a non-finite coordinate");
-      }
       if (x < minX || x > maxX || y < minY || y > maxY) {
-        throw new Error("path leaves the artboard's safe margins");
+        throw new Error(`${method}(${args.join(", ")}) leaves the artboard's safe margins`);
       }
     }
   }
+
+  return {
+    lineTo(x, y) {
+      checkFinite("lineTo", [x, y]);
+      checkBounds("lineTo", [x, y]);
+      if (penX === x && penY === y) return;
+      commands.push({ cmd: commands.length === 0 ? "M" : "L", args: [x, y] });
+      penX = x;
+      penY = y;
+    },
+    curveTo(c1x, c1y, c2x, c2y, x, y) {
+      if (commands.length === 0) {
+        throw new Error("path must begin with a point");
+      }
+      checkFinite("curveTo", [c1x, c1y, c2x, c2y, x, y]);
+      checkBounds("curveTo", [c1x, c1y, c2x, c2y, x, y]);
+      commands.push({ cmd: "C", args: [c1x, c1y, c2x, c2y, x, y] });
+      penX = x;
+      penY = y;
+    },
+    quadTo(cx, cy, x, y) {
+      if (commands.length === 0) {
+        throw new Error("path must begin with a point");
+      }
+      checkFinite("quadTo", [cx, cy, x, y]);
+      checkBounds("quadTo", [cx, cy, x, y]);
+      commands.push({ cmd: "Q", args: [cx, cy, x, y] });
+      penX = x;
+      penY = y;
+    },
+    get commands() {
+      return commands;
+    },
+  };
 }
 
 function round(n) {
@@ -121,18 +117,18 @@ function escapeXml(s) {
   })[c]);
 }
 
-// Builds and validates the full SVG document for one generated drawing.
-// Throws with a readable message if the path data breaks the contract.
-export function buildDrawing({ filename, seed, pathData, closePath = CLOSE_PATH_DEFAULT }) {
-  const bounds = getBounds();
-  let commands = parsePathData(pathData);
-
-  const last = commands[commands.length - 1];
-  if (closePath && last.cmd !== "Z") {
-    commands = [...commands, { cmd: "Z", args: [] }];
+// Builds the full SVG document for one generated drawing. `path` is
+// already validated per-call by `createPath`; this only checks it's
+// non-empty before serializing.
+export function buildDrawing({ filename, seed, path, closePath = CLOSE_PATH_DEFAULT }) {
+  let commands = path.commands;
+  if (commands.length === 0) {
+    throw new Error("path has no commands");
   }
 
-  validatePath(commands, bounds);
+  if (closePath) {
+    commands = [...commands, { cmd: "Z", args: [] }];
+  }
 
   const d = serializeCommands(commands);
   const meta = JSON.stringify({ drawing: filename, seed });

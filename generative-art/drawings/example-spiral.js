@@ -3,7 +3,7 @@
 // all as one continuous path. Demonstrates seeded variation (loop count,
 // placement, turns, lobes, wobble) and a busier composition than a single
 // loop, within the uninterrupted-path constraint.
-export default function generate(rng, bounds) {
+export default function generate(rng, bounds, path) {
   const cols = 3;
   const rows = 3;
   const cellWidth = bounds.width / cols;
@@ -28,16 +28,11 @@ export default function generate(rng, bounds) {
     };
   });
 
-  const points = [];
   for (const cluster of clusters) {
-    for (const p of spirographLoop(rng, cluster.x, cluster.y, maxLoopRadius)) {
-      const last = points[points.length - 1];
-      if (last && last[0] === p[0] && last[1] === p[1]) continue;
-      points.push(p);
+    for (const [x, y] of spirographLoop(rng, cluster.x, cluster.y, maxLoopRadius)) {
+      path.lineTo(x, y);
     }
   }
-
-  return points.map(([x, y], i) => `${i === 0 ? "M" : "L"}${x},${y}`).join(" ");
 }
 
 // One in-out loop: radius rises from 0 back to 0, so it starts and ends at
@@ -57,7 +52,7 @@ function spirographLoop(rng, cx, cy, maxRadius) {
     const radius = inOut * baseRadius * (1 + Math.sin(angle * lobes) * wobble);
     const x = cx + Math.cos(angle) * radius;
     const y = cy + Math.sin(angle) * radius;
-    points.push([round(x), round(y)]);
+    points.push([x, y]);
   }
   return points;
 }
@@ -67,8 +62,4 @@ function shuffle(arr, rng) {
     const j = Math.floor(rng() * (i + 1));
     [arr[i], arr[j]] = [arr[j], arr[i]];
   }
-}
-
-function round(n) {
-  return Math.round(n * 1000) / 1000;
 }
