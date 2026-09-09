@@ -214,8 +214,10 @@
   .catalog-terms .sep { color: var(--soft); font-weight: 400; margin: 0 .5em; }
 
   /* One series per card. Compact grid: 1 column on the narrowest phones,
-     2 columns once there's room, 3 on a wide screen. Never a lone orphan
-     row that looks broken — 6 series divide cleanly by 1, 2, and 3. */
+     2 columns once there's room, 3 on a wide screen. Right now there is
+     only one series for sale, so the grid holds a single card — it's
+     capped and centred rather than stretched across the row. As more
+     series are added the multi-column rules below take over again. */
   .grid {
     list-style: none;
     margin: 0;
@@ -230,6 +232,11 @@
   @media (min-width: 900px) {
     .grid { grid-template-columns: repeat(3, 1fr); }
   }
+  /* A lone series shouldn't sit in a third of the row looking unfinished. */
+  .grid:has(> li:only-child) {
+    grid-template-columns: minmax(0, 340px);
+    justify-content: center;
+  }
   .card {
     display: flex;
     flex-direction: column;
@@ -242,8 +249,8 @@
     background: var(--art-bg);
   }
 
-  /* Every art image shows at the 4×6 card aspect. The placeholder previews
-     are already 4:6; real low-res scans dropped in are cropped to match. */
+  /* Every art image shows at the 4×6 card aspect. The Series 01 scan is
+     already 4:6; any future scan dropped in is cropped to match. */
   .hero figure img,
   .process figure img,
   .card figure img {
@@ -357,13 +364,13 @@
   <section class="hero" aria-labelledby="hero-h">
     <div class="wrap">
       <figure>
-        <img src="images/series-01.png" width="360" height="540"
-             alt="Series 01, “Woven Loop” — low-resolution preview of the drawing that represents this series (placeholder art). The original you receive is a unique hand-plotted variation, not this exact drawing.">
+        <img src="images/series-01.jpg" width="350" height="525"
+             alt="Series 01, “Pine” — low-resolution scan of the retained drawing for this series: a pine tree built from straight inked strokes fanning out from a single trunk line. The original you receive is a unique hand-plotted variation, not this exact drawing.">
       </figure>
       <div>
         <p class="eyebrow">Hand-plotted originals</p>
         <h1 id="hero-h">Buy a series. Get one of its 25 originals.</h1>
-        <p>Each series starts from one generative drawing. I keep and scan
+        <p>Each series starts from one drawing I ink by hand. I keep and scan
            that drawing, then plot 25 related 4×6 cards one at a time on a pen
            plotter. Every card in a series shares the design and no two are the
            same line. You buy the series; I ship one of its remaining
@@ -380,19 +387,20 @@
   <section class="process" aria-labelledby="process-h">
     <div class="wrap">
       <figure>
-        <img src="images/series-01.png" width="360" height="540"
-             alt="The drawing that represents Series 01 — shown here as the low-resolution page preview. Subscribers receive a separate high-resolution printable file of it by email.">
-        <figcaption>Series 01 — the retained drawing. Its low-resolution preview is above; subscribers get the high-resolution file.</figcaption>
+        <img src="images/series-01.jpg" width="320" height="480"
+             alt="The retained drawing for Series 01, “Pine” — shown here as the low-resolution page scan. Subscribers receive a separate high-resolution printable file of it by email.">
+        <figcaption>Series 01, “Pine” — the retained drawing (0/25). Its low-resolution scan is above; subscribers get the high-resolution file.</figcaption>
       </figure>
       <div>
         <p class="eyebrow">How a series works</p>
         <h2 id="process-h">One drawing kept, 25 originals sold</h2>
         <dl>
           <dt>1 retained drawing — free print, digital only</dt>
-          <dd>The first plot of a new design. I keep it, scan it at high
-              resolution, and that scan becomes the series' free print for
-              mailing-list subscribers. The page shows only a deliberately
-              low-resolution preview of it — never the printable file.</dd>
+          <dd>The first inked drawing of a new design, numbered 0/25. I keep
+              it, scan it at high resolution, and that scan becomes the series'
+              free print for mailing-list subscribers. The page shows only a
+              deliberately low-resolution scan of it — never the printable
+              file.</dd>
           <dt>25 originals — physical, $25 each</dt>
           <dd>Drawn individually on the plotter as related variations of the
               same design. You buy the <em>series</em>, not a numbered piece;
@@ -411,114 +419,46 @@
       <h2 id="catalog-h">Available series</h2>
       <p class="catalog-terms">$25 per original <span class="sep">·</span> edition of 25 <span class="sep">·</span> free U.S. shipping</p>
       <p class="note">
-        Every image below is a single low-resolution preview that represents
-        the whole series. It is not a specific piece for sale: buy a series and
-        fulfilment ships one of its 25 unique hand-plotted originals, which will
-        differ from the drawing shown. Prototype build — the artwork is
-        placeholder pen-plotter output and each “Buy” link points at a
-        placeholder Stripe URL.
+        The image below is a single low-resolution scan of the retained
+        drawing that represents the whole series. It is not a specific piece
+        for sale: buy the series and fulfilment ships one of its 25 unique
+        hand-plotted originals, which will differ from the drawing shown.
+        Prototype build — the “Buy” link still points at a placeholder Stripe
+        URL.
       </p>
 
       <!--
         SERIES INVENTORY IS MANUAL. Each series has ONE card and ONE Stripe
-        Payment Link. To retire a sold-out series with no other code change,
-        edit its <li>:
+        Payment Link. Right now there is a single series (Series 01, "Pine") —
+        the only drawing actually available for sale.
+
+        To ADD a series: copy the <li class="card"> block below, bump the
+        number and title, point the <img> at its new images/series-NN scan,
+        write the description, and set the real Stripe Payment Link. No
+        JavaScript, no build step. Once there are two or more cards the grid
+        goes back to its 2/3-column layout on its own.
+
+        To retire a sold-out series with no other code change, edit its <li>:
           - add the class "sold"           (class="card sold")
           - replace the <p class="edition">…</p> line with
             <p class="avail" data-sold>Sold out — edition of 25 complete</p>
           - replace the <a class="buy" …>Buy — $25</a> with
             <span class="buy buy-disabled" aria-disabled="true">Sold out</span>
-        Nothing else references the series. "Series 04" below is done this way
-        as a worked example.
-
-        To ADD a series: copy any available <li class="card"> block, bump the
-        number and title, point the <img> at its new images/series-NN.png
-        preview, write the description, and set the real Stripe Payment Link.
-        No JavaScript, no build step.
+        Nothing else references the series.
       -->
       <ul class="grid">
       <li class="card">
         <figure>
-          <img src="images/series-01.png" width="360" height="540" loading="lazy"
-               alt="Series 01, “Woven Loop” — representative low-resolution preview of a single continuous pen-plotter line folding through itself (placeholder art). Your original is a unique variation, not this drawing.">
+          <img src="images/series-01.jpg" width="340" height="510" loading="lazy"
+               alt="Series 01, “Pine” — low-resolution scan of the retained drawing: a pine tree built from straight inked strokes fanning out from a single trunk line. Your original is a unique hand-plotted variation, not this drawing.">
         </figure>
         <div class="card-body">
-          <p class="ident">Series 01 · Woven Loop</p>
-          <p class="desc">A single line folded back through itself into a dense, textile-like knot.</p>
+          <p class="ident">Series 01 · Pine</p>
+          <p class="desc">A pine tree drawn entirely in straight strokes, fanning out from one long trunk line.</p>
           <p class="edition">Edition of 25 originals</p>
           <p class="repnote">Ships as a unique hand-plotted variation of this series — not the drawing shown.</p>
           <p class="price">$25 · free U.S. shipping</p>
           <a class="buy" href="https://buy.stripe.com/PLACEHOLDER_SERIES_01">Buy &mdash; $25</a>
-        </div>
-      </li>
-      <li class="card">
-        <figure>
-          <img src="images/series-02.png" width="360" height="540" loading="lazy"
-               alt="Series 02, “Tidal Drift” — representative low-resolution preview of a slow, wide pen-plotter curve drifting across the card (placeholder art). Your original is a unique variation, not this drawing.">
-        </figure>
-        <div class="card-body">
-          <p class="ident">Series 02 · Tidal Drift</p>
-          <p class="desc">Wide, slow arcs that lean the same way, like a pulled tide.</p>
-          <p class="edition">Edition of 25 originals</p>
-          <p class="repnote">Ships as a unique hand-plotted variation of this series — not the drawing shown.</p>
-          <p class="price">$25 · free U.S. shipping</p>
-          <a class="buy" href="https://buy.stripe.com/PLACEHOLDER_SERIES_02">Buy &mdash; $25</a>
-        </div>
-      </li>
-      <li class="card">
-        <figure>
-          <img src="images/series-03.png" width="360" height="540" loading="lazy"
-               alt="Series 03, “Standing Wave” — representative low-resolution preview of a tight, repeating pen-plotter oscillation (placeholder art). Your original is a unique variation, not this drawing.">
-        </figure>
-        <div class="card-body">
-          <p class="ident">Series 03 · Standing Wave</p>
-          <p class="desc">A tight oscillation that nearly repeats but never quite closes.</p>
-          <p class="edition">Edition of 25 originals</p>
-          <p class="repnote">Ships as a unique hand-plotted variation of this series — not the drawing shown.</p>
-          <p class="price">$25 · free U.S. shipping</p>
-          <a class="buy" href="https://buy.stripe.com/PLACEHOLDER_SERIES_03">Buy &mdash; $25</a>
-        </div>
-      </li>
-      <li class="card sold">
-        <figure>
-          <img src="images/series-04.png" width="360" height="540" loading="lazy"
-               alt="Series 04, “Orbit Decay” — representative low-resolution preview of a spiralling pen-plotter line winding inward (placeholder art). This series is sold out.">
-        </figure>
-        <div class="card-body">
-          <p class="ident">Series 04 · Orbit Decay</p>
-          <p class="desc">A spiral winding inward as the pendulum runs down.</p>
-          <p class="avail" data-sold>Sold out — edition of 25 complete</p>
-          <p class="repnote">Every original in this series has shipped.</p>
-          <p class="price">$25 · free U.S. shipping</p>
-          <span class="buy buy-disabled" aria-disabled="true">Sold out</span>
-        </div>
-      </li>
-      <li class="card">
-        <figure>
-          <img src="images/series-05.png" width="360" height="540" loading="lazy"
-               alt="Series 05, “Long Meander” — representative low-resolution preview of a wandering pen-plotter line that crosses the card many times (placeholder art). Your original is a unique variation, not this drawing.">
-        </figure>
-        <div class="card-body">
-          <p class="ident">Series 05 · Long Meander</p>
-          <p class="desc">A wandering line that crosses the card again and again before settling.</p>
-          <p class="edition">Edition of 25 originals</p>
-          <p class="repnote">Ships as a unique hand-plotted variation of this series — not the drawing shown.</p>
-          <p class="price">$25 · free U.S. shipping</p>
-          <a class="buy" href="https://buy.stripe.com/PLACEHOLDER_SERIES_05">Buy &mdash; $25</a>
-        </div>
-      </li>
-      <li class="card">
-        <figure>
-          <img src="images/series-06.png" width="360" height="540" loading="lazy"
-               alt="Series 06, “Folded Field” — representative low-resolution preview of overlapping pen-plotter loops filling the card evenly (placeholder art). Your original is a unique variation, not this drawing.">
-        </figure>
-        <div class="card-body">
-          <p class="ident">Series 06 · Folded Field</p>
-          <p class="desc">Overlapping loops that fill the card with an even, woven texture.</p>
-          <p class="edition">Edition of 25 originals</p>
-          <p class="repnote">Ships as a unique hand-plotted variation of this series — not the drawing shown.</p>
-          <p class="price">$25 · free U.S. shipping</p>
-          <a class="buy" href="https://buy.stripe.com/PLACEHOLDER_SERIES_06">Buy &mdash; $25</a>
         </div>
       </li>
       </ul>
@@ -530,14 +470,14 @@
       <p class="eyebrow">Mailing list</p>
       <h2 id="prints-h">A free printable image for every series</h2>
       <figure class="prints-preview">
-        <img src="images/series-01.png" width="360" height="540"
-             alt="The Series 01 retained drawing at the same low resolution used across the catalogue — a preview, not the printable file.">
-        <figcaption>The low-resolution preview, as shown on this page.</figcaption>
+        <img src="images/series-01.jpg" width="340" height="510"
+             alt="The Series 01 retained drawing, “Pine”, at the same low resolution used across the catalogue — a scan, not the printable file.">
+        <figcaption>The low-resolution scan, as shown on this page.</figcaption>
       </figure>
       <p>Subscribe and you get the high-resolution scan of each series' retained
          drawing — a new decorative print to run off at home whenever you want
          to change what's on the wall. One image per series, free, for your
-         email address.</p>
+         email address. Series 01, “Pine”, is the first.</p>
       <p>The images on this page are deliberately low resolution: fine on
          screen, no good for printing. The file subscribers receive by email is
          the full-quality version, sized for a clean 4×6 print.</p>
