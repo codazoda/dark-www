@@ -215,9 +215,10 @@
   .catalog-terms .sep { color: var(--soft); font-weight: 400; margin: 0 .5em; }
 
   /* One series per card. Compact grid: 1 column on the narrowest phones,
-     2 columns once there's room, 3 on a wide screen. If only one series
-     is ever listed again, the grid holds a single card — it's capped and
-     centred rather than stretched across the row. */
+     2 columns once there's room, 3 on a wide screen. Right now there is
+     only one series for sale, so the grid holds a single card — it's
+     capped and centred rather than stretched across the row. As more
+     series are added the multi-column rules below take over again. */
   .grid {
     list-style: none;
     margin: 0;
@@ -427,7 +428,8 @@
 
       <!--
         SERIES INVENTORY IS MANUAL. Each series has ONE card and ONE Stripe
-        Payment Link.
+        Payment Link. Right now there is a single series (Series 01, "Pine") —
+        the only series actually available for sale.
 
         To ADD a series: copy the <li class="card"> block below, bump the
         number and title, point the <img> at its new images/series-NN scan,
@@ -456,20 +458,6 @@
           <p class="repnote">You’ll receive your own variation from this series, not the piece shown.</p>
           <p class="price">$25 · free U.S. shipping</p>
           <a class="buy" href="https://buy.stripe.com/bJe4gA5qVez00Ir16w1Nu09">Buy an original &mdash; $25</a>
-        </div>
-      </li>
-      <li class="card">
-        <figure>
-          <img src="images/series-02.jpg" width="340" height="510" loading="lazy"
-               alt="Series 02, “Game” — rocks tumbling across a screen, with a small triangular player hand-drawn in pencil on each piece, evoking an '80s arcade screen. Your original is a unique pen-plotted variation, not this exact piece.">
-        </figure>
-        <div class="card-body">
-          <p class="ident">Series 02 · Game</p>
-          <p class="desc">Rocks tumbling across a screen, each piece finished with a small triangular player hand-drawn in pencil — a nod to '80s arcade screens, all ink except that one pencil detail.</p>
-          <p class="edition">Edition of 25 originals</p>
-          <p class="repnote">You’ll receive your own variation from this series, not the piece shown.</p>
-          <p class="price">$25 · free U.S. shipping</p>
-          <a class="buy" href="https://buy.stripe.com/4gM00kcTn62ucr96qQ1Nu0a">Buy an original &mdash; $25</a>
         </div>
       </li>
       </ul>
