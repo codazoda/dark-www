@@ -44,6 +44,7 @@
     cursor: pointer;
   }
   button:focus-visible { outline: 2px dashed #fff; outline-offset: 3px; }
+  button:disabled { opacity: .85; cursor: default; }
 
   /* An incoming ?best= challenge is shown in the #status line for the whole first
      round (see #status.challenge below) and stripped from the address bar on load —
@@ -95,9 +96,11 @@
   #box.rolled #dice { display: flex; }
   #box.rolled #prompt { display: none; }
   #box.rolled #instructions { display: none; }
-  /* Rolling: dice stay hidden a moment before the new roll appears, so a repeat of the same numbers still reads as a fresh roll. */
+  /* Rolling: dice are visible and tumbling with rapidly changing faces for about
+     600ms before the final values are revealed (see #box.rolling .die below). */
   #box.rolling #prompt { display: none; }
   #box.rolling #instructions { display: none; }
+  #box.rolling #dice { display: flex; }
   .die {
     width: clamp(60px, 20vmin, 128px);
     aspect-ratio: 1;
@@ -110,6 +113,21 @@
   }
   .pip { border-radius: 50%; background: #fff; visibility: hidden; }
   .pip.on { visibility: visible; }
+  /* Tumble/bounce while rolling; the two dice run the same keyframes offset and
+     mirrored so they read as rolling independently rather than in lockstep. */
+  @keyframes dieTumble {
+    0%   { transform: rotate(0deg) translateY(0); }
+    20%  { transform: rotate(-100deg) translateY(-14%); }
+    40%  { transform: rotate(140deg) translateY(0); }
+    60%  { transform: rotate(-200deg) translateY(-10%); }
+    80%  { transform: rotate(260deg) translateY(0); }
+    100% { transform: rotate(360deg) translateY(0); }
+  }
+  #box.rolling .die { animation: dieTumble .6s ease-in-out; }
+  #box.rolling .die:nth-child(2) { animation-direction: reverse; animation-delay: .05s; }
+  @media (prefers-reduced-motion: reduce) {
+    #box.rolling .die { animation: none; }
+  }
 
   /* Score row: "Score: N" pinned left, "Today: M" pinned right, CLEAR centered
      between them on the same line. The side padding keeps a little breathing room
@@ -648,6 +666,16 @@
   }
 
   var rollTimer = null;
+  var tumbleTimer = null;
+  var isRolling = false;
+
+  function prefersReducedMotion() {
+    try {
+      return !!(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
+    } catch (e) {
+      return false;
+    }
+  }
 
   function shutCount() {
     var t = tilesEl.children;
@@ -675,14 +703,28 @@
     rollHintEl.textContent = '';
   }
 
+  // Reveal the final values: draw the dice, update labels, and mark the roll done.
+  function finishRoll(a, b) {
+    draw(dice[0], a);
+    draw(dice[1], b);
+    diceEl.setAttribute('aria-label', 'Dice: ' + a + ' and ' + b);
+    box.setAttribute('aria-label', 'Roll the dice. Showing ' + a + ' and ' + b + '.');
+    box.className = 'rolled';
+  }
+
   function roll() {
+    // Guards against the document-level keydown handler below, which can call
+    // roll() directly and would otherwise bypass the disabled <button id="box">.
+    if (isRolling) return;
     // Can't roll again until a tile has been shut since the last roll. The first
     // roll of a round is always allowed.
     if (hasRolledThisRound && shutCount() <= shutCountAtRoll) {
       showRollHint();
       return;
     }
-    if (rollTimer) clearTimeout(rollTimer);
+    // The values used by the game are generated once, up front, so the tumble
+    // animation below is purely visual and can't affect probability or state.
+    var a = rnd(), b = rnd();
     rolledSinceClear = true;
     hasRolledThisRound = true;
     shutCountAtRoll = shutCount();
@@ -695,25 +737,45 @@
       resetStatusLine();
     }
     markPlayedToday();
-    // Hide whatever's showing first, so back-to-back rolls of the same numbers still look like something happened.
+
+    if (prefersReducedMotion()) {
+      finishRoll(a, b);
+      return;
+    }
+
+    // Disable the control for the duration of the tumble so one activation can
+    // only ever produce one roll, whether from a pointer tap or a keypress.
+    isRolling = true;
+    box.disabled = true;
     box.className = 'rolling';
     box.setAttribute('aria-label', 'Rolling dice');
     diceEl.setAttribute('aria-label', 'Rolling dice');
+    tumbleTimer = setInterval(function () {
+      draw(dice[0], rnd());
+      draw(dice[1], rnd());
+    }, 90);
     rollTimer = setTimeout(function () {
       rollTimer = null;
-      var a = rnd(), b = rnd();
-      draw(dice[0], a);
-      draw(dice[1], b);
-      diceEl.setAttribute('aria-label', 'Dice: ' + a + ' and ' + b);
-      box.setAttribute('aria-label', 'Roll the dice. Showing ' + a + ' and ' + b + '.');
-      box.className = 'rolled';
-    }, 200);
+      clearInterval(tumbleTimer);
+      tumbleTimer = null;
+      isRolling = false;
+      box.disabled = false;
+      finishRoll(a, b);
+    }, 600);
   }
 
   function clear() {
     if (rollTimer) {
       clearTimeout(rollTimer);
       rollTimer = null;
+    }
+    if (tumbleTimer) {
+      clearInterval(tumbleTimer);
+      tumbleTimer = null;
+    }
+    if (isRolling) {
+      isRolling = false;
+      box.disabled = false;
     }
     if (rolledSinceClear) {
       var score = computeScore();
