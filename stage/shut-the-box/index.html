@@ -137,10 +137,7 @@
      equal and a touch roomier than the old line-height stacking (which packed
      the challenge and affiliate links tight together on a phone). Affiliate
      goes first so the page's only outbound link sits away from the bottom
-     screen edge, leaving the non-interactive summary as the last line. Each
-     line shares the same 44px min-height (the affiliate link's hard
-     touch-target floor) so the three rows read as one even block instead of
-     the affiliate line looking oversized next to two shorter text lines. The
+     screen edge, leaving the non-interactive summary as the last line. The
      margin-top adds a little breathing room below the CLEAR button so the
      block doesn't crowd the score row. */
   #stats {
@@ -164,7 +161,7 @@
      is N. Can you beat it?" for the whole first round. Same slot, same height in
      every state, so the bottom of the board never shifts. */
   #status {
-    min-height: 44px;
+    min-height: 1.7em;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -199,28 +196,7 @@
     font-size: clamp(12px, 2vw, 14px);
     line-height: 1.4;
   }
-  /* min-height (not padding) gives the link's own tappable area a 44px floor
-     (the text run is already well over 44px wide) without touching the
-     visual size of the underlined text; inline-flex centers that text in the
-     taller box so it lines up with the equal-height status and summary rows. */
-  #affiliate a {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    min-height: 44px;
-    padding: 0 6px;
-    color: rgba(255, 255, 255, .6);
-    text-decoration: underline;
-  }
-
-  /* Matches #status and #affiliate a's 44px row height so all three bottom
-     lines consume the same vertical space. */
-  #statSummary {
-    min-height: 44px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-  }
+  #affiliate a { color: rgba(255, 255, 255, .6); text-decoration: underline; }
 
   /* Twelve tiles across a phone are too thin to tap; wrap to two rows of six. */
   @media (max-width: 600px) {
