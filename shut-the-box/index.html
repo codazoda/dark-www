@@ -150,10 +150,12 @@
     font-size: clamp(14px, 3.4vw, 16px);
   }
 
-  /* The three bottom lines — summary, status/challenge, affiliate — sit in a
+  /* The three bottom lines — affiliate, status/challenge, summary — sit in a
      flex column with one shared gap, so the vertical spacing between them is
      equal and a touch roomier than the old line-height stacking (which packed
-     the challenge and affiliate links tight together on a phone). The
+     the challenge and affiliate links tight together on a phone). Affiliate
+     goes first so the page's only outbound link sits away from the bottom
+     screen edge, leaving the non-interactive summary as the last line. The
      margin-top adds a little breathing room below the CLEAR button so the
      block doesn't crowd the score row. */
   #stats {
@@ -203,8 +205,9 @@
     cursor: pointer;
   }
 
-  /* One compact affiliate line in normal flow, just below the status line: same
-     text as before, muted grey, underlined, no rule or border of its own. */
+  /* One compact affiliate line in normal flow, now the first of the three
+     bottom lines: same text as before, muted grey, underlined, no rule or
+     border of its own. */
   #affiliate {
     margin: 0;
     text-align: center;
@@ -237,9 +240,9 @@
     <span id="statToday">Today: &ndash;</span>
   </div>
   <div id="stats">
-    <div id="statSummary">Best: &ndash; &middot; Games: 0 &middot; Shut: 0</div>
+    <p id="affiliate"><a id="affiliateLink" href="https://amzn.to/45SaAk9" target="_blank" rel="noopener nofollow sponsored">Buy Shut the Box on Amazon (affiliate link)</a></p>
     <div id="status" class="streak" aria-live="polite">Streak: 0 days</div>
-    <p id="affiliate"><a href="https://amzn.to/45SaAk9" target="_blank" rel="noopener nofollow sponsored">Buy Shut the Box on Amazon (affiliate link)</a></p>
+    <div id="statSummary">Best: &ndash; &middot; Games: 0 &middot; Shut: 0</div>
   </div>
 <script>
   var STATS_KEY = "shutTheBox.stats";
@@ -801,6 +804,25 @@
 
   box.addEventListener('click', roll);
   document.getElementById('clear').addEventListener('click', clear);
+
+  // Installed-PWA browser handoff for the affiliate link. The plain href/target="_blank"
+  // above is the real link and the fallback for no-JS, keyboard activation, and every
+  // ordinary browser tab, where it already opens a normal new tab/window. iOS already
+  // hands target="_blank" links from a standalone home-screen app to Safari, so it needs
+  // no help. Android's installed-PWA (WebAPK) host instead opens such links in a Custom
+  // Tab layered over the same app task — still an embedded view, not the device's normal
+  // browser — so only there we intercept the tap and re-dispatch it as an explicit
+  // android.intent.action.VIEW intent with no target package, which resolves through the
+  // user's actual default browser instead.
+  var affiliateLink = document.getElementById('affiliateLink');
+  var isStandalone = window.matchMedia('(display-mode: standalone)').matches || navigator.standalone === true;
+  if (affiliateLink && isStandalone && /Android/i.test(navigator.userAgent)) {
+    affiliateLink.addEventListener('click', function (e) {
+      e.preventDefault();
+      var target = affiliateLink.href.replace(/^https?:\/\//, '');
+      location.href = 'intent://' + target + '#Intent;scheme=https;action=android.intent.action.VIEW;end';
+    });
+  }
 
   document.addEventListener('keydown', function (e) {
     if (e.key !== 'Enter' && e.key !== ' ') return;
