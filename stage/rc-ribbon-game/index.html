@@ -1,0 +1,799 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>RC Ribbon Game</title>
+<meta name="description" content="Steer a tiny RC plane through colored ribbons in this fast, instructions-free browser game. No account, no install, no ads.">
+<style>
+  :root { color-scheme: dark; }
+  * { box-sizing: border-box; }
+  html, body { height: 100%; }
+  body {
+    margin: 0;
+    background: #000;
+    color: #fff;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    height: 100dvh;
+    -webkit-tap-highlight-color: transparent;
+  }
+  #stage {
+    position: relative;
+    flex: 1;
+    min-height: 0;
+    overflow: hidden;
+    touch-action: none;
+  }
+  canvas {
+    position: absolute;
+    inset: 0;
+    display: block;
+    width: 100%;
+    height: 100%;
+  }
+  #hud {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    display: none;
+    justify-content: space-between;
+    padding: 8px 12px;
+    font-size: clamp(13px, 2.6vw, 18px);
+    letter-spacing: .04em;
+    pointer-events: none;
+    text-shadow: 0 0 4px #000, 0 0 4px #000;
+  }
+  #stage.playing #hud { display: flex; }
+
+  .overlay {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 14px;
+    padding: 16px;
+    text-align: center;
+    background: rgba(0, 0, 0, .82);
+  }
+  .overlay[hidden] { display: none; }
+  .overlay h1 { margin: 0; font-size: clamp(20px, 5vw, 34px); letter-spacing: .05em; }
+  .overlay p { margin: 0; max-width: 34em; font-size: clamp(13px, 2.6vw, 16px); color: rgba(255, 255, 255, .75); }
+  .bigbtn {
+    font: inherit;
+    color: #000;
+    background: #fff;
+    border: none;
+    border-radius: 0;
+    padding: 14px 36px;
+    font-size: clamp(16px, 3.4vw, 22px);
+    font-weight: 700;
+    letter-spacing: .08em;
+    cursor: pointer;
+    min-height: 44px;
+  }
+  .bigbtn:focus-visible { outline: 3px dashed #fff; outline-offset: 4px; }
+  .bigbtn:disabled { opacity: .5; cursor: default; }
+  #finalScore { font-size: clamp(15px, 3vw, 20px); }
+
+  .overlay p.rotateHint { color: #ffd54f; font-weight: 700; }
+  .overlay p.motionStatus { min-height: 1.4em; }
+
+  #pauseOverlay {
+    background: rgba(0, 0, 0, .7);
+    font-size: clamp(16px, 4vw, 24px);
+    letter-spacing: .08em;
+  }
+
+  #touchControls {
+    position: absolute;
+    right: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    display: none;
+    flex-direction: column;
+    gap: 12px;
+  }
+  #stage.playing #touchControls { display: flex; }
+  #touchControls button {
+    font: inherit;
+    color: #fff;
+    background: rgba(255, 255, 255, .08);
+    border: 2px solid #fff;
+    border-radius: 8px;
+    width: 64px;
+    height: 64px;
+    font-size: 26px;
+    line-height: 1;
+    cursor: pointer;
+    touch-action: none;
+    -webkit-user-select: none;
+    user-select: none;
+    -webkit-touch-callout: none;
+  }
+  #touchControls button:active,
+  #touchControls button.held {
+    background: rgba(255, 255, 255, .3);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    * { animation-duration: .001ms !important; transition-duration: .001ms !important; }
+  }
+</style>
+</head>
+<body>
+  <div id="stage">
+    <canvas id="game" aria-hidden="true"></canvas>
+
+    <div id="hud">
+      <span id="statScore">Score: 0</span>
+      <span id="statMisses">Misses left: 3</span>
+    </div>
+
+    <div id="touchControls">
+      <button id="btnUp" type="button" aria-label="Steer up">&#9650;</button>
+      <button id="btnDown" type="button" aria-label="Steer down">&#9660;</button>
+    </div>
+
+    <div id="startScreen" class="overlay">
+      <h1>RC Ribbon Game</h1>
+      <p>Fly your RC plane through the ribbons. Miss three and it's over.<br>
+      Tilt your phone left/right to steer &middot; or Up/Down, W/S, or the on-screen arrows.</p>
+      <p id="rotateHintStart" class="rotateHint" hidden>Rotate your phone to landscape to play.</p>
+      <p id="motionStatusStart" class="motionStatus" aria-live="polite"></p>
+      <button id="playBtn" class="bigbtn" type="button" autofocus>Play</button>
+    </div>
+
+    <div id="gameOverScreen" class="overlay" hidden>
+      <h1>Run Over</h1>
+      <p id="finalScore">Score: 0</p>
+      <p id="rotateHintOver" class="rotateHint" hidden>Rotate your phone to landscape to play again.</p>
+      <p id="motionStatusOver" class="motionStatus" aria-live="polite"></p>
+      <button id="againBtn" class="bigbtn" type="button">Play Again</button>
+    </div>
+
+    <div id="pauseOverlay" class="overlay" hidden aria-live="polite">
+      <p id="pauseMessage">Paused</p>
+    </div>
+  </div>
+
+<script>
+(() => {
+  "use strict";
+
+  const stage = document.getElementById('stage');
+  const canvas = document.getElementById('game');
+  const ctx = canvas.getContext('2d');
+  const statScoreEl = document.getElementById('statScore');
+  const statMissesEl = document.getElementById('statMisses');
+  const startScreen = document.getElementById('startScreen');
+  const gameOverScreen = document.getElementById('gameOverScreen');
+  const pauseOverlay = document.getElementById('pauseOverlay');
+  const pauseMessageEl = document.getElementById('pauseMessage');
+  const finalScoreEl = document.getElementById('finalScore');
+  const playBtn = document.getElementById('playBtn');
+  const againBtn = document.getElementById('againBtn');
+  const btnUp = document.getElementById('btnUp');
+  const btnDown = document.getElementById('btnDown');
+  const rotateHintStart = document.getElementById('rotateHintStart');
+  const rotateHintOver = document.getElementById('rotateHintOver');
+  const motionStatusEls = [
+    document.getElementById('motionStatusStart'),
+    document.getElementById('motionStatusOver'),
+  ];
+
+  const RIBBON_COLORS = ['#ff5252', '#ffa726', '#ffee58', '#66bb6a', '#26c6da', '#ec407a', '#42a5f5'];
+  const MAX_MISSES = 3;
+
+  const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  // Logical (CSS-pixel) stage size. Every game coordinate is derived from
+  // this each frame, so the same layout scales to any aspect ratio instead
+  // of assuming a fixed canvas resolution.
+  let W = 0, H = 0;
+
+  function resize() {
+    const rect = stage.getBoundingClientRect();
+    W = rect.width;
+    H = rect.height;
+    const dpr = window.devicePixelRatio || 1;
+    canvas.width = Math.round(W * dpr);
+    canvas.height = Math.round(H * dpr);
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    if (state.screen !== 'playing') {
+      state.planeY = H / 2;
+    } else {
+      state.planeY = clamp(state.planeY, planeMinY(), planeMaxY());
+    }
+    updateOrientationUI();
+  }
+
+  // --- Orientation gating -------------------------------------------------
+  function isLandscapeViewport() {
+    return window.innerWidth > window.innerHeight;
+  }
+
+  function updateOrientationUI() {
+    const landscape = isLandscapeViewport();
+    state.landscape = landscape;
+    playBtn.hidden = !landscape;
+    rotateHintStart.hidden = landscape;
+    againBtn.hidden = !landscape;
+    rotateHintOver.hidden = landscape;
+    syncPause();
+  }
+
+  function clamp(v, lo, hi) { return Math.min(hi, Math.max(lo, v)); }
+  function randBetween(lo, hi) { return lo + Math.random() * (hi - lo); }
+
+  function planeX() { return W * 0.16; }
+  function planeHalfLen() { return clamp(Math.min(W, H) * 0.09, 18, 34); }
+  function planeHalfHeight() { return clamp(Math.min(W, H) * 0.06, 12, 22); }
+  function planeMinY() { return planeHalfHeight() + 4; }
+  function planeMaxY() { return H - planeHalfHeight() - 4; }
+
+  const state = {
+    screen: 'start', // 'start' | 'playing' | 'gameover'
+    paused: false,
+    planeY: 0,
+    planeVy: 0,
+    planeTilt: 0,
+    elapsed: 0,
+    score: 0,
+    misses: 0,
+    ribbons: [],
+    effects: [],
+    spawnTimer: 0,
+    nextSpawnIn: 0,
+    keys: { up: false, down: false },
+    touch: { up: false, down: false },
+    landscape: true,
+  };
+
+  // Motion lives outside `state` because it tracks the phone's sensor and
+  // permission across the whole page lifetime, not just one run -- the
+  // listener is attached once, ever, and only the calibration fields get
+  // reset on each Play/Play Again tap.
+  const motion = {
+    listenerAttached: false,
+    busy: false, // mid setup (requesting permission / calibrating) -- blocks duplicate starts
+    active: false, // calibrated and supplying steering input for the current run
+    neutral: null, // radians, roll angle captured as "level" at calibration
+    rawRoll: null, // radians, latest raw sample; null until a valid one arrives
+    smoothedRoll: 0,
+    value: 0, // -1..1 steering value, after dead zone/curve/smoothing
+  };
+
+  // Difficulty ramps from 0 to 1 over the first 45 seconds of a run, then
+  // holds steady, so a run keeps getting harder without becoming unfair
+  // to someone who survives a long time.
+  function difficultyFactor() {
+    return clamp(state.elapsed / 45, 0, 1);
+  }
+
+  function resetRun() {
+    state.planeY = H / 2;
+    state.planeTilt = 0;
+    state.elapsed = 0;
+    state.score = 0;
+    state.misses = 0;
+    state.ribbons = [];
+    state.effects = [];
+    state.spawnTimer = 0;
+    state.nextSpawnIn = randBetween(0.5, 1.0);
+    state.paused = false;
+    updateHud();
+  }
+
+  function updateHud() {
+    statScoreEl.textContent = 'Score: ' + state.score;
+    statMissesEl.textContent = 'Misses left: ' + (MAX_MISSES - state.misses);
+  }
+
+  function startGame() {
+    resetRun();
+    state.screen = 'playing';
+    stage.classList.add('playing');
+    startScreen.hidden = true;
+    gameOverScreen.hidden = true;
+    pauseOverlay.hidden = true;
+  }
+
+  function endGame() {
+    state.screen = 'gameover';
+    stage.classList.remove('playing');
+    motion.active = false;
+    motion.value = 0;
+    finalScoreEl.textContent = 'Score: ' + state.score;
+    gameOverScreen.hidden = false;
+  }
+
+  playBtn.addEventListener('click', beginMotionSetupAndStart);
+  againBtn.addEventListener('click', beginMotionSetupAndStart);
+
+  // --- Input -----------------------------------------------------------
+  // Net direction is (down - up) for digital input; holding both cancels
+  // out rather than leaving one input "stuck" winning arbitrarily. An
+  // actively held key or on-screen button overrides tilt entirely;
+  // otherwise the analog motion value (already -1..1) drives the plane.
+  function netDirection() {
+    const up = state.keys.up || state.touch.up;
+    const down = state.keys.down || state.touch.down;
+    if (up || down) return (down ? 1 : 0) - (up ? 1 : 0);
+    return motion.active ? motion.value : 0;
+  }
+
+  window.addEventListener('keydown', (e) => {
+    if (e.key === 'ArrowUp' || e.key === 'w' || e.key === 'W') {
+      state.keys.up = true;
+      e.preventDefault();
+    } else if (e.key === 'ArrowDown' || e.key === 's' || e.key === 'S') {
+      state.keys.down = true;
+      e.preventDefault();
+    } else if (e.key === ' ' || e.key === 'Spacebar' || e.key === 'Enter') {
+      // Space/Enter start a run from either the start screen or the game
+      // over screen, so a keyboard player never has to reach for the mouse
+      // or rely on a button still holding focus.
+      if ((state.screen === 'start' || state.screen === 'gameover') && state.landscape) {
+        e.preventDefault();
+        beginMotionSetupAndStart();
+      }
+    }
+  });
+  window.addEventListener('keyup', (e) => {
+    if (e.key === 'ArrowUp' || e.key === 'w' || e.key === 'W') state.keys.up = false;
+    else if (e.key === 'ArrowDown' || e.key === 's' || e.key === 'S') state.keys.down = false;
+  });
+  // Losing keyboard focus (alt-tab, devtools, etc.) must not leave a key
+  // latched "held" forever.
+  window.addEventListener('blur', () => {
+    state.keys.up = false;
+    state.keys.down = false;
+    state.touch.up = false;
+    state.touch.down = false;
+    motion.value = 0;
+    btnUp.classList.remove('held');
+    btnDown.classList.remove('held');
+  });
+
+  function bindHold(btn, prop) {
+    const clear = () => { state.touch[prop] = false; btn.classList.remove('held'); };
+    btn.addEventListener('pointerdown', (e) => {
+      e.preventDefault();
+      btn.setPointerCapture(e.pointerId);
+      state.touch[prop] = true;
+      btn.classList.add('held');
+    });
+    btn.addEventListener('pointerup', clear);
+    btn.addEventListener('pointercancel', clear);
+    btn.addEventListener('lostpointercapture', clear);
+    btn.addEventListener('contextmenu', (e) => e.preventDefault());
+  }
+  bindHold(btnUp, 'up');
+  bindHold(btnDown, 'down');
+
+  // --- Motion (tilt steering) --------------------------------------------
+  // A small dead zone absorbs sensor noise/drift near level, then the
+  // steering value ramps up smoothly and reaches full speed at ~30 deg.
+  const DEAD_ZONE_DEG = 4;
+  const FULL_TILT_DEG = 30;
+  // Flip to -1 if on-device testing shows tilt steering the plane backwards.
+  const TILT_SIGN = 1;
+  const CALIBRATION_TIMEOUT_MS = 2500;
+
+  function angleToSteer(deltaRad) {
+    const deg = deltaRad * 180 / Math.PI * TILT_SIGN;
+    const mag = Math.abs(deg);
+    if (mag <= DEAD_ZONE_DEG) return 0;
+    const eased = clamp((mag - DEAD_ZONE_DEG) / (FULL_TILT_DEG - DEAD_ZONE_DEG), 0, 1);
+    return eased * Math.sign(deg);
+  }
+
+  function currentScreenAngle() {
+    if (screen.orientation && typeof screen.orientation.angle === 'number') return screen.orientation.angle;
+    if (typeof window.orientation === 'number') return window.orientation;
+    return 90; // gameplay requires landscape, so assume landscape-primary if unknown
+  }
+
+  // Rotates the device's raw x/y gravity components into landscape screen
+  // space, so the same physical left/right tilt reads the same regardless
+  // of whether the phone is held landscape-left or landscape-right.
+  function landscapeGravityXY(gx, gy) {
+    const angle = currentScreenAngle();
+    if (angle === 90 || angle === -270) return { x: -gy, y: gx };
+    if (angle === -90 || angle === 270) return { x: gy, y: -gx };
+    return { x: gx, y: gy };
+  }
+
+  function handleDeviceMotion(e) {
+    const g = e.accelerationIncludingGravity;
+    if (!g) return;
+    const gx = g.x, gy = g.y;
+    if (typeof gx !== 'number' || typeof gy !== 'number' || !isFinite(gx) || !isFinite(gy)) return;
+    const { x, y } = landscapeGravityXY(gx, gy);
+    const roll = Math.atan2(x, -y);
+    if (isFinite(roll)) motion.rawRoll = roll;
+  }
+
+  function attachMotionListenerOnce() {
+    if (motion.listenerAttached) return;
+    motion.listenerAttached = true;
+    window.addEventListener('devicemotion', handleDeviceMotion);
+  }
+
+  function requestMotionPermission() {
+    if (typeof DeviceMotionEvent === 'undefined') return Promise.resolve('unsupported');
+    if (typeof DeviceMotionEvent.requestPermission === 'function') {
+      return DeviceMotionEvent.requestPermission()
+        .then((result) => (result === 'granted' ? 'granted' : 'denied'))
+        .catch(() => 'denied');
+    }
+    return Promise.resolve('granted');
+  }
+
+  function setMotionStatus(text) {
+    for (const el of motionStatusEls) el.textContent = text;
+  }
+
+  function setButtonsBusy(busy) {
+    playBtn.disabled = busy;
+    againBtn.disabled = busy;
+  }
+
+  // Called only from the Play/Play Again click and Space/Enter handlers, so
+  // the permission prompt stays inside that user gesture on iOS Safari.
+  // Recalibrates from scratch every tap: a fresh neutral pose, and a fresh
+  // sample (never a stale one left over from a previous run) before play
+  // begins. Never blocks play outright -- permission/sensor failure falls
+  // back to keyboard/on-screen controls after a brief explanation.
+  function beginMotionSetupAndStart() {
+    if (motion.busy) return;
+    motion.busy = true;
+    setButtonsBusy(true);
+    motion.active = false;
+    motion.value = 0;
+    motion.neutral = null;
+    motion.rawRoll = null;
+    setMotionStatus('Hold comfortably…');
+
+    function finishSetup(message) {
+      if (!message) {
+        setMotionStatus('');
+        motion.busy = false;
+        setButtonsBusy(false);
+        startGame();
+        return;
+      }
+      setMotionStatus(message);
+      setTimeout(() => {
+        setMotionStatus('');
+        motion.busy = false;
+        setButtonsBusy(false);
+        startGame();
+      }, 1100);
+    }
+
+    requestMotionPermission().then((result) => {
+      if (result !== 'granted') {
+        finishSetup(result === 'unsupported'
+          ? 'Tilt controls aren’t available on this device — use the keyboard or on-screen arrows.'
+          : 'Motion permission denied — use the keyboard or on-screen arrows.');
+        return;
+      }
+      attachMotionListenerOnce();
+      setMotionStatus('Calibrating…');
+      const deadline = performance.now() + CALIBRATION_TIMEOUT_MS;
+      (function poll() {
+        if (motion.rawRoll !== null) {
+          motion.neutral = motion.rawRoll;
+          motion.smoothedRoll = motion.rawRoll;
+          motion.value = 0;
+          motion.active = true;
+          finishSetup('');
+          return;
+        }
+        if (performance.now() >= deadline) {
+          finishSetup('No motion data — use the keyboard or on-screen arrows.');
+          return;
+        }
+        requestAnimationFrame(poll);
+      })();
+    });
+  }
+
+  function updateMotionSteer(dt) {
+    if (!motion.active) return;
+    if (motion.rawRoll === null) { motion.value = 0; return; }
+    const alpha = Math.min(1, dt * 8);
+    motion.smoothedRoll += (motion.rawRoll - motion.smoothedRoll) * alpha;
+    motion.value = angleToSteer(motion.smoothedRoll - motion.neutral);
+  }
+
+  // --- Pause on lost focus ----------------------------------------------
+  // Freezing the loop (rather than just hiding an overlay) means no time
+  // passes while hidden, so no ribbon can silently cross the miss line.
+  function syncPause() {
+    if (state.screen !== 'playing') { pauseOverlay.hidden = true; return; }
+    const portrait = !state.landscape;
+    const lostFocus = document.hidden || !document.hasFocus();
+    state.paused = portrait || lostFocus;
+    pauseMessageEl.textContent = portrait
+      ? 'Rotate your phone to landscape to continue.'
+      : 'Paused';
+    pauseOverlay.hidden = !state.paused;
+  }
+  document.addEventListener('visibilitychange', syncPause);
+  window.addEventListener('blur', syncPause);
+  window.addEventListener('focus', syncPause);
+
+  // --- Ribbons -----------------------------------------------------------
+  // A ribbon is a horizontal squiggly line (like a spell-check underline)
+  // scrolling in from the right at a fixed height. Cutting one means
+  // steering the plane's vertical span into that line's band while it's
+  // passing through the plane's column -- reached by flying up from below
+  // or down from above, never by starting the run already parked there.
+  function spawnRibbon() {
+    const diff = difficultyFactor();
+    const width = clamp(W * 0.22, 90, 220);
+    const bandHalf = clamp(H * 0.07, 20, 34);
+    const amp = clamp(bandHalf * 0.35, 6, 12);
+    const margin = bandHalf + 10;
+    state.ribbons.push({
+      x: W + width,
+      y: randBetween(margin, H - margin),
+      width,
+      bandHalf,
+      amp,
+      color: RIBBON_COLORS[Math.floor(Math.random() * RIBBON_COLORS.length)],
+      speed: W * (0.42 + diff * 0.28),
+      resolved: null, // null | 'cut' | 'miss'
+      sawOutsideBand: false,
+    });
+  }
+
+  function spawnCutEffect(ribbon) {
+    state.effects.push({
+      type: 'cut',
+      x: ribbon.x, y: ribbon.y, width: ribbon.width, amp: ribbon.amp,
+      color: ribbon.color,
+      t: 0,
+      dur: reducedMotion ? 0.25 : 0.45,
+    });
+  }
+
+  function spawnMissEffect(ribbon) {
+    state.effects.push({
+      type: 'miss',
+      x: Math.max(ribbon.x, 8), y: ribbon.y,
+      t: 0,
+      dur: reducedMotion ? 0.3 : 0.5,
+    });
+  }
+
+  function updateRibbons(dt) {
+    const px = planeX();
+    const pHalfLen = planeHalfLen();
+    const pHalfH = planeHalfHeight();
+    const planeTop = state.planeY - pHalfH;
+    const planeBottom = state.planeY + pHalfH;
+
+    for (const r of state.ribbons) {
+      r.x -= r.speed * dt;
+
+      if (!r.resolved) {
+        const overlapsX = r.x <= px + pHalfLen && r.x + r.width >= px - pHalfLen;
+        if (overlapsX) {
+          const bandTop = r.y - r.bandHalf;
+          const bandBottom = r.y + r.bandHalf;
+          const inBand = bandTop <= planeBottom && bandBottom >= planeTop;
+          if (inBand) {
+            // Only counts as a cut once the plane has been seen clearly
+            // outside the band during this same pass -- a genuine crossing,
+            // not a "straight on" hit from already sitting in the band
+            // before the ribbon's leading edge arrives.
+            if (r.sawOutsideBand) {
+              r.resolved = 'cut';
+              state.score += 1;
+              updateHud();
+              spawnCutEffect(r);
+            }
+          } else {
+            r.sawOutsideBand = true;
+          }
+        }
+      }
+
+      if (!r.resolved && r.x + r.width < 0) {
+        r.resolved = 'miss';
+        state.misses += 1;
+        updateHud();
+        spawnMissEffect(r);
+      }
+    }
+
+    state.ribbons = state.ribbons.filter((r) => r.x + r.width > -40);
+
+    if (state.misses >= MAX_MISSES) {
+      endGame();
+    }
+  }
+
+  function updateEffects(dt) {
+    for (const fx of state.effects) fx.t += dt;
+    state.effects = state.effects.filter((fx) => fx.t < fx.dur);
+  }
+
+  // --- Update / draw loop -------------------------------------------------
+  const MAX_TILT = 0.5; // radians, ~29 degrees at full climb/dive
+
+  function update(dt) {
+    state.elapsed += dt;
+
+    updateMotionSteer(dt);
+    const dir = netDirection();
+    const speed = H * 1.15;
+    state.planeY = clamp(state.planeY + dir * speed * dt, planeMinY(), planeMaxY());
+
+    // Ease the tilt toward the input direction rather than snapping, so the
+    // plane visibly noses up climbing and down diving instead of staying level.
+    const targetTilt = dir * MAX_TILT;
+    state.planeTilt += (targetTilt - state.planeTilt) * Math.min(1, dt * 10);
+
+    const diff = difficultyFactor();
+    state.spawnTimer += dt;
+    if (state.spawnTimer >= state.nextSpawnIn) {
+      state.spawnTimer = 0;
+      state.nextSpawnIn = randBetween(0.9 - diff * 0.45, 1.6 - diff * 0.75);
+      spawnRibbon();
+    }
+
+    updateRibbons(dt);
+    updateEffects(dt);
+  }
+
+  // A small high-wing taildragger silhouette (Piper Cub-ish), drawn nose to
+  // the right, tail to the left, so it reads as flying into the ribbons.
+  function drawPlane() {
+    const x = planeX();
+    const y = state.planeY;
+    const L = planeHalfLen() * 2;
+    const Hh = planeHalfHeight() * 2;
+    ctx.save();
+    ctx.translate(x, y);
+    ctx.rotate(state.planeTilt);
+    ctx.strokeStyle = '#fff';
+    ctx.lineWidth = 3;
+    ctx.lineJoin = 'round';
+    ctx.lineCap = 'round';
+
+    ctx.beginPath();
+    ctx.moveTo(L * 0.50, 0);
+    ctx.lineTo(L * 0.40, -Hh * 0.16);
+    ctx.quadraticCurveTo(L * 0.18, -Hh * 0.30, L * 0.02, -Hh * 0.34);
+    ctx.lineTo(-L * 0.28, -Hh * 0.18);
+    ctx.lineTo(-L * 0.46, -Hh * 0.32);
+    ctx.lineTo(-L * 0.50, -Hh * 0.08);
+    ctx.lineTo(-L * 0.34, Hh * 0.02);
+    ctx.quadraticCurveTo(-L * 0.10, Hh * 0.20, L * 0.20, Hh * 0.16);
+    ctx.lineTo(L * 0.42, Hh * 0.06);
+    ctx.closePath();
+    ctx.stroke();
+
+    // High wing with two struts down to the fuselage.
+    ctx.beginPath();
+    ctx.moveTo(-L * 0.12, -Hh * 0.34);
+    ctx.lineTo(L * 0.16, -Hh * 0.34);
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(-L * 0.04, -Hh * 0.34);
+    ctx.lineTo(-L * 0.10, -Hh * 0.14);
+    ctx.moveTo(L * 0.08, -Hh * 0.34);
+    ctx.lineTo(L * 0.06, -Hh * 0.20);
+    ctx.stroke();
+
+    ctx.beginPath();
+    ctx.arc(L * 0.52, 0, 3, 0, Math.PI * 2);
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.arc(-L * 0.36, Hh * 0.12, 2.5, 0, Math.PI * 2);
+    ctx.stroke();
+
+    ctx.restore();
+  }
+
+  // Draws a horizontal squiggly line (spell-check style) from x to x+width,
+  // centered on y. Using absolute x in the phase (not a 0..1 fraction) keeps
+  // the wave pattern continuous as the ribbon scrolls, so it flows smoothly.
+  function drawSquiggle(x, y, width, amplitude) {
+    const wavelength = 18;
+    const steps = Math.max(6, Math.round(width / 4));
+    ctx.beginPath();
+    for (let i = 0; i <= steps; i++) {
+      const px = x + (i / steps) * width;
+      const py = y + Math.sin((px / wavelength) * Math.PI * 2) * amplitude;
+      if (i === 0) ctx.moveTo(px, py); else ctx.lineTo(px, py);
+    }
+    ctx.stroke();
+  }
+
+  function drawRibbon(r) {
+    if (r.resolved === 'cut' || r.resolved === 'miss') return;
+    ctx.strokeStyle = r.color;
+    ctx.lineWidth = 3;
+    drawSquiggle(r.x, r.y, r.width, r.amp);
+  }
+
+  function drawCutEffect(fx) {
+    const p = fx.t / fx.dur;
+    ctx.strokeStyle = fx.color;
+    ctx.lineWidth = 3;
+    if (reducedMotion) {
+      // Reduced motion: a brief static highlight instead of the halves
+      // flying apart.
+      ctx.globalAlpha = 1 - p;
+      drawSquiggle(fx.x, fx.y, fx.width, fx.amp);
+      ctx.globalAlpha = 1;
+      return;
+    }
+    const spread = p * 22;
+    const fade = 1 - p;
+    ctx.globalAlpha = fade;
+    // top half drifts up, bottom half drifts down
+    drawSquiggle(fx.x, fx.y - spread - 2, fx.width, fx.amp);
+    drawSquiggle(fx.x, fx.y + spread + 2, fx.width, fx.amp);
+    ctx.globalAlpha = 1;
+  }
+
+  function drawMissEffect(fx) {
+    const p = fx.t / fx.dur;
+    const size = 14;
+    ctx.globalAlpha = reducedMotion ? (p < 1 ? 1 : 0) : 1 - p;
+    ctx.strokeStyle = '#fff';
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.moveTo(fx.x - size, fx.y - size);
+    ctx.lineTo(fx.x + size, fx.y + size);
+    ctx.moveTo(fx.x + size, fx.y - size);
+    ctx.lineTo(fx.x - size, fx.y + size);
+    ctx.stroke();
+    ctx.globalAlpha = 1;
+  }
+
+  function draw() {
+    ctx.clearRect(0, 0, W, H);
+    if (state.screen === 'start') return;
+    for (const r of state.ribbons) drawRibbon(r);
+    drawPlane();
+    for (const fx of state.effects) {
+      if (fx.type === 'cut') drawCutEffect(fx);
+      else drawMissEffect(fx);
+    }
+  }
+
+  let lastTime = null;
+  function loop(ts) {
+    if (lastTime === null) lastTime = ts;
+    let dt = (ts - lastTime) / 1000;
+    lastTime = ts;
+    dt = Math.min(dt, 0.05);
+
+    if (state.screen === 'playing' && !state.paused) {
+      update(dt);
+    }
+    draw();
+    requestAnimationFrame(loop);
+  }
+
+  window.addEventListener('resize', resize);
+  window.addEventListener('orientationchange', resize);
+  resize();
+  requestAnimationFrame(loop);
+})();
+</script>
+</body>
+</html>
