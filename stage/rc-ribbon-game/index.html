@@ -284,6 +284,14 @@
     } else if (e.key === 'ArrowDown' || e.key === 's' || e.key === 'S') {
       state.keys.down = true;
       e.preventDefault();
+    } else if (e.key === ' ' || e.key === 'Spacebar' || e.key === 'Enter') {
+      // Space/Enter start a run from either the start screen or the game
+      // over screen, so a keyboard player never has to reach for the mouse
+      // or rely on a button still holding focus.
+      if (state.screen === 'start' || state.screen === 'gameover') {
+        e.preventDefault();
+        startGame();
+      }
     }
   });
   window.addEventListener('keyup', (e) => {
