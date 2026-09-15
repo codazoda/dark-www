@@ -351,6 +351,7 @@
       color: RIBBON_COLORS[Math.floor(Math.random() * RIBBON_COLORS.length)],
       speed: W * (0.42 + diff * 0.28),
       resolved: null, // null | 'cut' | 'miss'
+      sawOutsideBand: false,
     });
   }
 
@@ -388,11 +389,20 @@
         if (overlapsX) {
           const bandTop = r.y - r.bandHalf;
           const bandBottom = r.y + r.bandHalf;
-          if (bandTop <= planeBottom && bandBottom >= planeTop) {
-            r.resolved = 'cut';
-            state.score += 1;
-            updateHud();
-            spawnCutEffect(r);
+          const inBand = bandTop <= planeBottom && bandBottom >= planeTop;
+          if (inBand) {
+            // Only counts as a cut once the plane has been seen clearly
+            // outside the band during this same pass -- a genuine crossing,
+            // not a "straight on" hit from already sitting in the band
+            // before the ribbon's leading edge arrives.
+            if (r.sawOutsideBand) {
+              r.resolved = 'cut';
+              state.score += 1;
+              updateHud();
+              spawnCutEffect(r);
+            }
+          } else {
+            r.sawOutsideBand = true;
           }
         }
       }
