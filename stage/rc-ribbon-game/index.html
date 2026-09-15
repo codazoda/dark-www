@@ -211,6 +211,8 @@
     paused: false,
     planeY: 0,
     planeVy: 0,
+    planeTilt: 0,
+    elapsed: 0,
     score: 0,
     misses: 0,
     ribbons: [],
@@ -221,8 +223,17 @@
     touch: { up: false, down: false },
   };
 
+  // Difficulty ramps from 0 to 1 over the first 45 seconds of a run, then
+  // holds steady, so a run keeps getting harder without becoming unfair
+  // to someone who survives a long time.
+  function difficultyFactor() {
+    return clamp(state.elapsed / 45, 0, 1);
+  }
+
   function resetRun() {
     state.planeY = H / 2;
+    state.planeTilt = 0;
+    state.elapsed = 0;
     state.score = 0;
     state.misses = 0;
     state.ribbons = [];
@@ -320,17 +331,25 @@
   window.addEventListener('focus', syncPause);
 
   // --- Ribbons -----------------------------------------------------------
+  // A ribbon is a horizontal squiggly line (like a spell-check underline)
+  // scrolling in from the right at a fixed height. Cutting one means
+  // steering the plane's vertical span into that line's band while it's
+  // passing through the plane's column -- reached by flying up from below
+  // or down from above, never by starting the run already parked there.
   function spawnRibbon() {
-    const height = clamp(H * 0.24, 46, 130);
-    const width = clamp(W * 0.03, 14, 26);
-    const margin = height / 2 + 6;
+    const diff = difficultyFactor();
+    const width = clamp(W * 0.22, 90, 220);
+    const bandHalf = clamp(H * 0.07, 20, 34);
+    const amp = clamp(bandHalf * 0.35, 6, 12);
+    const margin = bandHalf + 10;
     state.ribbons.push({
       x: W + width,
       y: randBetween(margin, H - margin),
       width,
-      height,
+      bandHalf,
+      amp,
       color: RIBBON_COLORS[Math.floor(Math.random() * RIBBON_COLORS.length)],
-      speed: W * 0.42,
+      speed: W * (0.42 + diff * 0.28),
       resolved: null, // null | 'cut' | 'miss'
     });
   }
@@ -338,7 +357,7 @@
   function spawnCutEffect(ribbon) {
     state.effects.push({
       type: 'cut',
-      x: ribbon.x, y: ribbon.y, width: ribbon.width, height: ribbon.height,
+      x: ribbon.x, y: ribbon.y, width: ribbon.width, amp: ribbon.amp,
       color: ribbon.color,
       t: 0,
       dur: reducedMotion ? 0.25 : 0.45,
@@ -367,9 +386,9 @@
       if (!r.resolved) {
         const overlapsX = r.x <= px + pHalfLen && r.x + r.width >= px - pHalfLen;
         if (overlapsX) {
-          const ribbonTop = r.y - r.height / 2;
-          const ribbonBottom = r.y + r.height / 2;
-          if (ribbonTop <= planeBottom && ribbonBottom >= planeTop) {
+          const bandTop = r.y - r.bandHalf;
+          const bandBottom = r.y + r.bandHalf;
+          if (bandTop <= planeBottom && bandBottom >= planeTop) {
             r.resolved = 'cut';
             state.score += 1;
             updateHud();
@@ -399,15 +418,25 @@
   }
 
   // --- Update / draw loop -------------------------------------------------
+  const MAX_TILT = 0.5; // radians, ~29 degrees at full climb/dive
+
   function update(dt) {
+    state.elapsed += dt;
+
     const dir = netDirection();
     const speed = H * 1.15;
     state.planeY = clamp(state.planeY + dir * speed * dt, planeMinY(), planeMaxY());
 
+    // Ease the tilt toward the input direction rather than snapping, so the
+    // plane visibly noses up climbing and down diving instead of staying level.
+    const targetTilt = dir * MAX_TILT;
+    state.planeTilt += (targetTilt - state.planeTilt) * Math.min(1, dt * 10);
+
+    const diff = difficultyFactor();
     state.spawnTimer += dt;
     if (state.spawnTimer >= state.nextSpawnIn) {
       state.spawnTimer = 0;
-      state.nextSpawnIn = randBetween(0.9, 1.6);
+      state.nextSpawnIn = randBetween(0.9 - diff * 0.45, 1.6 - diff * 0.75);
       spawnRibbon();
     }
 
@@ -415,25 +444,68 @@
     updateEffects(dt);
   }
 
+  // A small high-wing taildragger silhouette (Piper Cub-ish), drawn nose to
+  // the right, tail to the left, so it reads as flying into the ribbons.
   function drawPlane() {
     const x = planeX();
     const y = state.planeY;
     const L = planeHalfLen() * 2;
     const Hh = planeHalfHeight() * 2;
+    ctx.save();
+    ctx.translate(x, y);
+    ctx.rotate(state.planeTilt);
     ctx.strokeStyle = '#fff';
     ctx.lineWidth = 3;
     ctx.lineJoin = 'round';
+    ctx.lineCap = 'round';
+
     ctx.beginPath();
-    ctx.moveTo(x + L * 0.5, y);
-    ctx.lineTo(x - L * 0.1, y - Hh * 0.5);
-    ctx.lineTo(x - L * 0.5, y - Hh * 0.18);
-    ctx.lineTo(x - L * 0.32, y);
-    ctx.lineTo(x - L * 0.5, y + Hh * 0.18);
-    ctx.lineTo(x - L * 0.1, y + Hh * 0.5);
+    ctx.moveTo(L * 0.50, 0);
+    ctx.lineTo(L * 0.40, -Hh * 0.16);
+    ctx.quadraticCurveTo(L * 0.18, -Hh * 0.30, L * 0.02, -Hh * 0.34);
+    ctx.lineTo(-L * 0.28, -Hh * 0.18);
+    ctx.lineTo(-L * 0.46, -Hh * 0.32);
+    ctx.lineTo(-L * 0.50, -Hh * 0.08);
+    ctx.lineTo(-L * 0.34, Hh * 0.02);
+    ctx.quadraticCurveTo(-L * 0.10, Hh * 0.20, L * 0.20, Hh * 0.16);
+    ctx.lineTo(L * 0.42, Hh * 0.06);
     ctx.closePath();
     ctx.stroke();
+
+    // High wing with two struts down to the fuselage.
     ctx.beginPath();
-    ctx.arc(x + L * 0.52, y, 3, 0, Math.PI * 2);
+    ctx.moveTo(-L * 0.12, -Hh * 0.34);
+    ctx.lineTo(L * 0.16, -Hh * 0.34);
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(-L * 0.04, -Hh * 0.34);
+    ctx.lineTo(-L * 0.10, -Hh * 0.14);
+    ctx.moveTo(L * 0.08, -Hh * 0.34);
+    ctx.lineTo(L * 0.06, -Hh * 0.20);
+    ctx.stroke();
+
+    ctx.beginPath();
+    ctx.arc(L * 0.52, 0, 3, 0, Math.PI * 2);
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.arc(-L * 0.36, Hh * 0.12, 2.5, 0, Math.PI * 2);
+    ctx.stroke();
+
+    ctx.restore();
+  }
+
+  // Draws a horizontal squiggly line (spell-check style) from x to x+width,
+  // centered on y. Using absolute x in the phase (not a 0..1 fraction) keeps
+  // the wave pattern continuous as the ribbon scrolls, so it flows smoothly.
+  function drawSquiggle(x, y, width, amplitude) {
+    const wavelength = 18;
+    const steps = Math.max(6, Math.round(width / 4));
+    ctx.beginPath();
+    for (let i = 0; i <= steps; i++) {
+      const px = x + (i / steps) * width;
+      const py = y + Math.sin((px / wavelength) * Math.PI * 2) * amplitude;
+      if (i === 0) ctx.moveTo(px, py); else ctx.lineTo(px, py);
+    }
     ctx.stroke();
   }
 
@@ -441,17 +513,7 @@
     if (r.resolved === 'cut' || r.resolved === 'miss') return;
     ctx.strokeStyle = r.color;
     ctx.lineWidth = 3;
-    const top = r.y - r.height / 2;
-    const bottom = r.y + r.height / 2;
-    const notch = r.width * 0.6;
-    ctx.beginPath();
-    ctx.moveTo(r.x, top);
-    ctx.lineTo(r.x + r.width, top);
-    ctx.lineTo(r.x + r.width - notch, r.y);
-    ctx.lineTo(r.x + r.width, bottom);
-    ctx.lineTo(r.x, bottom);
-    ctx.closePath();
-    ctx.stroke();
+    drawSquiggle(r.x, r.y, r.width, r.amp);
   }
 
   function drawCutEffect(fx) {
@@ -462,22 +524,16 @@
       // Reduced motion: a brief static highlight instead of the halves
       // flying apart.
       ctx.globalAlpha = 1 - p;
-      ctx.strokeRect(fx.x - fx.width / 2, fx.y - fx.height / 2, fx.width * 1.6, fx.height);
+      drawSquiggle(fx.x, fx.y, fx.width, fx.amp);
       ctx.globalAlpha = 1;
       return;
     }
     const spread = p * 22;
     const fade = 1 - p;
     ctx.globalAlpha = fade;
-    // top half drifts up-left, bottom half drifts down-left
-    ctx.beginPath();
-    ctx.moveTo(fx.x, fx.y - spread - 2);
-    ctx.lineTo(fx.x + fx.width, fx.y - spread - 2);
-    ctx.stroke();
-    ctx.beginPath();
-    ctx.moveTo(fx.x, fx.y + spread + 2);
-    ctx.lineTo(fx.x + fx.width, fx.y + spread + 2);
-    ctx.stroke();
+    // top half drifts up, bottom half drifts down
+    drawSquiggle(fx.x, fx.y - spread - 2, fx.width, fx.amp);
+    drawSquiggle(fx.x, fx.y + spread + 2, fx.width, fx.amp);
     ctx.globalAlpha = 1;
   }
 
