@@ -379,9 +379,9 @@
 
   // --- Motion (tilt steering) --------------------------------------------
   // A small dead zone absorbs sensor noise/drift near level, then the
-  // steering value ramps up smoothly and reaches full speed at ~30 deg.
-  const DEAD_ZONE_DEG = 4;
-  const FULL_TILT_DEG = 30;
+  // steering value ramps up smoothly and reaches full speed at ~18 deg.
+  const DEAD_ZONE_DEG = 2;
+  const FULL_TILT_DEG = 18;
   // Flip to -1 if on-device testing shows tilt steering the plane backwards.
   const TILT_SIGN = 1;
   const CALIBRATION_TIMEOUT_MS = 2500;
