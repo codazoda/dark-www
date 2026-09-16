@@ -78,7 +78,11 @@
     min-height: 44px;
   }
   .bigbtn:focus-visible { outline: 3px dashed #fff; outline-offset: 4px; }
+  .bigbtn:disabled { opacity: .5; cursor: default; }
   #finalScore { font-size: clamp(15px, 3vw, 20px); }
+
+  .overlay p.rotateHint { color: #ffd54f; font-weight: 700; }
+  .overlay p.motionStatus { min-height: 1.4em; }
 
   #pauseOverlay {
     background: rgba(0, 0, 0, .7);
@@ -139,18 +143,22 @@
     <div id="startScreen" class="overlay">
       <h1>RC Ribbon Game</h1>
       <p>Fly your RC plane through the ribbons. Miss three and it's over.<br>
-      Up/Down or W/S to steer &middot; or use the on-screen arrows.</p>
+      Tilt your phone left/right to steer &middot; or Up/Down, W/S, or the on-screen arrows.</p>
+      <p id="rotateHintStart" class="rotateHint" hidden>Rotate your phone to landscape to play.</p>
+      <p id="motionStatusStart" class="motionStatus" aria-live="polite"></p>
       <button id="playBtn" class="bigbtn" type="button" autofocus>Play</button>
     </div>
 
     <div id="gameOverScreen" class="overlay" hidden>
       <h1>Run Over</h1>
       <p id="finalScore">Score: 0</p>
+      <p id="rotateHintOver" class="rotateHint" hidden>Rotate your phone to landscape to play again.</p>
+      <p id="motionStatusOver" class="motionStatus" aria-live="polite"></p>
       <button id="againBtn" class="bigbtn" type="button">Play Again</button>
     </div>
 
     <div id="pauseOverlay" class="overlay" hidden aria-live="polite">
-      <p>Paused</p>
+      <p id="pauseMessage">Paused</p>
     </div>
   </div>
 
@@ -166,11 +174,18 @@
   const startScreen = document.getElementById('startScreen');
   const gameOverScreen = document.getElementById('gameOverScreen');
   const pauseOverlay = document.getElementById('pauseOverlay');
+  const pauseMessageEl = document.getElementById('pauseMessage');
   const finalScoreEl = document.getElementById('finalScore');
   const playBtn = document.getElementById('playBtn');
   const againBtn = document.getElementById('againBtn');
   const btnUp = document.getElementById('btnUp');
   const btnDown = document.getElementById('btnDown');
+  const rotateHintStart = document.getElementById('rotateHintStart');
+  const rotateHintOver = document.getElementById('rotateHintOver');
+  const motionStatusEls = [
+    document.getElementById('motionStatusStart'),
+    document.getElementById('motionStatusOver'),
+  ];
 
   const RIBBON_COLORS = ['#ff5252', '#ffa726', '#ffee58', '#66bb6a', '#26c6da', '#ec407a', '#42a5f5'];
   const MAX_MISSES = 3;
@@ -195,6 +210,22 @@
     } else {
       state.planeY = clamp(state.planeY, planeMinY(), planeMaxY());
     }
+    updateOrientationUI();
+  }
+
+  // --- Orientation gating -------------------------------------------------
+  function isLandscapeViewport() {
+    return window.innerWidth > window.innerHeight;
+  }
+
+  function updateOrientationUI() {
+    const landscape = isLandscapeViewport();
+    state.landscape = landscape;
+    playBtn.hidden = !landscape;
+    rotateHintStart.hidden = landscape;
+    againBtn.hidden = !landscape;
+    rotateHintOver.hidden = landscape;
+    syncPause();
   }
 
   function clamp(v, lo, hi) { return Math.min(hi, Math.max(lo, v)); }
@@ -221,6 +252,21 @@
     nextSpawnIn: 0,
     keys: { up: false, down: false },
     touch: { up: false, down: false },
+    landscape: true,
+  };
+
+  // Motion lives outside `state` because it tracks the phone's sensor and
+  // permission across the whole page lifetime, not just one run -- the
+  // listener is attached once, ever, and only the calibration fields get
+  // reset on each Play/Play Again tap.
+  const motion = {
+    listenerAttached: false,
+    busy: false, // mid setup (requesting permission / calibrating) -- blocks duplicate starts
+    active: false, // calibrated and supplying steering input for the current run
+    neutral: null, // radians, roll angle captured as "level" at calibration
+    rawRoll: null, // radians, latest raw sample; null until a valid one arrives
+    smoothedRoll: 0,
+    value: 0, // -1..1 steering value, after dead zone/curve/smoothing
   };
 
   // Difficulty ramps from 0 to 1 over the first 45 seconds of a run, then
@@ -261,20 +307,25 @@
   function endGame() {
     state.screen = 'gameover';
     stage.classList.remove('playing');
+    motion.active = false;
+    motion.value = 0;
     finalScoreEl.textContent = 'Score: ' + state.score;
     gameOverScreen.hidden = false;
   }
 
-  playBtn.addEventListener('click', startGame);
-  againBtn.addEventListener('click', startGame);
+  playBtn.addEventListener('click', beginMotionSetupAndStart);
+  againBtn.addEventListener('click', beginMotionSetupAndStart);
 
   // --- Input -----------------------------------------------------------
-  // Net direction is (down - up); holding both cancels out rather than
-  // leaving one input "stuck" winning arbitrarily.
+  // Net direction is (down - up) for digital input; holding both cancels
+  // out rather than leaving one input "stuck" winning arbitrarily. An
+  // actively held key or on-screen button overrides tilt entirely;
+  // otherwise the analog motion value (already -1..1) drives the plane.
   function netDirection() {
     const up = state.keys.up || state.touch.up;
     const down = state.keys.down || state.touch.down;
-    return (down ? 1 : 0) - (up ? 1 : 0);
+    if (up || down) return (down ? 1 : 0) - (up ? 1 : 0);
+    return motion.active ? motion.value : 0;
   }
 
   window.addEventListener('keydown', (e) => {
@@ -288,9 +339,9 @@
       // Space/Enter start a run from either the start screen or the game
       // over screen, so a keyboard player never has to reach for the mouse
       // or rely on a button still holding focus.
-      if (state.screen === 'start' || state.screen === 'gameover') {
+      if ((state.screen === 'start' || state.screen === 'gameover') && state.landscape) {
         e.preventDefault();
-        startGame();
+        beginMotionSetupAndStart();
       }
     }
   });
@@ -305,6 +356,7 @@
     state.keys.down = false;
     state.touch.up = false;
     state.touch.down = false;
+    motion.value = 0;
     btnUp.classList.remove('held');
     btnDown.classList.remove('held');
   });
@@ -325,14 +377,155 @@
   bindHold(btnUp, 'up');
   bindHold(btnDown, 'down');
 
+  // --- Motion (tilt steering) --------------------------------------------
+  // A small dead zone absorbs sensor noise/drift near level, then the
+  // steering value ramps up smoothly and reaches full speed at ~30 deg.
+  const DEAD_ZONE_DEG = 4;
+  const FULL_TILT_DEG = 30;
+  // Flip to -1 if on-device testing shows tilt steering the plane backwards.
+  const TILT_SIGN = 1;
+  const CALIBRATION_TIMEOUT_MS = 2500;
+
+  function angleToSteer(deltaRad) {
+    const deg = deltaRad * 180 / Math.PI * TILT_SIGN;
+    const mag = Math.abs(deg);
+    if (mag <= DEAD_ZONE_DEG) return 0;
+    const eased = clamp((mag - DEAD_ZONE_DEG) / (FULL_TILT_DEG - DEAD_ZONE_DEG), 0, 1);
+    return eased * Math.sign(deg);
+  }
+
+  function currentScreenAngle() {
+    if (screen.orientation && typeof screen.orientation.angle === 'number') return screen.orientation.angle;
+    if (typeof window.orientation === 'number') return window.orientation;
+    return 90; // gameplay requires landscape, so assume landscape-primary if unknown
+  }
+
+  // Rotates the device's raw x/y gravity components into landscape screen
+  // space, so the same physical left/right tilt reads the same regardless
+  // of whether the phone is held landscape-left or landscape-right.
+  function landscapeGravityXY(gx, gy) {
+    const angle = currentScreenAngle();
+    if (angle === 90 || angle === -270) return { x: -gy, y: gx };
+    if (angle === -90 || angle === 270) return { x: gy, y: -gx };
+    return { x: gx, y: gy };
+  }
+
+  function handleDeviceMotion(e) {
+    const g = e.accelerationIncludingGravity;
+    if (!g) return;
+    const gx = g.x, gy = g.y;
+    if (typeof gx !== 'number' || typeof gy !== 'number' || !isFinite(gx) || !isFinite(gy)) return;
+    const { x, y } = landscapeGravityXY(gx, gy);
+    const roll = Math.atan2(x, -y);
+    if (isFinite(roll)) motion.rawRoll = roll;
+  }
+
+  function attachMotionListenerOnce() {
+    if (motion.listenerAttached) return;
+    motion.listenerAttached = true;
+    window.addEventListener('devicemotion', handleDeviceMotion);
+  }
+
+  function requestMotionPermission() {
+    if (typeof DeviceMotionEvent === 'undefined') return Promise.resolve('unsupported');
+    if (typeof DeviceMotionEvent.requestPermission === 'function') {
+      return DeviceMotionEvent.requestPermission()
+        .then((result) => (result === 'granted' ? 'granted' : 'denied'))
+        .catch(() => 'denied');
+    }
+    return Promise.resolve('granted');
+  }
+
+  function setMotionStatus(text) {
+    for (const el of motionStatusEls) el.textContent = text;
+  }
+
+  function setButtonsBusy(busy) {
+    playBtn.disabled = busy;
+    againBtn.disabled = busy;
+  }
+
+  // Called only from the Play/Play Again click and Space/Enter handlers, so
+  // the permission prompt stays inside that user gesture on iOS Safari.
+  // Recalibrates from scratch every tap: a fresh neutral pose, and a fresh
+  // sample (never a stale one left over from a previous run) before play
+  // begins. Never blocks play outright -- permission/sensor failure falls
+  // back to keyboard/on-screen controls after a brief explanation.
+  function beginMotionSetupAndStart() {
+    if (motion.busy) return;
+    motion.busy = true;
+    setButtonsBusy(true);
+    motion.active = false;
+    motion.value = 0;
+    motion.neutral = null;
+    motion.rawRoll = null;
+    setMotionStatus('Hold comfortably…');
+
+    function finishSetup(message) {
+      if (!message) {
+        setMotionStatus('');
+        motion.busy = false;
+        setButtonsBusy(false);
+        startGame();
+        return;
+      }
+      setMotionStatus(message);
+      setTimeout(() => {
+        setMotionStatus('');
+        motion.busy = false;
+        setButtonsBusy(false);
+        startGame();
+      }, 1100);
+    }
+
+    requestMotionPermission().then((result) => {
+      if (result !== 'granted') {
+        finishSetup(result === 'unsupported'
+          ? 'Tilt controls aren’t available on this device — use the keyboard or on-screen arrows.'
+          : 'Motion permission denied — use the keyboard or on-screen arrows.');
+        return;
+      }
+      attachMotionListenerOnce();
+      setMotionStatus('Calibrating…');
+      const deadline = performance.now() + CALIBRATION_TIMEOUT_MS;
+      (function poll() {
+        if (motion.rawRoll !== null) {
+          motion.neutral = motion.rawRoll;
+          motion.smoothedRoll = motion.rawRoll;
+          motion.value = 0;
+          motion.active = true;
+          finishSetup('');
+          return;
+        }
+        if (performance.now() >= deadline) {
+          finishSetup('No motion data — use the keyboard or on-screen arrows.');
+          return;
+        }
+        requestAnimationFrame(poll);
+      })();
+    });
+  }
+
+  function updateMotionSteer(dt) {
+    if (!motion.active) return;
+    if (motion.rawRoll === null) { motion.value = 0; return; }
+    const alpha = Math.min(1, dt * 8);
+    motion.smoothedRoll += (motion.rawRoll - motion.smoothedRoll) * alpha;
+    motion.value = angleToSteer(motion.smoothedRoll - motion.neutral);
+  }
+
   // --- Pause on lost focus ----------------------------------------------
   // Freezing the loop (rather than just hiding an overlay) means no time
   // passes while hidden, so no ribbon can silently cross the miss line.
   function syncPause() {
-    const shouldPause = document.hidden || !document.hasFocus();
     if (state.screen !== 'playing') { pauseOverlay.hidden = true; return; }
-    state.paused = shouldPause;
-    pauseOverlay.hidden = !shouldPause;
+    const portrait = !state.landscape;
+    const lostFocus = document.hidden || !document.hasFocus();
+    state.paused = portrait || lostFocus;
+    pauseMessageEl.textContent = portrait
+      ? 'Rotate your phone to landscape to continue.'
+      : 'Paused';
+    pauseOverlay.hidden = !state.paused;
   }
   document.addEventListener('visibilitychange', syncPause);
   window.addEventListener('blur', syncPause);
@@ -441,6 +634,7 @@
   function update(dt) {
     state.elapsed += dt;
 
+    updateMotionSteer(dt);
     const dir = netDirection();
     const speed = H * 1.15;
     state.planeY = clamp(state.planeY + dir * speed * dt, planeMinY(), planeMaxY());
