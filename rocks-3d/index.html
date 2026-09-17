@@ -164,6 +164,11 @@
   var WARNING_MAX_DUTY = 0.9;      // visible fraction as impact approaches 0s
   var COCKPIT_MARGIN_FRAC = 0.05;  // fraction of min(cw, ch) inset for the cockpit frame
   var COCKPIT_CORNER_FRAC = 0.16;  // fraction of min(cw, ch) used by each corner bracket
+  var GAUGE_OFFSET_X = 26;         // px; ladder's x position right of the crosshair
+  var GAUGE_HALF_HEIGHT = 34;      // px; ladder extends this far above/below the crosshair
+  var GAUGE_TICK_COUNT = 5;        // fixed tick marks along the ladder, including both ends
+  var GAUGE_TICK_HALF_WIDTH = 5;   // px half-width of each tick mark
+  var GAUGE_MARKER_HALF_WIDTH = 9; // px half-width of the moving marker
   var TIER = {
     large:  { radius: 1.0,  next: 'medium', score: 20 },
     medium: { radius: 0.6,  next: 'small',  score: 50 },
@@ -530,6 +535,45 @@
     ctx.stroke();
   }
 
+  // A slim range ladder beside the crosshair. targetDepth is the depth of the
+  // rock currently under the crosshair, or null for empty space.
+  function drawDistanceGauge(targetDepth) {
+    var cx = cw / 2, cy = ch / 2;
+    var gx = cx + GAUGE_OFFSET_X;
+    var top = cy - GAUGE_HALF_HEIGHT, bottom = cy + GAUGE_HALF_HEIGHT;
+
+    ctx.strokeStyle = 'rgba(255, 255, 255, 0.4)';
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    ctx.moveTo(gx, top);
+    ctx.lineTo(gx, bottom);
+    for (var i = 0; i < GAUGE_TICK_COUNT; i++) {
+      var ty = top + (bottom - top) * (i / (GAUGE_TICK_COUNT - 1));
+      ctx.moveTo(gx - GAUGE_TICK_HALF_WIDTH, ty);
+      ctx.lineTo(gx + GAUGE_TICK_HALF_WIDTH, ty);
+    }
+    ctx.stroke();
+
+    if (targetDepth == null) {
+      ctx.font = '14px ui-monospace, SFMono-Regular, Menlo, Consolas, monospace';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillStyle = '#fff';
+      ctx.fillText('∞', gx, cy);
+      return;
+    }
+
+    var t = (DEPTH_SPAWN_MAX - targetDepth) / (DEPTH_SPAWN_MAX - DEPTH_HIT);
+    t = Math.min(1, Math.max(0, t));
+    var my = top + (bottom - top) * t;
+    ctx.strokeStyle = '#fff';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(gx - GAUGE_MARKER_HALF_WIDTH, my);
+    ctx.lineTo(gx + GAUGE_MARKER_HALF_WIDTH, my);
+    ctx.stroke();
+  }
+
   function drawCockpit() {
     ctx.strokeStyle = 'rgba(255, 255, 255, 0.3)';
     ctx.lineWidth = 1;
@@ -622,6 +666,7 @@
     var halfFovYaw = FOV_YAW / 2, halfFovPitch = fovPitch / 2;
 
     var drawList = rocks.slice().sort(function (a, b) { return b.depth - a.depth; });
+    var targetDepth = null;
     for (var i = 0; i < drawList.length; i++) {
       var rock = drawList[i];
       var offYaw = angDiff(view.yaw, rock.yaw);
@@ -632,6 +677,11 @@
       var sx = cx + (offYaw / halfFovYaw) * cx;
       var sy = cy - (offPitch / halfFovPitch) * cy;
       drawRockShape(sx, sy, r, rock.outline);
+      // Crosshair is fixed on screen while the world shakes, so test against
+      // the rock's actual shaken position, matching what's visually aimed at.
+      if (Math.hypot(sx + ox - cx, sy + oy - cy) <= r && (targetDepth == null || rock.depth < targetDepth)) {
+        targetDepth = rock.depth;
+      }
     }
 
     for (var j = 0; j < shots.length; j++) {
@@ -655,6 +705,7 @@
     drawCockpit();
     drawWarning(nowSec);
     drawCrosshair();
+    drawDistanceGauge(targetDepth);
   }
 
   var lastT = performance.now();
