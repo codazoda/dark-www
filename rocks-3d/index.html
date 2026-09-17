@@ -97,6 +97,7 @@
   <canvas id="game"></canvas>
   <div id="hud">
     <div id="score">SCORE 0000</div>
+    <div id="stageNum">STAGE 1</div>
     <div id="lives"></div>
   </div>
   <div id="overlay">
@@ -117,6 +118,7 @@
   var hintEl = document.getElementById('hint');
   var startBtn = document.getElementById('startBtn');
   var scoreEl = document.getElementById('score');
+  var stageEl = document.getElementById('stageNum');
   var livesEl = document.getElementById('lives');
 
   var isTouch = matchMedia('(pointer: coarse)').matches;
@@ -141,6 +143,7 @@
   var APPROACH_MIN = 0.055;     // depth units/sec closing speed
   var APPROACH_MAX = 0.13;
   var START_LIVES = 3;
+  var READY_DURATION = 1.2;    // sec of frozen preview before play (starts, and stage transitions)
   var WARNING_WINDOW = 12;         // sec to impact that triggers the cockpit warning
   var WARNING_CENTER_RADIUS = 20;  // px; threat within this of the crosshair counts as already faced
   var WARNING_MIN_DUTY = 0.25;     // visible fraction of each 1s cycle at the outer edge of the window
@@ -208,7 +211,7 @@
   var view = { yaw: 0, pitch: 0 };
   var rocks = [];
   var shots = [];
-  var score = 0, lives = START_LIVES, wave = 1;
+  var score = 0, lives = START_LIVES, stageNum = 1;
   var state = 'start'; // start | ready | playing | paused | gameover
   var lastShotAt = -999;
   var readyUntil = 0;
@@ -242,16 +245,16 @@
     rock.approach = randRange(APPROACH_MIN, APPROACH_MAX);
   }
 
-  function startWave(n) {
+  function startStage(n) {
     rocks = [];
     var count = 3 + n;
     for (var i = 0; i < count; i++) spawnRock('large');
   }
 
   function resetGame() {
-    score = 0; lives = START_LIVES; wave = 1; shots = [];
+    score = 0; lives = START_LIVES; stageNum = 1; shots = [];
     view.yaw = 0; view.pitch = 0;
-    startWave(wave);
+    startStage(stageNum);
     updateHUD();
   }
 
@@ -259,6 +262,7 @@
     var s = String(score);
     while (s.length < 4) s = '0' + s;
     scoreEl.textContent = 'SCORE ' + s;
+    stageEl.textContent = 'STAGE ' + stageNum;
     var full = Math.max(0, lives), empty = Math.max(0, START_LIVES - lives);
     livesEl.textContent = '●'.repeat(full) + '○'.repeat(empty);
   }
@@ -272,7 +276,16 @@
   function showOverlay(title, hint, label) {
     overlayTitle.textContent = title;
     hintEl.textContent = hint;
+    hintEl.style.display = '';
     startBtn.textContent = label;
+    startBtn.style.display = '';
+    overlay.classList.add('visible');
+  }
+  // Brief, button-less announcement shown while a stage transition freezes play.
+  function showStageOverlay(n) {
+    overlayTitle.textContent = 'STAGE ' + n;
+    hintEl.style.display = 'none';
+    startBtn.style.display = 'none';
     overlay.classList.add('visible');
   }
   function hideOverlay() { overlay.classList.remove('visible'); }
@@ -356,7 +369,7 @@
     resetGame();
     hideOverlay();
     state = 'ready';
-    readyUntil = performance.now() / 1000 + 1.2;
+    readyUntil = performance.now() / 1000 + READY_DURATION;
   }
 
   startBtn.addEventListener('click', function () {
@@ -379,7 +392,7 @@
   });
 
   function update(dt, nowSec) {
-    if (state === 'ready' && nowSec >= readyUntil) state = 'playing';
+    if (state === 'ready' && nowSec >= readyUntil) { state = 'playing'; hideOverlay(); }
     if (state !== 'playing') {
       if (shakeT > 0) shakeT = Math.max(0, shakeT - dt);
       return;
@@ -434,8 +447,12 @@
     }
 
     if (rocks.length === 0) {
-      wave++;
-      startWave(wave);
+      stageNum++;
+      startStage(stageNum);
+      updateHUD();
+      state = 'ready';
+      readyUntil = nowSec + READY_DURATION;
+      showStageOverlay(stageNum);
     }
 
     if (shakeT > 0) shakeT = Math.max(0, shakeT - dt);
