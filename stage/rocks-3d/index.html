@@ -542,7 +542,7 @@
     var gx = cx + GAUGE_OFFSET_X;
     var top = cy - GAUGE_HALF_HEIGHT, bottom = cy + GAUGE_HALF_HEIGHT;
 
-    ctx.strokeStyle = '#fff';
+    ctx.strokeStyle = 'rgba(255, 255, 255, 0.4)';
     ctx.lineWidth = 1.5;
     ctx.beginPath();
     ctx.moveTo(gx, top);
@@ -566,6 +566,7 @@
     var t = (DEPTH_SPAWN_MAX - targetDepth) / (DEPTH_SPAWN_MAX - DEPTH_HIT);
     t = Math.min(1, Math.max(0, t));
     var my = top + (bottom - top) * t;
+    ctx.strokeStyle = '#fff';
     ctx.lineWidth = 2;
     ctx.beginPath();
     ctx.moveTo(gx - GAUGE_MARKER_HALF_WIDTH, my);
