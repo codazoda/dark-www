@@ -1,0 +1,679 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Story Bank</title>
+<style>
+  :root {
+    color-scheme: light;
+    --blue: #0b5fff;
+    --text: #1a1a1a;
+    --text-secondary: #5a5a5a;
+    --border: #d9d9d9;
+    --bg: #ffffff;
+    --danger: #b3261e;
+    --hover-bg: #f2f2f2;
+    --disabled: #9fb8e8;
+    --shadow: rgba(0, 0, 0, 0.15);
+    --shadow-strong: rgba(0, 0, 0, 0.3);
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root {
+      color-scheme: dark;
+      --blue: #3b82f6;
+      --text: #f2f2f2;
+      --text-secondary: #a8a8a8;
+      --border: #3a3a3a;
+      --bg: #121212;
+      --danger: #ff6b60;
+      --hover-bg: #262626;
+      --disabled: #3a5580;
+      --shadow: rgba(0, 0, 0, 0.6);
+      --shadow-strong: rgba(0, 0, 0, 0.7);
+    }
+  }
+
+  * { box-sizing: border-box; }
+
+  [hidden] { display: none !important; }
+
+  html, body {
+    margin: 0;
+    padding: 0;
+    height: 100%;
+  }
+
+  body {
+    font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    font-size: 16px;
+    color: var(--text);
+    background: var(--bg);
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  button {
+    font: inherit;
+    color: inherit;
+  }
+
+  #app {
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+    max-width: 640px;
+    margin: 0 auto;
+    position: relative;
+  }
+
+  /* Tab header */
+  .tabs {
+    display: flex;
+    border-bottom: 1px solid var(--border);
+    flex-shrink: 0;
+  }
+
+  .tab {
+    flex: 1 1 50%;
+    background: none;
+    border: none;
+    padding: 14px 8px;
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--text-secondary);
+    cursor: pointer;
+    min-height: 44px;
+  }
+
+  .tab[aria-current="page"] {
+    color: var(--blue);
+    text-decoration: underline;
+    text-underline-offset: 4px;
+  }
+
+  .tab:focus-visible,
+  button:focus-visible,
+  a:focus-visible {
+    outline: 3px solid var(--blue);
+    outline-offset: 2px;
+  }
+
+  /* Compose header */
+  .compose-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid var(--border);
+    padding: 10px 12px;
+    flex-shrink: 0;
+  }
+
+  .cancel-btn {
+    background: none;
+    border: none;
+    font-size: 16px;
+    padding: 10px 4px;
+    min-height: 44px;
+    cursor: pointer;
+    color: var(--text);
+  }
+
+  .save-btn {
+    background: none;
+    border: none;
+    font-size: 16px;
+    font-weight: 600;
+    padding: 10px 4px;
+    min-height: 44px;
+    cursor: pointer;
+    color: var(--blue);
+    text-decoration: underline;
+    text-underline-offset: 4px;
+  }
+
+  .save-btn:disabled {
+    color: var(--disabled);
+    text-decoration: none;
+    cursor: not-allowed;
+  }
+
+  .view {
+    flex: 1 1 auto;
+    padding: 12px;
+  }
+
+  /* Stories list */
+  .story-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+  }
+
+  .story-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    padding: 12px 4px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .story-content {
+    flex: 1 1 auto;
+    min-width: 0;
+  }
+
+  .story-time {
+    display: block;
+    font-size: 14px;
+    color: var(--text-secondary);
+    margin-bottom: 4px;
+  }
+
+  .story-time .edited-tag {
+    font-style: italic;
+  }
+
+  .story-text {
+    margin: 0;
+    font-size: 16px;
+    white-space: pre-wrap;
+    word-break: break-word;
+  }
+
+  .story-actions {
+    position: relative;
+    flex-shrink: 0;
+  }
+
+  .menu-btn {
+    background: none;
+    border: none;
+    font-size: 20px;
+    line-height: 1;
+    width: 44px;
+    height: 44px;
+    cursor: pointer;
+    border-radius: 6px;
+  }
+
+  .menu-btn:hover {
+    background: var(--hover-bg);
+  }
+
+  .story-menu {
+    position: absolute;
+    right: 0;
+    top: 44px;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    box-shadow: 0 2px 8px var(--shadow);
+    z-index: 10;
+    min-width: 140px;
+    overflow: hidden;
+  }
+
+  .story-menu button {
+    display: block;
+    width: 100%;
+    text-align: left;
+    background: none;
+    border: none;
+    padding: 12px 14px;
+    font-size: 16px;
+    min-height: 44px;
+    cursor: pointer;
+  }
+
+  .story-menu button:hover {
+    background: var(--hover-bg);
+  }
+
+  .story-menu .delete-btn {
+    color: var(--danger);
+  }
+
+  .empty-state {
+    color: var(--text-secondary);
+    font-size: 16px;
+    text-align: center;
+    margin-top: 48px;
+    padding: 0 16px;
+  }
+
+  /* Compose */
+  .compose-text {
+    width: 100%;
+    min-height: 60vh;
+    border: none;
+    resize: none;
+    font: inherit;
+    font-size: 16px;
+    line-height: 1.5;
+    padding: 4px;
+    background: var(--bg);
+    color: var(--text);
+  }
+
+  .compose-text:focus {
+    outline: none;
+  }
+
+  /* Menu view */
+  .menu-action {
+    display: block;
+    width: 100%;
+    text-align: left;
+    background: none;
+    border: none;
+    border-bottom: 1px solid var(--border);
+    padding: 16px 8px;
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--blue);
+    min-height: 44px;
+    cursor: pointer;
+  }
+
+  /* Floating action button */
+  .fab {
+    position: fixed;
+    right: 20px;
+    bottom: 20px;
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    background: var(--blue);
+    color: #fff;
+    border: none;
+    font-size: 28px;
+    line-height: 1;
+    box-shadow: 0 2px 8px var(--shadow-strong);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .fab:hover {
+    filter: brightness(1.1);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    * {
+      transition: none !important;
+      animation: none !important;
+    }
+  }
+</style>
+</head>
+<body>
+  <div id="app">
+    <header id="tabs-header" class="tabs">
+      <button type="button" class="tab" id="tab-stories" data-view="stories" aria-current="page">Stories</button>
+      <button type="button" class="tab" id="tab-menu" data-view="menu">Menu</button>
+    </header>
+
+    <header id="compose-header" class="compose-header" hidden>
+      <button type="button" id="cancel-btn" class="cancel-btn">Cancel</button>
+      <button type="button" id="save-btn" class="save-btn" disabled>Save</button>
+    </header>
+
+    <main id="view-stories" class="view">
+      <ul id="story-list" class="story-list"></ul>
+      <p id="empty-state" class="empty-state" hidden>No stories yet. Tap the <strong>+</strong> button to capture your first one.</p>
+    </main>
+
+    <main id="view-compose" class="view" hidden>
+      <label for="compose-text" style="position:absolute; left:-9999px;">Story text</label>
+      <textarea id="compose-text" class="compose-text" placeholder="What do you see and what does it mean?"></textarea>
+    </main>
+
+    <main id="view-menu" class="view" hidden>
+      <button type="button" id="export-btn" class="menu-action">Export stories</button>
+    </main>
+
+    <button type="button" id="add-btn" class="fab" aria-label="New story">+</button>
+  </div>
+
+<script>
+(function () {
+  "use strict";
+
+  var STORAGE_KEY = "story-bank:entries";
+
+  var state = {
+    entries: loadEntries(),
+    view: "stories",
+    editingId: null
+  };
+
+  var elTabsHeader = document.getElementById("tabs-header");
+  var elComposeHeader = document.getElementById("compose-header");
+  var elTabStories = document.getElementById("tab-stories");
+  var elTabMenu = document.getElementById("tab-menu");
+  var elViewStories = document.getElementById("view-stories");
+  var elViewCompose = document.getElementById("view-compose");
+  var elViewMenu = document.getElementById("view-menu");
+  var elStoryList = document.getElementById("story-list");
+  var elEmptyState = document.getElementById("empty-state");
+  var elAddBtn = document.getElementById("add-btn");
+  var elCancelBtn = document.getElementById("cancel-btn");
+  var elSaveBtn = document.getElementById("save-btn");
+  var elComposeText = document.getElementById("compose-text");
+  var elExportBtn = document.getElementById("export-btn");
+
+  function loadEntries() {
+    try {
+      var raw = localStorage.getItem(STORAGE_KEY);
+      if (!raw) return [];
+      var parsed = JSON.parse(raw);
+      return Array.isArray(parsed) ? parsed : [];
+    } catch (e) {
+      return [];
+    }
+  }
+
+  function saveEntries() {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(state.entries));
+  }
+
+  function genId() {
+    if (window.crypto && window.crypto.randomUUID) {
+      return window.crypto.randomUUID();
+    }
+    return "id-" + Date.now() + "-" + Math.random().toString(36).slice(2);
+  }
+
+  function formatShort(iso) {
+    var d = new Date(iso);
+    try {
+      return d.toLocaleString(undefined, { dateStyle: "medium", timeStyle: "short" });
+    } catch (e) {
+      return d.toLocaleString();
+    }
+  }
+
+  function formatFull(iso) {
+    var d = new Date(iso);
+    try {
+      return d.toLocaleString(undefined, { dateStyle: "full", timeStyle: "medium" });
+    } catch (e) {
+      return d.toLocaleString();
+    }
+  }
+
+  function visibleEntriesSorted() {
+    return state.entries
+      .filter(function (e) { return !e.deleted; })
+      .slice()
+      .sort(function (a, b) { return b.createdAt.localeCompare(a.createdAt); });
+  }
+
+  function closeAllStoryMenus(except) {
+    var menus = elStoryList.querySelectorAll(".story-menu");
+    menus.forEach(function (m) {
+      if (m !== except) {
+        m.hidden = true;
+        var btn = m.previousElementSibling;
+        if (btn) btn.setAttribute("aria-expanded", "false");
+      }
+    });
+  }
+
+  function renderStories() {
+    var visible = visibleEntriesSorted();
+    elStoryList.innerHTML = "";
+
+    if (visible.length === 0) {
+      elEmptyState.hidden = false;
+    } else {
+      elEmptyState.hidden = true;
+    }
+
+    visible.forEach(function (entry) {
+      var li = document.createElement("li");
+      li.className = "story-item";
+      li.dataset.id = entry.id;
+
+      var content = document.createElement("div");
+      content.className = "story-content";
+
+      var time = document.createElement("time");
+      time.className = "story-time";
+      time.setAttribute("datetime", entry.createdAt);
+      var timeLabel = formatShort(entry.createdAt);
+      if (entry.editedAt) {
+        timeLabel += " ";
+        var editedSpan = document.createElement("span");
+        editedSpan.className = "edited-tag";
+        editedSpan.textContent = "(edited)";
+        time.textContent = timeLabel;
+        time.appendChild(editedSpan);
+      } else {
+        time.textContent = timeLabel;
+      }
+
+      var text = document.createElement("p");
+      text.className = "story-text";
+      text.textContent = entry.text;
+
+      content.appendChild(time);
+      content.appendChild(text);
+
+      var actions = document.createElement("div");
+      actions.className = "story-actions";
+
+      var menuBtn = document.createElement("button");
+      menuBtn.type = "button";
+      menuBtn.className = "menu-btn";
+      menuBtn.setAttribute("aria-haspopup", "true");
+      menuBtn.setAttribute("aria-expanded", "false");
+      menuBtn.setAttribute("aria-label", "Options for story from " + formatShort(entry.createdAt));
+      menuBtn.textContent = "⋮";
+
+      var menu = document.createElement("div");
+      menu.className = "story-menu";
+      menu.setAttribute("role", "menu");
+      menu.hidden = true;
+
+      var editBtn = document.createElement("button");
+      editBtn.type = "button";
+      editBtn.className = "edit-btn";
+      editBtn.setAttribute("role", "menuitem");
+      editBtn.textContent = "Edit";
+
+      var deleteBtn = document.createElement("button");
+      deleteBtn.type = "button";
+      deleteBtn.className = "delete-btn";
+      deleteBtn.setAttribute("role", "menuitem");
+      deleteBtn.textContent = "Delete";
+
+      menu.appendChild(editBtn);
+      menu.appendChild(deleteBtn);
+
+      menuBtn.addEventListener("click", function (ev) {
+        ev.stopPropagation();
+        var isOpen = !menu.hidden;
+        closeAllStoryMenus();
+        menu.hidden = isOpen;
+        menuBtn.setAttribute("aria-expanded", String(!isOpen));
+        if (!isOpen) editBtn.focus();
+      });
+
+      editBtn.addEventListener("click", function (ev) {
+        ev.stopPropagation();
+        menu.hidden = true;
+        menuBtn.setAttribute("aria-expanded", "false");
+        openCompose(entry.id);
+      });
+
+      deleteBtn.addEventListener("click", function (ev) {
+        ev.stopPropagation();
+        menu.hidden = true;
+        menuBtn.setAttribute("aria-expanded", "false");
+        if (window.confirm("Delete this story? It will be removed from the list.")) {
+          entry.deleted = true;
+          saveEntries();
+          renderStories();
+        }
+      });
+
+      actions.appendChild(menuBtn);
+      actions.appendChild(menu);
+
+      li.appendChild(content);
+      li.appendChild(actions);
+      elStoryList.appendChild(li);
+    });
+  }
+
+  document.addEventListener("click", function () {
+    closeAllStoryMenus();
+  });
+
+  document.addEventListener("keydown", function (ev) {
+    if (ev.key === "Escape") {
+      closeAllStoryMenus();
+    }
+  });
+
+  function showView(view) {
+    state.view = view;
+
+    elViewStories.hidden = view !== "stories";
+    elViewCompose.hidden = view !== "compose";
+    elViewMenu.hidden = view !== "menu";
+
+    elTabsHeader.hidden = view === "compose";
+    elComposeHeader.hidden = view !== "compose";
+
+    elAddBtn.hidden = view !== "stories";
+
+    if (view === "stories") {
+      elTabStories.setAttribute("aria-current", "page");
+      elTabMenu.removeAttribute("aria-current");
+    } else if (view === "menu") {
+      elTabMenu.setAttribute("aria-current", "page");
+      elTabStories.removeAttribute("aria-current");
+    }
+
+    if (view === "stories") {
+      renderStories();
+    }
+
+    if (view === "compose") {
+      elComposeText.focus();
+    }
+  }
+
+  function openCompose(editingId) {
+    state.editingId = editingId || null;
+    if (editingId) {
+      var entry = state.entries.find(function (e) { return e.id === editingId; });
+      elComposeText.value = entry ? entry.text : "";
+    } else {
+      elComposeText.value = "";
+    }
+    updateSaveDisabled();
+    showView("compose");
+  }
+
+  function updateSaveDisabled() {
+    elSaveBtn.disabled = elComposeText.value.trim().length === 0;
+  }
+
+  elComposeText.addEventListener("input", updateSaveDisabled);
+
+  elCancelBtn.addEventListener("click", function () {
+    state.editingId = null;
+    elComposeText.value = "";
+    showView("stories");
+  });
+
+  elSaveBtn.addEventListener("click", function () {
+    var text = elComposeText.value;
+    if (text.trim().length === 0) return;
+
+    var now = new Date().toISOString();
+
+    if (state.editingId) {
+      var entry = state.entries.find(function (e) { return e.id === state.editingId; });
+      if (entry) {
+        entry.text = text;
+        entry.editedAt = now;
+      }
+    } else {
+      state.entries.push({
+        id: genId(),
+        createdAt: now,
+        editedAt: null,
+        text: text,
+        deleted: false
+      });
+    }
+
+    saveEntries();
+    state.editingId = null;
+    elComposeText.value = "";
+    showView("stories");
+  });
+
+  elAddBtn.addEventListener("click", function () {
+    openCompose(null);
+  });
+
+  elTabStories.addEventListener("click", function () {
+    showView("stories");
+  });
+
+  elTabMenu.addEventListener("click", function () {
+    showView("menu");
+  });
+
+  function pad(n) {
+    return n < 10 ? "0" + n : String(n);
+  }
+
+  function todayFilenameDate() {
+    var d = new Date();
+    return d.getFullYear() + "-" + pad(d.getMonth() + 1) + "-" + pad(d.getDate());
+  }
+
+  function buildExportMarkdown() {
+    var visible = visibleEntriesSorted();
+    var lines = ["# Story Bank", ""];
+
+    if (visible.length === 0) {
+      lines.push("No stories have been captured.");
+    } else {
+      visible.forEach(function (entry) {
+        lines.push("## " + formatFull(entry.createdAt));
+        lines.push("");
+        lines.push(entry.text);
+        lines.push("");
+      });
+    }
+
+    return lines.join("\n").replace(/\n+$/, "\n");
+  }
+
+  elExportBtn.addEventListener("click", function () {
+    var markdown = buildExportMarkdown();
+    var blob = new Blob([markdown], { type: "text/markdown;charset=utf-8" });
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement("a");
+    a.href = url;
+    a.download = "story-bank-" + todayFilenameDate() + ".md";
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  });
+
+  showView("stories");
+})();
+</script>
+</body>
+</html>
