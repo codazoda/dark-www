@@ -13,6 +13,26 @@
     --border: #d9d9d9;
     --bg: #ffffff;
     --danger: #b3261e;
+    --hover-bg: #f2f2f2;
+    --disabled: #9fb8e8;
+    --shadow: rgba(0, 0, 0, 0.15);
+    --shadow-strong: rgba(0, 0, 0, 0.3);
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root {
+      color-scheme: dark;
+      --blue: #3b82f6;
+      --text: #f2f2f2;
+      --text-secondary: #a8a8a8;
+      --border: #3a3a3a;
+      --bg: #121212;
+      --danger: #ff6b60;
+      --hover-bg: #262626;
+      --disabled: #3a5580;
+      --shadow: rgba(0, 0, 0, 0.6);
+      --shadow-strong: rgba(0, 0, 0, 0.7);
+    }
   }
 
   * { box-sizing: border-box; }
@@ -113,7 +133,7 @@
   }
 
   .save-btn:disabled {
-    color: #9fb8e8;
+    color: var(--disabled);
     text-decoration: none;
     cursor: not-allowed;
   }
@@ -178,7 +198,7 @@
   }
 
   .menu-btn:hover {
-    background: #f2f2f2;
+    background: var(--hover-bg);
   }
 
   .story-menu {
@@ -188,7 +208,7 @@
     background: var(--bg);
     border: 1px solid var(--border);
     border-radius: 8px;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+    box-shadow: 0 2px 8px var(--shadow);
     z-index: 10;
     min-width: 140px;
     overflow: hidden;
@@ -207,7 +227,7 @@
   }
 
   .story-menu button:hover {
-    background: #f2f2f2;
+    background: var(--hover-bg);
   }
 
   .story-menu .delete-btn {
@@ -232,6 +252,8 @@
     font-size: 16px;
     line-height: 1.5;
     padding: 4px;
+    background: var(--bg);
+    color: var(--text);
   }
 
   .compose-text:focus {
@@ -267,7 +289,7 @@
     border: none;
     font-size: 28px;
     line-height: 1;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+    box-shadow: 0 2px 8px var(--shadow-strong);
     cursor: pointer;
     display: flex;
     align-items: center;
