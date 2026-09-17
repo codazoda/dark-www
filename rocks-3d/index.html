@@ -135,6 +135,8 @@
   var SHOT_START_DEPTH = 0.5;
   var SHOT_SPEED = 2.6;         // depth units/sec, outward
   var SHOT_BASE_RADIUS = 0.05;
+  var SHOT_LAUNCH_MULT = 2;     // rendered radius multiplier at the moment a shot fires
+  var SHOT_LAUNCH_TIME = 0.15;  // sec for the launch multiplier to ease back to 1x
   var DEPTH_HIT = 0.4;          // rock reaches the cockpit at this depth
   var DEPTH_SPAWN_MIN = 4.2;
   var DEPTH_SPAWN_MAX = 6;
@@ -349,7 +351,7 @@
     var now = performance.now() / 1000;
     if (now - lastShotAt < FIRE_COOLDOWN) return;
     lastShotAt = now;
-    shots.push({ yaw: view.yaw, pitch: view.pitch, depth: SHOT_START_DEPTH, life: SHOT_LIFETIME });
+    shots.push({ yaw: view.yaw, pitch: view.pitch, depth: SHOT_START_DEPTH, life: SHOT_LIFETIME, age: 0 });
   }
 
   function loseLife() {
@@ -418,6 +420,7 @@
       var s = shots[si];
       s.depth += SHOT_SPEED * dt;
       s.life -= dt;
+      s.age += dt;
       if (s.life <= 0 || s.depth > DEPTH_SPAWN_MAX + 1) shots.splice(si, 1);
     }
 
@@ -593,7 +596,10 @@
       var s = shots[j];
       var oYaw = angDiff(view.yaw, s.yaw);
       var oPitch = angDiff(view.pitch, s.pitch);
-      var sr = (K / s.depth) * SHOT_BASE_RADIUS;
+      var launchT = Math.min(s.age / SHOT_LAUNCH_TIME, 1);
+      var launchEase = launchT * (2 - launchT); // ease-out, smoothly settles at 1x
+      var launchMult = SHOT_LAUNCH_MULT - (SHOT_LAUNCH_MULT - 1) * launchEase;
+      var sr = (K / s.depth) * SHOT_BASE_RADIUS * launchMult;
       var mDeg = (sr / pxPerDeg) + 5;
       if (Math.abs(oYaw) > halfFovYaw + mDeg || Math.abs(oPitch) > halfFovPitch + mDeg) continue;
       var ssx = cx + (oYaw / halfFovYaw) * cx;
