@@ -90,6 +90,14 @@
   #startBtn:hover, #startBtn:active {
     background: rgba(255, 255, 255, 0.15);
   }
+  #flash {
+    position: absolute;
+    inset: 0;
+    background: #fff;
+    opacity: 0;
+    pointer-events: none;
+  }
+  #flash.visible { opacity: 1; }
 </style>
 </head>
 <body>
@@ -105,6 +113,7 @@
     <p id="hint"></p>
     <button id="startBtn" type="button">Start</button>
   </div>
+  <div id="flash"></div>
 </div>
 <script>
 (function () {
@@ -117,6 +126,7 @@
   var overlayTitle = overlay.querySelector('h1');
   var hintEl = document.getElementById('hint');
   var startBtn = document.getElementById('startBtn');
+  var flashEl = document.getElementById('flash');
   var scoreEl = document.getElementById('score');
   var stageEl = document.getElementById('stageNum');
   var livesEl = document.getElementById('lives');
@@ -146,6 +156,8 @@
   var APPROACH_MAX = 0.13;
   var START_LIVES = 3;
   var READY_DURATION = 1.2;    // sec of frozen preview before play (starts, and stage transitions)
+  var HIT_FLASH_DURATION = 0.15; // sec, full-stage white flash on a rock collision
+  var HIT_PAUSE_DURATION = 1.2;  // sec, total frozen pause after a non-final hit before resuming
   var WARNING_WINDOW = 12;         // sec to impact that triggers the cockpit warning
   var WARNING_CENTER_RADIUS = 20;  // px; threat within this of the crosshair counts as already faced
   var WARNING_MIN_DUTY = 0.25;     // visible fraction of each 1s cycle at the outer edge of the window
@@ -214,10 +226,11 @@
   var rocks = [];
   var shots = [];
   var score = 0, lives = START_LIVES, stageNum = 1;
-  var state = 'start'; // start | ready | playing | paused | gameover
+  var state = 'start'; // start | ready | playing | hit | paused | gameover
   var lastShotAt = -999;
   var readyUntil = 0;
   var shakeT = 0;
+  var hitFlashUntil = 0, hitPauseUntil = 0, hitFinal = false, hitOverlayShown = false;
 
   function spawnRock(tier, overrides) {
     overrides = overrides || {};
@@ -290,6 +303,14 @@
     startBtn.style.display = 'none';
     overlay.classList.add('visible');
   }
+  // Brief, button-less announcement shown while a non-final hit freezes play.
+  function showHitOverlay() {
+    overlayTitle.textContent = 'SHIP HIT';
+    hintEl.textContent = lives + (lives === 1 ? ' SHIP REMAINING' : ' SHIPS REMAINING');
+    hintEl.style.display = '';
+    startBtn.style.display = 'none';
+    overlay.classList.add('visible');
+  }
   function hideOverlay() { overlay.classList.remove('visible'); }
 
   var keys = { left: false, right: false, up: false, down: false };
@@ -354,11 +375,29 @@
     shots.push({ yaw: view.yaw, pitch: view.pitch, depth: SHOT_START_DEPTH, life: SHOT_LIFETIME, age: 0 });
   }
 
-  function loseLife() {
+  // A rock reaching the cockpit is a single collision event: one life lost,
+  // the rock respawned, and play frozen behind a flash + hit-feedback overlay
+  // until it resumes (or, on the final life, Game Over takes over instead).
+  function triggerHit(rock, nowSec) {
     lives--;
-    if (!reducedMotion) shakeT = 0.25;
+    respawnFar(rock);
     updateHUD();
-    if (lives <= 0) gameOver();
+    if (!reducedMotion) shakeT = 0.25;
+    hitFinal = lives <= 0;
+    hitOverlayShown = false;
+    hitFlashUntil = nowSec + HIT_FLASH_DURATION;
+    hitPauseUntil = nowSec + HIT_PAUSE_DURATION;
+    state = 'hit';
+    flashEl.classList.add('visible');
+  }
+
+  function updateHitState(dt, nowSec) {
+    if (shakeT > 0) shakeT = Math.max(0, shakeT - dt);
+    if (nowSec < hitFlashUntil) return;
+    flashEl.classList.remove('visible');
+    if (hitFinal) { gameOver(); return; }
+    if (!hitOverlayShown) { hitOverlayShown = true; showHitOverlay(); }
+    if (nowSec >= hitPauseUntil) { hideOverlay(); state = 'playing'; }
   }
 
   function gameOver() {
@@ -395,6 +434,9 @@
 
   function update(dt, nowSec) {
     if (state === 'ready' && nowSec >= readyUntil) { state = 'playing'; hideOverlay(); }
+
+    if (state === 'hit') { updateHitState(dt, nowSec); return; }
+
     if (state !== 'playing') {
       if (shakeT > 0) shakeT = Math.max(0, shakeT - dt);
       return;
@@ -411,8 +453,8 @@
       rock.pitch = wrap360(rock.pitch + rock.driftPitch * dt);
       rock.depth -= rock.approach * dt;
       if (rock.depth <= DEPTH_HIT) {
-        loseLife();
-        respawnFar(rock);
+        triggerHit(rock, nowSec);
+        return;
       }
     }
 
