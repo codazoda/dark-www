@@ -141,6 +141,12 @@
   var APPROACH_MIN = 0.055;     // depth units/sec closing speed
   var APPROACH_MAX = 0.13;
   var START_LIVES = 3;
+  var WARNING_WINDOW = 12;         // sec to impact that triggers the cockpit warning
+  var WARNING_CENTER_RADIUS = 20;  // px; threat within this of the crosshair counts as already faced
+  var WARNING_MIN_DUTY = 0.25;     // visible fraction of each 1s cycle at the outer edge of the window
+  var WARNING_MAX_DUTY = 0.9;      // visible fraction as impact approaches 0s
+  var COCKPIT_MARGIN_FRAC = 0.05;  // fraction of min(cw, ch) inset for the cockpit frame
+  var COCKPIT_CORNER_FRAC = 0.16;  // fraction of min(cw, ch) used by each corner bracket
   var TIER = {
     large:  { radius: 1.0,  next: 'medium', score: 20 },
     medium: { radius: 0.6,  next: 'small',  score: 50 },
@@ -465,9 +471,9 @@
   function drawCockpit() {
     ctx.strokeStyle = 'rgba(255, 255, 255, 0.3)';
     ctx.lineWidth = 1;
-    var m = Math.min(cw, ch) * 0.05;
+    var m = Math.min(cw, ch) * COCKPIT_MARGIN_FRAC;
     ctx.strokeRect(m, m, cw - 2 * m, ch - 2 * m);
-    var s = Math.min(cw, ch) * 0.16;
+    var s = Math.min(cw, ch) * COCKPIT_CORNER_FRAC;
     ctx.beginPath();
     ctx.moveTo(m, m + s); ctx.lineTo(m, m); ctx.lineTo(m + s, m);
     ctx.moveTo(cw - m - s, m); ctx.lineTo(cw - m, m); ctx.lineTo(cw - m, m + s);
@@ -476,7 +482,65 @@
     ctx.stroke();
   }
 
-  function render() {
+  // Picks the rock with the shortest time to impact within WARNING_WINDOW,
+  // then draws a pulsing red line along the cockpit edge that points at it.
+  function drawWarning(nowSec) {
+    if (state !== 'playing') return;
+
+    var threat = null, bestT = WARNING_WINDOW;
+    for (var i = 0; i < rocks.length; i++) {
+      var rock = rocks[i];
+      var t = (rock.depth - DEPTH_HIT) / rock.approach;
+      if (t <= WARNING_WINDOW && t < bestT) { bestT = t; threat = rock; }
+    }
+    if (!threat) return;
+
+    var cx = cw / 2, cy = ch / 2;
+    var halfFovYaw = FOV_YAW / 2, halfFovPitch = fovPitch / 2;
+    var offYaw = angDiff(view.yaw, threat.yaw);
+    var offPitch = angDiff(view.pitch, threat.pitch);
+    var sx = cx + (offYaw / halfFovYaw) * cx;
+    var sy = cy - (offPitch / halfFovPitch) * cy;
+
+    var rockR = (K / threat.depth) * TIER[threat.tier].radius;
+    var centeredRadius = Math.max(rockR, WARNING_CENTER_RADIUS);
+    var dx = sx - cx, dy = sy - cy;
+    if (Math.hypot(dx, dy) < centeredRadius) return; // already facing it
+
+    if (!reducedMotion) {
+      var urgency = 1 - Math.min(1, Math.max(0, bestT) / WARNING_WINDOW);
+      var duty = WARNING_MIN_DUTY + urgency * (WARNING_MAX_DUTY - WARNING_MIN_DUTY);
+      if ((nowSec % 1) >= duty) return;
+    }
+
+    var m = Math.min(cw, ch) * COCKPIT_MARGIN_FRAC;
+    var s = Math.min(cw, ch) * COCKPIT_CORNER_FRAC;
+    var halfRectW = cx - m, halfRectH = cy - m;
+    var tx = dx !== 0 ? halfRectW / Math.abs(dx) : Infinity;
+    var ty = dy !== 0 ? halfRectH / Math.abs(dy) : Infinity;
+    var t = Math.min(tx, ty);
+    var ix = cx + dx * t, iy = cy + dy * t;
+
+    var lineLen = Math.min(cw, ch) * 0.09;
+    var half = lineLen / 2;
+    ctx.strokeStyle = 'red';
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    if (tx <= ty) {
+      // vertical edge (left/right): stay clear of the corner brackets and HUD
+      var yy = Math.min(ch - m - s - half, Math.max(m + s + half, iy));
+      ctx.moveTo(ix, yy - half);
+      ctx.lineTo(ix, yy + half);
+    } else {
+      // horizontal edge (top/bottom)
+      var xx = Math.min(cw - m - s - half, Math.max(m + s + half, ix));
+      ctx.moveTo(xx - half, iy);
+      ctx.lineTo(xx + half, iy);
+    }
+    ctx.stroke();
+  }
+
+  function render(nowSec) {
     ctx.setTransform(Math.max(1, window.devicePixelRatio || 1), 0, 0, Math.max(1, window.devicePixelRatio || 1), 0, 0);
     ctx.fillStyle = '#000';
     ctx.fillRect(0, 0, cw, ch);
@@ -524,6 +588,7 @@
 
     ctx.restore();
     drawCockpit();
+    drawWarning(nowSec);
     drawCrosshair();
   }
 
@@ -533,8 +598,9 @@
     var dt = Math.min(0.05, (now - lastT) / 1000);
     lastT = now;
     if (document.hidden) return;
-    update(dt, now / 1000);
-    render();
+    var nowSec = now / 1000;
+    update(dt, nowSec);
+    render(nowSec);
   }
 
   resize();
