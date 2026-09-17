@@ -613,8 +613,9 @@
     var dx = sx - cx, dy = sy - cy;
     if (Math.hypot(dx, dy) < centeredRadius) return; // already facing it
 
+    var urgency = 1 - Math.min(1, Math.max(0, bestT) / WARNING_WINDOW);
+
     if (!reducedMotion) {
-      var urgency = 1 - Math.min(1, Math.max(0, bestT) / WARNING_WINDOW);
       var duty = WARNING_MIN_DUTY + urgency * (WARNING_MAX_DUTY - WARNING_MIN_DUTY);
       if ((nowSec % 1) >= duty) return;
     }
@@ -627,10 +628,11 @@
     var t = Math.min(tx, ty);
     var ix = cx + dx * t, iy = cy + dy * t;
 
-    var lineLen = Math.min(cw, ch) * 0.09;
+    var sizeMul = 1 + urgency; // 1x at warning-window edge, 2x at impact
+    var lineLen = Math.min(cw, ch) * 0.09 * sizeMul;
     var half = lineLen / 2;
     ctx.strokeStyle = 'red';
-    ctx.lineWidth = 3;
+    ctx.lineWidth = 3 * sizeMul;
     ctx.beginPath();
     if (tx <= ty) {
       // vertical edge (left/right): stay clear of the corner brackets and HUD
