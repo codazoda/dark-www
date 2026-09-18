@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-labelledby="title">
+  <title id="title">RC Ribbon Game propeller</title>
+  <rect width="512" height="512" fill="#000"/>
+  <g fill="#fff" stroke="#000" stroke-width="12" stroke-linejoin="round">
+    <path d="M256 230C203 197 171 146 186 84c10-43 38-62 58-52 28 14 33 73 24 126-5 29-8 53-12 72Z"/>
+    <path d="M279 269c54-31 114-33 160 11 32 31 34 64 16 77-26 19-80-6-122-40-23-19-43-34-54-48Z"/>
+    <path d="M233 269c-1 62-29 116-90 134-43 13-72-1-74-23-3-32 45-67 96-86 28-10 51-20 68-25Z"/>
+  </g>
+  <circle cx="256" cy="256" r="57" fill="#ffd54f" stroke="#000" stroke-width="14"/>
+  <circle cx="256" cy="256" r="17" fill="#000"/>
+</svg>
