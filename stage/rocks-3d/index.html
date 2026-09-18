@@ -174,14 +174,17 @@
   var GAUGE_TICK_HALF_WIDTH = 5;   // px half-width of each tick mark
   var GAUGE_MARKER_HALF_WIDTH = 9; // px half-width of the moving marker
   var STAR_COUNT = 350;         // background stars, fixed in world space for the scene
-  var STAR_RADIUS = 0.6;        // px, constant on-screen dot size
+  var STAR_RADIUS_MIN = 0.6;    // px, dot size at/below STAR_RADIUS_REF_MIN screen size
+  var STAR_RADIUS_MAX = 1.3;    // px, dot size at/above STAR_RADIUS_REF_MAX screen size
+  var STAR_RADIUS_REF_MIN = 600;  // px, min(cw, ch) at/below which stars use STAR_RADIUS_MIN
+  var STAR_RADIUS_REF_MAX = 1800; // px, min(cw, ch) at/above which stars use STAR_RADIUS_MAX
   var TIER = {
     large:  { radius: 1.0,  next: 'medium', score: 20 },
     medium: { radius: 0.6,  next: 'small',  score: 50 },
     small:  { radius: 0.35, next: null,     score: 100 }
   };
 
-  var cw = 0, ch = 0, K = 0, fovPitch = 0, pxPerDeg = 0;
+  var cw = 0, ch = 0, K = 0, fovPitch = 0, pxPerDeg = 0, starRadius = STAR_RADIUS_MIN;
 
   function resize() {
     var rect = stage.getBoundingClientRect();
@@ -196,6 +199,8 @@
     fovPitch = FOV_YAW * (ch / cw);
     pxPerDeg = cw / FOV_YAW;
     K = Math.min(cw, ch) * 0.25;
+    var starT = Math.min(1, Math.max(0, (Math.min(cw, ch) - STAR_RADIUS_REF_MIN) / (STAR_RADIUS_REF_MAX - STAR_RADIUS_REF_MIN)));
+    starRadius = STAR_RADIUS_MIN + (STAR_RADIUS_MAX - STAR_RADIUS_MIN) * starT;
   }
   window.addEventListener('resize', resize);
 
@@ -533,7 +538,7 @@
   function drawStars() {
     var cx = cw / 2, cy = ch / 2;
     var halfFovYaw = FOV_YAW / 2, halfFovPitch = fovPitch / 2;
-    var marginDeg = (STAR_RADIUS / pxPerDeg) + 2;
+    var marginDeg = (starRadius / pxPerDeg) + 2;
     ctx.fillStyle = '#fff';
     ctx.beginPath();
     for (var i = 0; i < starYaw.length; i++) {
@@ -542,8 +547,8 @@
       if (Math.abs(offYaw) > halfFovYaw + marginDeg || Math.abs(offPitch) > halfFovPitch + marginDeg) continue;
       var sx = cx + (offYaw / halfFovYaw) * cx;
       var sy = cy - (offPitch / halfFovPitch) * cy;
-      ctx.moveTo(sx + STAR_RADIUS, sy);
-      ctx.arc(sx, sy, STAR_RADIUS, 0, Math.PI * 2);
+      ctx.moveTo(sx + starRadius, sy);
+      ctx.arc(sx, sy, starRadius, 0, Math.PI * 2);
     }
     ctx.fill();
   }
