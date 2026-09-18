@@ -294,7 +294,7 @@
   function controlHint() {
     return isTouch
       ? 'Drag to look around. Tap to fire.'
-      : 'Arrow keys or mouse to look around. Space to fire. Esc releases the mouse.';
+      : 'Arrow keys or mouse to look around. Left click or Space to fire. Esc releases the mouse.';
   }
 
   function showOverlay(title, hint, label) {
@@ -344,10 +344,10 @@
       view.pitch = wrap360(view.pitch - e.movementY * MOUSE_SENS);
     }
   });
-  canvas.addEventListener('mousedown', function () {
-    if (state === 'playing' && !isTouch && document.pointerLockElement !== canvas) {
-      canvas.requestPointerLock();
-    }
+  canvas.addEventListener('mousedown', function (e) {
+    if (e.button !== 0 || isTouch || state !== 'playing') return;
+    if (document.pointerLockElement !== canvas) canvas.requestPointerLock();
+    tryFire();
   });
 
   var touchActive = false, touchStartX = 0, touchStartY = 0, touchLastX = 0, touchLastY = 0, touchMoved = false;
