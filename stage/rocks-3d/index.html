@@ -1,0 +1,737 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Rocks 3D</title>
+<meta name="description" content="A minimal first-person Asteroids-inspired browser game. Turn to face a seamless field of drifting rocks and shoot them apart. No install, no account, no ads.">
+<style>
+  :root { color-scheme: dark; }
+  * { box-sizing: border-box; }
+  html, body { height: 100%; }
+  body {
+    margin: 0;
+    background: #000;
+    color: #fff;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    height: 100dvh;
+    -webkit-tap-highlight-color: transparent;
+    user-select: none;
+  }
+  #stage {
+    position: relative;
+    flex: 1;
+    min-height: 0;
+    overflow: hidden;
+    touch-action: none;
+  }
+  canvas {
+    position: absolute;
+    inset: 0;
+    display: block;
+    width: 100%;
+    height: 100%;
+  }
+  #hud {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    display: flex;
+    justify-content: space-between;
+    padding: 10px 14px;
+    font-size: 14px;
+    letter-spacing: 1px;
+    pointer-events: none;
+    text-shadow: 0 0 4px rgba(0, 0, 0, 0.9);
+  }
+  #lives { letter-spacing: 4px; }
+  #overlay {
+    position: absolute;
+    inset: 0;
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 14px;
+    padding: 24px;
+    text-align: center;
+    background: rgba(0, 0, 0, 0.82);
+  }
+  #overlay.visible { display: flex; }
+  #overlay h1 {
+    margin: 0;
+    font-size: clamp(20px, 6vw, 32px);
+    letter-spacing: 4px;
+    font-weight: normal;
+  }
+  #hint {
+    margin: 0;
+    max-width: 320px;
+    font-size: 14px;
+    line-height: 1.5;
+    opacity: 0.85;
+  }
+  #startBtn {
+    min-height: 44px;
+    min-width: 150px;
+    font: inherit;
+    font-size: 16px;
+    letter-spacing: 1px;
+    color: #fff;
+    background: transparent;
+    border: 1px solid #fff;
+    padding: 10px 26px;
+    cursor: pointer;
+  }
+  #startBtn:hover, #startBtn:active {
+    background: rgba(255, 255, 255, 0.15);
+  }
+  #flash {
+    position: absolute;
+    inset: 0;
+    background: #fff;
+    opacity: 0;
+    pointer-events: none;
+  }
+  #flash.visible { opacity: 1; }
+</style>
+</head>
+<body>
+<div id="stage">
+  <canvas id="game"></canvas>
+  <div id="hud">
+    <div id="score">SCORE 0000</div>
+    <div id="stageNum">STAGE 1</div>
+    <div id="lives"></div>
+  </div>
+  <div id="overlay">
+    <h1>ROCKS 3D</h1>
+    <p id="hint"></p>
+    <button id="startBtn" type="button">Start</button>
+  </div>
+  <div id="flash"></div>
+</div>
+<script>
+(function () {
+  'use strict';
+
+  var canvas = document.getElementById('game');
+  var ctx = canvas.getContext('2d');
+  var stage = document.getElementById('stage');
+  var overlay = document.getElementById('overlay');
+  var overlayTitle = overlay.querySelector('h1');
+  var hintEl = document.getElementById('hint');
+  var startBtn = document.getElementById('startBtn');
+  var flashEl = document.getElementById('flash');
+  var scoreEl = document.getElementById('score');
+  var stageEl = document.getElementById('stageNum');
+  var livesEl = document.getElementById('lives');
+
+  var isTouch = matchMedia('(pointer: coarse)').matches;
+  var reducedMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  // Tunables. Depth is an arbitrary world unit: large = far, small = close.
+  var FOV_YAW = 92;             // degrees of horizontal field of view
+  var ROT_SPEED = 75;           // deg/sec, keyboard turning
+  var MOUSE_SENS = 0.12;        // deg per pixel of mouse movement
+  var TOUCH_SENS = 0.28;        // deg per pixel of touch drag
+  var TAP_MOVE_THRESHOLD = 12;  // px; below this a touch is a tap, not a drag
+  var FIRE_COOLDOWN = 0.25;     // sec between shots
+  var SHOT_LIFETIME = 2.2;      // sec before a shot expires
+  var SHOT_START_DEPTH = 0.5;
+  var SHOT_SPEED = 2.6;         // depth units/sec, outward
+  var SHOT_BASE_RADIUS = 0.05;
+  var SHOT_LAUNCH_MULT = 2;     // rendered radius multiplier at the moment a shot fires
+  var SHOT_LAUNCH_TIME = 0.15;  // sec for the launch multiplier to ease back to 1x
+  var DEPTH_HIT = 0.4;          // rock reaches the cockpit at this depth
+  var DEPTH_SPAWN_MIN = 4.2;
+  var DEPTH_SPAWN_MAX = 6;
+  var ROCK_OUTLINE_MIN_WIDTH = 1.5; // px, rock outline at the far spawn boundary
+  var ROCK_OUTLINE_MAX_WIDTH = 4;   // px, rock outline at the impact boundary
+  var DEPTH_TOLERANCE = 0.55;   // how close in depth a shot and rock must be to collide
+  var DRIFT_MAX = 7;            // deg/sec ambient rock drift
+  var APPROACH_MIN = 0.055;     // depth units/sec closing speed
+  var APPROACH_MAX = 0.13;
+  var START_LIVES = 3;
+  var READY_DURATION = 1.2;    // sec of frozen preview before play (starts, and stage transitions)
+  var HIT_FLASH_DURATION = 0.15; // sec, full-stage white flash on a rock collision
+  var HIT_PAUSE_DURATION = 1.2;  // sec, total frozen pause after a non-final hit before resuming
+  var WARNING_WINDOW = 12;         // sec to impact that triggers the cockpit warning
+  var WARNING_CENTER_RADIUS = 20;  // px; threat within this of the crosshair counts as already faced
+  var WARNING_MIN_DUTY = 0.25;     // visible fraction of each 1s cycle at the outer edge of the window
+  var WARNING_MAX_DUTY = 0.9;      // visible fraction as impact approaches 0s
+  var COCKPIT_MARGIN_FRAC = 0.05;  // fraction of min(cw, ch) inset for the cockpit frame
+  var COCKPIT_CORNER_FRAC = 0.16;  // fraction of min(cw, ch) used by each corner bracket
+  var GAUGE_OFFSET_X = 26;         // px; ladder's x position right of the crosshair
+  var GAUGE_HALF_HEIGHT = 34;      // px; ladder extends this far above/below the crosshair
+  var GAUGE_TICK_COUNT = 5;        // fixed tick marks along the ladder, including both ends
+  var GAUGE_TICK_HALF_WIDTH = 5;   // px half-width of each tick mark
+  var GAUGE_MARKER_HALF_WIDTH = 9; // px half-width of the moving marker
+  var TIER = {
+    large:  { radius: 1.0,  next: 'medium', score: 20 },
+    medium: { radius: 0.6,  next: 'small',  score: 50 },
+    small:  { radius: 0.35, next: null,     score: 100 }
+  };
+
+  var cw = 0, ch = 0, K = 0, fovPitch = 0, pxPerDeg = 0;
+
+  function resize() {
+    var rect = stage.getBoundingClientRect();
+    cw = rect.width;
+    ch = rect.height;
+    var dpr = Math.max(1, window.devicePixelRatio || 1);
+    canvas.width = Math.round(cw * dpr);
+    canvas.height = Math.round(ch * dpr);
+    canvas.style.width = cw + 'px';
+    canvas.style.height = ch + 'px';
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    fovPitch = FOV_YAW * (ch / cw);
+    pxPerDeg = cw / FOV_YAW;
+    K = Math.min(cw, ch) * 0.25;
+  }
+  window.addEventListener('resize', resize);
+
+  function wrap360(a) { a = a % 360; if (a < 0) a += 360; return a; }
+  // Shortest signed offset (b - a) wrapped into (-180, 180].
+  function angDiff(a, b) {
+    var d = (b - a) % 360;
+    if (d > 180) d -= 360;
+    if (d < -180) d += 360;
+    return d;
+  }
+
+  function mulberry32(seed) {
+    return function () {
+      seed |= 0; seed = (seed + 0x6D2B79F5) | 0;
+      var t = Math.imul(seed ^ (seed >>> 15), 1 | seed);
+      t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+      return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+    };
+  }
+
+  // A stable jagged outline for a rock, generated once from its seed.
+  function makeOutline(seed) {
+    var rng = mulberry32(seed);
+    var count = 8 + Math.floor(rng() * 5);
+    var pts = [];
+    for (var i = 0; i < count; i++) {
+      var baseAngle = (360 / count) * i;
+      var jitterAngle = baseAngle + (rng() - 0.5) * (360 / count) * 0.6;
+      var rMul = 0.65 + rng() * 0.55;
+      pts.push({ a: jitterAngle * Math.PI / 180, r: rMul });
+    }
+    return pts;
+  }
+
+  function randRange(a, b) { return a + Math.random() * (b - a); }
+
+  var view = { yaw: 0, pitch: 0 };
+  var rocks = [];
+  var shots = [];
+  var score = 0, lives = START_LIVES, stageNum = 1;
+  var state = 'start'; // start | ready | playing | hit | paused | gameover
+  var lastShotAt = -999;
+  var readyUntil = 0;
+  var shakeT = 0;
+  var hitFlashUntil = 0, hitPauseUntil = 0, hitFinal = false, hitOverlayShown = false;
+
+  function spawnRock(tier, overrides) {
+    overrides = overrides || {};
+    var driftScale = reducedMotion ? 0.2 : 1;
+    var rock = {
+      tier: tier,
+      yaw: overrides.yaw != null ? overrides.yaw : Math.random() * 360,
+      pitch: overrides.pitch != null ? overrides.pitch : Math.random() * 360,
+      depth: overrides.depth != null ? overrides.depth : randRange(DEPTH_SPAWN_MIN, DEPTH_SPAWN_MAX),
+      driftYaw: randRange(-DRIFT_MAX, DRIFT_MAX) * driftScale,
+      driftPitch: randRange(-DRIFT_MAX, DRIFT_MAX) * driftScale,
+      approach: randRange(APPROACH_MIN, APPROACH_MAX),
+      seed: Math.floor(Math.random() * 1e9)
+    };
+    rock.outline = makeOutline(rock.seed);
+    rocks.push(rock);
+    return rock;
+  }
+
+  function respawnFar(rock) {
+    var driftScale = reducedMotion ? 0.2 : 1;
+    rock.yaw = Math.random() * 360;
+    rock.pitch = Math.random() * 360;
+    rock.depth = randRange(DEPTH_SPAWN_MIN, DEPTH_SPAWN_MAX);
+    rock.driftYaw = randRange(-DRIFT_MAX, DRIFT_MAX) * driftScale;
+    rock.driftPitch = randRange(-DRIFT_MAX, DRIFT_MAX) * driftScale;
+    rock.approach = randRange(APPROACH_MIN, APPROACH_MAX);
+  }
+
+  function startStage(n) {
+    rocks = [];
+    var count = 3 + n;
+    for (var i = 0; i < count; i++) spawnRock('large');
+  }
+
+  function resetGame() {
+    score = 0; lives = START_LIVES; stageNum = 1; shots = [];
+    view.yaw = 0; view.pitch = 0;
+    startStage(stageNum);
+    updateHUD();
+  }
+
+  function updateHUD() {
+    var s = String(score);
+    while (s.length < 4) s = '0' + s;
+    scoreEl.textContent = 'SCORE ' + s;
+    stageEl.textContent = 'STAGE ' + stageNum;
+    var full = Math.max(0, lives), empty = Math.max(0, START_LIVES - lives);
+    livesEl.textContent = '●'.repeat(full) + '○'.repeat(empty);
+  }
+
+  function controlHint() {
+    return isTouch
+      ? 'Drag to look around. Tap to fire.'
+      : 'Arrow keys or mouse to look around. Space to fire. Esc releases the mouse.';
+  }
+
+  function showOverlay(title, hint, label) {
+    overlayTitle.textContent = title;
+    hintEl.textContent = hint;
+    hintEl.style.display = '';
+    startBtn.textContent = label;
+    startBtn.style.display = '';
+    overlay.classList.add('visible');
+  }
+  // Brief, button-less announcement shown while a stage transition freezes play.
+  function showStageOverlay(n) {
+    overlayTitle.textContent = 'STAGE ' + n;
+    hintEl.style.display = 'none';
+    startBtn.style.display = 'none';
+    overlay.classList.add('visible');
+  }
+  // Brief, button-less announcement shown while a non-final hit freezes play.
+  function showHitOverlay() {
+    overlayTitle.textContent = 'SHIP HIT';
+    hintEl.textContent = lives + (lives === 1 ? ' SHIP REMAINING' : ' SHIPS REMAINING');
+    hintEl.style.display = '';
+    startBtn.style.display = 'none';
+    overlay.classList.add('visible');
+  }
+  function hideOverlay() { overlay.classList.remove('visible'); }
+
+  var keys = { left: false, right: false, up: false, down: false };
+  window.addEventListener('keydown', function (e) {
+    if (e.code === 'ArrowLeft') { keys.left = true; e.preventDefault(); }
+    else if (e.code === 'ArrowRight') { keys.right = true; e.preventDefault(); }
+    else if (e.code === 'ArrowUp') { keys.up = true; e.preventDefault(); }
+    else if (e.code === 'ArrowDown') { keys.down = true; e.preventDefault(); }
+    else if (e.code === 'Space') { tryFire(); e.preventDefault(); }
+    else if (e.code === 'Escape') { if (document.pointerLockElement) document.exitPointerLock(); }
+  });
+  window.addEventListener('keyup', function (e) {
+    if (e.code === 'ArrowLeft') keys.left = false;
+    else if (e.code === 'ArrowRight') keys.right = false;
+    else if (e.code === 'ArrowUp') keys.up = false;
+    else if (e.code === 'ArrowDown') keys.down = false;
+  });
+
+  canvas.addEventListener('mousemove', function (e) {
+    if (document.pointerLockElement === canvas && state === 'playing') {
+      view.yaw = wrap360(view.yaw + e.movementX * MOUSE_SENS);
+      view.pitch = wrap360(view.pitch - e.movementY * MOUSE_SENS);
+    }
+  });
+  canvas.addEventListener('mousedown', function () {
+    if (state === 'playing' && !isTouch && document.pointerLockElement !== canvas) {
+      canvas.requestPointerLock();
+    }
+  });
+
+  var touchActive = false, touchStartX = 0, touchStartY = 0, touchLastX = 0, touchLastY = 0, touchMoved = false;
+  canvas.addEventListener('touchstart', function (e) {
+    if (state !== 'playing') return;
+    var t = e.changedTouches[0];
+    touchActive = true; touchMoved = false;
+    touchStartX = touchLastX = t.clientX;
+    touchStartY = touchLastY = t.clientY;
+    e.preventDefault();
+  }, { passive: false });
+  canvas.addEventListener('touchmove', function (e) {
+    if (!touchActive || state !== 'playing') return;
+    var t = e.changedTouches[0];
+    var dx = t.clientX - touchLastX, dy = t.clientY - touchLastY;
+    touchLastX = t.clientX; touchLastY = t.clientY;
+    if (Math.hypot(t.clientX - touchStartX, t.clientY - touchStartY) > TAP_MOVE_THRESHOLD) touchMoved = true;
+    view.yaw = wrap360(view.yaw + dx * TOUCH_SENS);
+    view.pitch = wrap360(view.pitch - dy * TOUCH_SENS);
+    e.preventDefault();
+  }, { passive: false });
+  canvas.addEventListener('touchend', function (e) {
+    if (!touchActive) return;
+    touchActive = false;
+    if (state === 'playing' && !touchMoved) tryFire();
+    e.preventDefault();
+  }, { passive: false });
+
+  function tryFire() {
+    if (state !== 'playing') return;
+    var now = performance.now() / 1000;
+    if (now - lastShotAt < FIRE_COOLDOWN) return;
+    lastShotAt = now;
+    shots.push({ yaw: view.yaw, pitch: view.pitch, depth: SHOT_START_DEPTH, life: SHOT_LIFETIME, age: 0 });
+  }
+
+  // A rock reaching the cockpit is a single collision event: one life lost,
+  // the rock respawned, and play frozen behind a flash + hit-feedback overlay
+  // until it resumes (or, on the final life, Game Over takes over instead).
+  function triggerHit(rock, nowSec) {
+    lives--;
+    respawnFar(rock);
+    updateHUD();
+    if (!reducedMotion) shakeT = 0.25;
+    hitFinal = lives <= 0;
+    hitOverlayShown = false;
+    hitFlashUntil = nowSec + HIT_FLASH_DURATION;
+    hitPauseUntil = nowSec + HIT_PAUSE_DURATION;
+    state = 'hit';
+    flashEl.classList.add('visible');
+  }
+
+  function updateHitState(dt, nowSec) {
+    if (shakeT > 0) shakeT = Math.max(0, shakeT - dt);
+    if (nowSec < hitFlashUntil) return;
+    flashEl.classList.remove('visible');
+    if (hitFinal) { gameOver(); return; }
+    if (!hitOverlayShown) { hitOverlayShown = true; showHitOverlay(); }
+    if (nowSec >= hitPauseUntil) { hideOverlay(); state = 'playing'; }
+  }
+
+  function gameOver() {
+    state = 'gameover';
+    if (document.pointerLockElement) document.exitPointerLock();
+    showOverlay('Game Over', 'Score ' + score + '. ' + controlHint(), 'Restart');
+  }
+
+  function beginReady() {
+    resetGame();
+    hideOverlay();
+    state = 'ready';
+    readyUntil = performance.now() / 1000 + READY_DURATION;
+  }
+
+  startBtn.addEventListener('click', function () {
+    if (state === 'paused') {
+      if (!isTouch) canvas.requestPointerLock();
+      hideOverlay();
+      state = 'playing';
+    } else {
+      if (!isTouch) canvas.requestPointerLock();
+      beginReady();
+    }
+  });
+
+  document.addEventListener('visibilitychange', function () {
+    if (document.hidden && (state === 'playing' || state === 'ready')) {
+      state = 'paused';
+    } else if (!document.hidden && state === 'paused') {
+      showOverlay('Paused', controlHint(), 'Resume');
+    }
+  });
+
+  function update(dt, nowSec) {
+    if (state === 'ready' && nowSec >= readyUntil) { state = 'playing'; hideOverlay(); }
+
+    if (state === 'hit') { updateHitState(dt, nowSec); return; }
+
+    if (state !== 'playing') {
+      if (shakeT > 0) shakeT = Math.max(0, shakeT - dt);
+      return;
+    }
+
+    if (keys.left) view.yaw = wrap360(view.yaw - ROT_SPEED * dt);
+    if (keys.right) view.yaw = wrap360(view.yaw + ROT_SPEED * dt);
+    if (keys.up) view.pitch = wrap360(view.pitch + ROT_SPEED * dt);
+    if (keys.down) view.pitch = wrap360(view.pitch - ROT_SPEED * dt);
+
+    for (var i = 0; i < rocks.length; i++) {
+      var rock = rocks[i];
+      rock.yaw = wrap360(rock.yaw + rock.driftYaw * dt);
+      rock.pitch = wrap360(rock.pitch + rock.driftPitch * dt);
+      rock.depth -= rock.approach * dt;
+      if (rock.depth <= DEPTH_HIT) {
+        triggerHit(rock, nowSec);
+        return;
+      }
+    }
+
+    for (var si = shots.length - 1; si >= 0; si--) {
+      var s = shots[si];
+      s.depth += SHOT_SPEED * dt;
+      s.life -= dt;
+      s.age += dt;
+      if (s.life <= 0 || s.depth > DEPTH_SPAWN_MAX + 1) shots.splice(si, 1);
+    }
+
+    for (var ri = rocks.length - 1; ri >= 0; ri--) {
+      var r = rocks[ri];
+      for (var sj = shots.length - 1; sj >= 0; sj--) {
+        var shot = shots[sj];
+        if (Math.abs(r.depth - shot.depth) > DEPTH_TOLERANCE) continue;
+        var dYaw = angDiff(r.yaw, shot.yaw);
+        var dPitch = angDiff(r.pitch, shot.pitch);
+        var distPx = Math.hypot(dYaw, dPitch) * pxPerDeg;
+        var rockR = (K / r.depth) * TIER[r.tier].radius;
+        var shotR = (K / shot.depth) * SHOT_BASE_RADIUS;
+        if (distPx < rockR + shotR) {
+          shots.splice(sj, 1);
+          score += TIER[r.tier].score;
+          var next = TIER[r.tier].next;
+          rocks.splice(ri, 1);
+          if (next) {
+            spawnRock(next, { yaw: wrap360(r.yaw + randRange(-12, 12)), pitch: wrap360(r.pitch + randRange(-12, 12)), depth: r.depth });
+            spawnRock(next, { yaw: wrap360(r.yaw + randRange(-12, 12)), pitch: wrap360(r.pitch + randRange(-12, 12)), depth: r.depth });
+          }
+          updateHUD();
+          break;
+        }
+      }
+    }
+
+    if (rocks.length === 0) {
+      stageNum++;
+      startStage(stageNum);
+      updateHUD();
+      state = 'ready';
+      readyUntil = nowSec + READY_DURATION;
+      showStageOverlay(stageNum);
+    }
+
+    if (shakeT > 0) shakeT = Math.max(0, shakeT - dt);
+  }
+
+  function drawRockShape(sx, sy, r, outline) {
+    ctx.beginPath();
+    for (var i = 0; i < outline.length; i++) {
+      var p = outline[i];
+      var x = sx + Math.cos(p.a) * r * p.r;
+      var y = sy + Math.sin(p.a) * r * p.r;
+      if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+    }
+    ctx.closePath();
+    ctx.stroke();
+  }
+
+  function drawCrosshair() {
+    var cx = cw / 2, cy = ch / 2;
+    ctx.strokeStyle = '#fff';
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    ctx.moveTo(cx - 12, cy); ctx.lineTo(cx - 4, cy);
+    ctx.moveTo(cx + 4, cy); ctx.lineTo(cx + 12, cy);
+    ctx.moveTo(cx, cy - 12); ctx.lineTo(cx, cy - 4);
+    ctx.moveTo(cx, cy + 4); ctx.lineTo(cx, cy + 12);
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.arc(cx, cy, 2, 0, Math.PI * 2);
+    ctx.stroke();
+  }
+
+  // A slim range ladder beside the crosshair. targetDepth is the depth of the
+  // rock currently under the crosshair, or null for empty space.
+  function drawDistanceGauge(targetDepth) {
+    var cx = cw / 2, cy = ch / 2;
+    var gx = cx + GAUGE_OFFSET_X;
+    var top = cy - GAUGE_HALF_HEIGHT, bottom = cy + GAUGE_HALF_HEIGHT;
+
+    ctx.strokeStyle = 'rgba(255, 255, 255, 0.4)';
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    ctx.moveTo(gx, top);
+    ctx.lineTo(gx, bottom);
+    for (var i = 0; i < GAUGE_TICK_COUNT; i++) {
+      var ty = top + (bottom - top) * (i / (GAUGE_TICK_COUNT - 1));
+      ctx.moveTo(gx - GAUGE_TICK_HALF_WIDTH, ty);
+      ctx.lineTo(gx + GAUGE_TICK_HALF_WIDTH, ty);
+    }
+    ctx.stroke();
+
+    if (targetDepth == null) {
+      ctx.font = '14px ui-monospace, SFMono-Regular, Menlo, Consolas, monospace';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillStyle = '#fff';
+      ctx.fillText('∞', gx, cy);
+      return;
+    }
+
+    var t = (DEPTH_SPAWN_MAX - targetDepth) / (DEPTH_SPAWN_MAX - DEPTH_HIT);
+    t = Math.min(1, Math.max(0, t));
+    var my = top + (bottom - top) * t;
+    ctx.strokeStyle = '#fff';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(gx - GAUGE_MARKER_HALF_WIDTH, my);
+    ctx.lineTo(gx + GAUGE_MARKER_HALF_WIDTH, my);
+    ctx.stroke();
+  }
+
+  function drawCockpit() {
+    ctx.strokeStyle = 'rgba(255, 255, 255, 0.3)';
+    ctx.lineWidth = 1;
+    var m = Math.min(cw, ch) * COCKPIT_MARGIN_FRAC;
+    ctx.strokeRect(m, m, cw - 2 * m, ch - 2 * m);
+    var s = Math.min(cw, ch) * COCKPIT_CORNER_FRAC;
+    ctx.beginPath();
+    ctx.moveTo(m, m + s); ctx.lineTo(m, m); ctx.lineTo(m + s, m);
+    ctx.moveTo(cw - m - s, m); ctx.lineTo(cw - m, m); ctx.lineTo(cw - m, m + s);
+    ctx.moveTo(cw - m, ch - m - s); ctx.lineTo(cw - m, ch - m); ctx.lineTo(cw - m - s, ch - m);
+    ctx.moveTo(m + s, ch - m); ctx.lineTo(m, ch - m); ctx.lineTo(m, ch - m - s);
+    ctx.stroke();
+  }
+
+  // Picks the rock with the shortest time to impact within WARNING_WINDOW,
+  // then draws a pulsing red line along the cockpit edge that points at it.
+  function drawWarning(nowSec) {
+    if (state !== 'playing') return;
+
+    var threat = null, bestT = WARNING_WINDOW;
+    for (var i = 0; i < rocks.length; i++) {
+      var rock = rocks[i];
+      var t = (rock.depth - DEPTH_HIT) / rock.approach;
+      if (t <= WARNING_WINDOW && t < bestT) { bestT = t; threat = rock; }
+    }
+    if (!threat) return;
+
+    var cx = cw / 2, cy = ch / 2;
+    var halfFovYaw = FOV_YAW / 2, halfFovPitch = fovPitch / 2;
+    var offYaw = angDiff(view.yaw, threat.yaw);
+    var offPitch = angDiff(view.pitch, threat.pitch);
+    var sx = cx + (offYaw / halfFovYaw) * cx;
+    var sy = cy - (offPitch / halfFovPitch) * cy;
+
+    var rockR = (K / threat.depth) * TIER[threat.tier].radius;
+    var centeredRadius = Math.max(rockR, WARNING_CENTER_RADIUS);
+    var dx = sx - cx, dy = sy - cy;
+    if (Math.hypot(dx, dy) < centeredRadius) return; // already facing it
+
+    var urgency = 1 - Math.min(1, Math.max(0, bestT) / WARNING_WINDOW);
+
+    if (!reducedMotion) {
+      var duty = WARNING_MIN_DUTY + urgency * (WARNING_MAX_DUTY - WARNING_MIN_DUTY);
+      if ((nowSec % 1) >= duty) return;
+    }
+
+    var m = Math.min(cw, ch) * COCKPIT_MARGIN_FRAC;
+    var s = Math.min(cw, ch) * COCKPIT_CORNER_FRAC;
+    var halfRectW = cx - m, halfRectH = cy - m;
+    var tx = dx !== 0 ? halfRectW / Math.abs(dx) : Infinity;
+    var ty = dy !== 0 ? halfRectH / Math.abs(dy) : Infinity;
+    var t = Math.min(tx, ty);
+    var ix = cx + dx * t, iy = cy + dy * t;
+
+    var sizeMul = 1 + urgency; // 1x at warning-window edge, 2x at impact
+    var lineLen = Math.min(cw, ch) * 0.09 * sizeMul;
+    var half = lineLen / 2;
+    ctx.strokeStyle = 'red';
+    ctx.lineWidth = 3 * sizeMul;
+    ctx.beginPath();
+    if (tx <= ty) {
+      // vertical edge (left/right): stay clear of the corner brackets and HUD
+      var yy = Math.min(ch - m - s - half, Math.max(m + s + half, iy));
+      ctx.moveTo(ix, yy - half);
+      ctx.lineTo(ix, yy + half);
+    } else {
+      // horizontal edge (top/bottom)
+      var xx = Math.min(cw - m - s - half, Math.max(m + s + half, ix));
+      ctx.moveTo(xx - half, iy);
+      ctx.lineTo(xx + half, iy);
+    }
+    ctx.stroke();
+  }
+
+  function render(nowSec) {
+    ctx.setTransform(Math.max(1, window.devicePixelRatio || 1), 0, 0, Math.max(1, window.devicePixelRatio || 1), 0, 0);
+    ctx.fillStyle = '#000';
+    ctx.fillRect(0, 0, cw, ch);
+
+    var ox = 0, oy = 0;
+    if (shakeT > 0) {
+      var mag = 6 * (shakeT / 0.25);
+      ox = (Math.random() - 0.5) * mag;
+      oy = (Math.random() - 0.5) * mag;
+    }
+    ctx.save();
+    ctx.translate(ox, oy);
+    ctx.strokeStyle = '#fff';
+    ctx.lineWidth = 1.5;
+
+    var cx = cw / 2, cy = ch / 2;
+    var halfFovYaw = FOV_YAW / 2, halfFovPitch = fovPitch / 2;
+
+    var drawList = rocks.slice().sort(function (a, b) { return b.depth - a.depth; });
+    var targetDepth = null;
+    for (var i = 0; i < drawList.length; i++) {
+      var rock = drawList[i];
+      var offYaw = angDiff(view.yaw, rock.yaw);
+      var offPitch = angDiff(view.pitch, rock.pitch);
+      var r = (K / rock.depth) * TIER[rock.tier].radius;
+      var marginDeg = (r / pxPerDeg) + 5;
+      if (Math.abs(offYaw) > halfFovYaw + marginDeg || Math.abs(offPitch) > halfFovPitch + marginDeg) continue;
+      var sx = cx + (offYaw / halfFovYaw) * cx;
+      var sy = cy - (offPitch / halfFovPitch) * cy;
+      var closeness = (DEPTH_SPAWN_MAX - rock.depth) / (DEPTH_SPAWN_MAX - DEPTH_HIT);
+      closeness = Math.min(1, Math.max(0, closeness));
+      ctx.lineWidth = ROCK_OUTLINE_MIN_WIDTH + (ROCK_OUTLINE_MAX_WIDTH - ROCK_OUTLINE_MIN_WIDTH) * closeness;
+      drawRockShape(sx, sy, r, rock.outline);
+      // Crosshair is fixed on screen while the world shakes, so test against
+      // the rock's actual shaken position, matching what's visually aimed at.
+      if (Math.hypot(sx + ox - cx, sy + oy - cy) <= r && (targetDepth == null || rock.depth < targetDepth)) {
+        targetDepth = rock.depth;
+      }
+    }
+
+    ctx.lineWidth = 1.5;
+    for (var j = 0; j < shots.length; j++) {
+      var s = shots[j];
+      var oYaw = angDiff(view.yaw, s.yaw);
+      var oPitch = angDiff(view.pitch, s.pitch);
+      var launchT = Math.min(s.age / SHOT_LAUNCH_TIME, 1);
+      var launchEase = launchT * (2 - launchT); // ease-out, smoothly settles at 1x
+      var launchMult = SHOT_LAUNCH_MULT - (SHOT_LAUNCH_MULT - 1) * launchEase;
+      var sr = (K / s.depth) * SHOT_BASE_RADIUS * launchMult;
+      var mDeg = (sr / pxPerDeg) + 5;
+      if (Math.abs(oYaw) > halfFovYaw + mDeg || Math.abs(oPitch) > halfFovPitch + mDeg) continue;
+      var ssx = cx + (oYaw / halfFovYaw) * cx;
+      var ssy = cy - (oPitch / halfFovPitch) * cy;
+      ctx.beginPath();
+      ctx.arc(ssx, ssy, Math.max(1.5, sr), 0, Math.PI * 2);
+      ctx.stroke();
+    }
+
+    ctx.restore();
+    drawCockpit();
+    drawWarning(nowSec);
+    drawCrosshair();
+    drawDistanceGauge(targetDepth);
+  }
+
+  var lastT = performance.now();
+  function frame(now) {
+    requestAnimationFrame(frame);
+    var dt = Math.min(0.05, (now - lastT) / 1000);
+    lastT = now;
+    if (document.hidden) return;
+    var nowSec = now / 1000;
+    update(dt, nowSec);
+    render(nowSec);
+  }
+
+  resize();
+  updateHUD();
+  showOverlay('ROCKS 3D', controlHint(), 'Start');
+  requestAnimationFrame(frame);
+})();
+</script>
+</body>
+</html>
