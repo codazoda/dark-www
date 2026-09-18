@@ -150,8 +150,6 @@
   var DEPTH_HIT = 0.4;          // rock reaches the cockpit at this depth
   var DEPTH_SPAWN_MIN = 4.2;
   var DEPTH_SPAWN_MAX = 6;
-  var ROCK_OUTLINE_MIN_WIDTH = 1.5; // px, rock outline at the far spawn boundary
-  var ROCK_OUTLINE_MAX_WIDTH = 4;   // px, rock outline at the impact boundary
   var DEPTH_TOLERANCE = 0.55;   // how close in depth a shot and rock must be to collide
   var DRIFT_MAX = 7;            // deg/sec ambient rock drift
   var APPROACH_MIN = 0.055;     // depth units/sec closing speed
@@ -680,9 +678,6 @@
       if (Math.abs(offYaw) > halfFovYaw + marginDeg || Math.abs(offPitch) > halfFovPitch + marginDeg) continue;
       var sx = cx + (offYaw / halfFovYaw) * cx;
       var sy = cy - (offPitch / halfFovPitch) * cy;
-      var closeness = (DEPTH_SPAWN_MAX - rock.depth) / (DEPTH_SPAWN_MAX - DEPTH_HIT);
-      closeness = Math.min(1, Math.max(0, closeness));
-      ctx.lineWidth = ROCK_OUTLINE_MIN_WIDTH + (ROCK_OUTLINE_MAX_WIDTH - ROCK_OUTLINE_MIN_WIDTH) * closeness;
       drawRockShape(sx, sy, r, rock.outline);
       // Crosshair is fixed on screen while the world shakes, so test against
       // the rock's actual shaken position, matching what's visually aimed at.
@@ -691,7 +686,6 @@
       }
     }
 
-    ctx.lineWidth = 1.5;
     for (var j = 0; j < shots.length; j++) {
       var s = shots[j];
       var oYaw = angDiff(view.yaw, s.yaw);
