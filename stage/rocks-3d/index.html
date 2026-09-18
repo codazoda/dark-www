@@ -147,9 +147,13 @@
   var SHOT_BASE_RADIUS = 0.05;
   var SHOT_LAUNCH_MULT = 2;     // rendered radius multiplier at the moment a shot fires
   var SHOT_LAUNCH_TIME = 0.15;  // sec for the launch multiplier to ease back to 1x
+  var SHOT_MIN_RADIUS = 0.5;    // terminal rendered radius, CSS px (1 CSS-pixel dot)
+  var SHOT_SHRINK_WINDOW = 0.5; // sec of remaining flight over which size eases to the terminal dot
   var DEPTH_HIT = 0.4;          // rock reaches the cockpit at this depth
   var DEPTH_SPAWN_MIN = 4.2;
   var DEPTH_SPAWN_MAX = 6;
+  var ROCK_OUTLINE_MIN_WIDTH = 1.5; // px, rock outline at the far spawn boundary
+  var ROCK_OUTLINE_MAX_WIDTH = 4;   // px, rock outline at the impact boundary
   var DEPTH_TOLERANCE = 0.55;   // how close in depth a shot and rock must be to collide
   var DRIFT_MAX = 7;            // deg/sec ambient rock drift
   var APPROACH_MIN = 0.055;     // depth units/sec closing speed
@@ -678,6 +682,9 @@
       if (Math.abs(offYaw) > halfFovYaw + marginDeg || Math.abs(offPitch) > halfFovPitch + marginDeg) continue;
       var sx = cx + (offYaw / halfFovYaw) * cx;
       var sy = cy - (offPitch / halfFovPitch) * cy;
+      var closeness = (DEPTH_SPAWN_MAX - rock.depth) / (DEPTH_SPAWN_MAX - DEPTH_HIT);
+      closeness = Math.min(1, Math.max(0, closeness));
+      ctx.lineWidth = ROCK_OUTLINE_MIN_WIDTH + (ROCK_OUTLINE_MAX_WIDTH - ROCK_OUTLINE_MIN_WIDTH) * closeness;
       drawRockShape(sx, sy, r, rock.outline);
       // Crosshair is fixed on screen while the world shakes, so test against
       // the rock's actual shaken position, matching what's visually aimed at.
@@ -686,6 +693,7 @@
       }
     }
 
+    ctx.lineWidth = 1.5;
     for (var j = 0; j < shots.length; j++) {
       var s = shots[j];
       var oYaw = angDiff(view.yaw, s.yaw);
@@ -693,13 +701,23 @@
       var launchT = Math.min(s.age / SHOT_LAUNCH_TIME, 1);
       var launchEase = launchT * (2 - launchT); // ease-out, smoothly settles at 1x
       var launchMult = SHOT_LAUNCH_MULT - (SHOT_LAUNCH_MULT - 1) * launchEase;
-      var sr = (K / s.depth) * SHOT_BASE_RADIUS * launchMult;
+      var srNatural = (K / s.depth) * SHOT_BASE_RADIUS * launchMult;
+      // Ease down to a fixed 1-CSS-pixel dot over the shot's final moments of
+      // flight, so it always reaches the terminal size by the last frame
+      // regardless of viewport size, instead of just floor-clamping (which
+      // only bites on screens small enough for the natural radius to reach it).
+      var remainingLife = s.life;
+      var remainingDepthTime = (DEPTH_SPAWN_MAX + 1 - s.depth) / SHOT_SPEED;
+      var remaining = Math.min(remainingLife, remainingDepthTime);
+      var shrinkT = Math.min(1, Math.max(0, remaining / SHOT_SHRINK_WINDOW));
+      var shrinkEase = shrinkT * shrinkT; // ease-in, holds near-natural size until close to expiry
+      var sr = SHOT_MIN_RADIUS + (Math.max(SHOT_MIN_RADIUS, srNatural) - SHOT_MIN_RADIUS) * shrinkEase;
       var mDeg = (sr / pxPerDeg) + 5;
       if (Math.abs(oYaw) > halfFovYaw + mDeg || Math.abs(oPitch) > halfFovPitch + mDeg) continue;
       var ssx = cx + (oYaw / halfFovYaw) * cx;
       var ssy = cy - (oPitch / halfFovPitch) * cy;
       ctx.beginPath();
-      ctx.arc(ssx, ssy, Math.max(1.5, sr), 0, Math.PI * 2);
+      ctx.arc(ssx, ssy, sr, 0, Math.PI * 2);
       ctx.stroke();
     }
 
