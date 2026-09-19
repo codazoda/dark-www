@@ -476,18 +476,31 @@
   // existing context and resumes it if the browser auto-suspended it.
   function ensureAudioContext() {
     if (audioUnavailable) return null;
-    if (audioCtx) {
-      if (audioCtx.state === 'suspended') audioCtx.resume().catch(function () {});
-      return audioCtx;
+    if (!audioCtx) {
+      try {
+        var Ctor = window.AudioContext || window.webkitAudioContext;
+        if (!Ctor) { audioUnavailable = true; return null; }
+        audioCtx = new Ctor();
+      } catch (e) {
+        audioUnavailable = true;
+        return null;
+      }
     }
+    if (audioCtx.state === 'suspended') audioCtx.resume().catch(function () {});
+    // Some engines (notably older WebKit/Safari) leave real playback gated
+    // even once the context reports 'running', until a sound has actually
+    // been started synchronously inside the gesture. A silent, zero-gain
+    // blip costs nothing and unlocks those engines for the beeps queued
+    // later during gameplay.
     try {
-      var Ctor = window.AudioContext || window.webkitAudioContext;
-      if (!Ctor) { audioUnavailable = true; return null; }
-      audioCtx = new Ctor();
-    } catch (e) {
-      audioUnavailable = true;
-      return null;
-    }
+      var unlockOsc = audioCtx.createOscillator();
+      var unlockGain = audioCtx.createGain();
+      unlockGain.gain.value = 0;
+      unlockOsc.connect(unlockGain);
+      unlockGain.connect(audioCtx.destination);
+      unlockOsc.start(audioCtx.currentTime);
+      unlockOsc.stop(audioCtx.currentTime + 0.001);
+    } catch (e) {}
     return audioCtx;
   }
 
