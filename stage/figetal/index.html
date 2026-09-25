@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#101014">
+  <title>Figetal</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <main>
+    <header>
+      <div>
+        <p class="eyebrow">FIGETAL <span aria-hidden="true">/</span> <span id="count">01</span></p>
+        <h1 id="title">Ripple Grid</h1>
+        <p id="hint">Tap or sweep to send a ripple.</p>
+      </div>
+      <button id="reset" type="button" aria-label="Reset active figetal">Reset</button>
+    </header>
+
+    <section id="surface" tabindex="0" aria-labelledby="title" aria-describedby="hint keyboard-hint">
+      <canvas id="canvas"></canvas>
+      <p id="keyboard-hint" class="sr-only">Use arrow keys, space, or enter to interact.</p>
+    </section>
+
+    <nav aria-label="Choose a figetal">
+      <button type="button" data-tool="0"><span>01</span><b>Ripple</b></button>
+      <button type="button" data-tool="1"><span>02</span><b>Magnet</b></button>
+      <button type="button" data-tool="2"><span>03</span><b>Threads</b></button>
+      <button type="button" data-tool="3"><span>04</span><b>Dial</b></button>
+      <button type="button" data-tool="4"><span>05</span><b>Garden</b></button>
+      <button type="button" data-tool="5"><span>06</span><b>Drift</b></button>
+    </nav>
+  </main>
+  <script src="app.js"></script>
+</body>
+</html>
