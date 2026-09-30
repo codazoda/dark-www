@@ -148,6 +148,7 @@ h1, h2, h3 { margin: 0 0 8px; }
   font-size: 14px;
 }
 .story-reminder p { margin: 6px 0; }
+.story-reminder a { color: var(--accent); font-weight: 600; }
 
 .results-row {
   display: flex;
@@ -404,6 +405,89 @@ button.danger { color: var(--danger); }
   font-size: 12px;
   color: var(--warn-text);
   margin-top: 4px;
+}
+
+.question-card h2 {
+  font-size: 17px;
+}
+
+textarea.big {
+  min-height: 140px;
+}
+
+.low-price-warning {
+  margin-top: 10px;
+}
+
+.low-price-warning[hidden] {
+  display: none;
+}
+
+.verdict-choices {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 10px;
+}
+
+.verdict-choice {
+  text-align: left;
+  display: block;
+  width: 100%;
+  padding: 14px 16px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--bg);
+  color: var(--text);
+  cursor: pointer;
+  min-height: 44px;
+}
+
+.verdict-choice.selected {
+  border-color: var(--accent);
+  border-width: 2px;
+  background: var(--bg-alt);
+}
+
+.verdict-title {
+  display: block;
+  font-weight: 700;
+  font-size: 15px;
+}
+
+.verdict-choice.selected .verdict-title {
+  color: var(--accent);
+}
+
+.verdict-desc {
+  display: block;
+  font-size: 13px;
+  color: var(--text-secondary);
+  margin-top: 4px;
+}
+
+.result-good, .result-neutral, .result-bad {
+  border-width: 2px;
+}
+
+.result-good { border-color: var(--accent); }
+.result-neutral { border-color: var(--warn-border); }
+.result-bad { border-color: var(--border); }
+
+.primary-link {
+  display: block;
+  width: 100%;
+  box-sizing: border-box;
+  text-align: center;
+  padding: 14px;
+  margin-top: 16px;
+  font-size: 16px;
+  font-weight: 700;
+  color: #fff;
+  background: var(--accent);
+  border-radius: 8px;
+  min-height: 44px;
+  text-decoration: none;
 }
 
 @media (prefers-reduced-motion: reduce) {

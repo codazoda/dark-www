@@ -213,6 +213,7 @@
       '<div class="card alt story-reminder">' +
         "<h2>ONE OFFER AT A TIME</h2>" +
         "<p>Pick something worth testing.</p>" +
+        '<p><a href="pressure-test.html">Pressure Test an Offer &rarr;</a></p>' +
         "<p>Define the experiment before seeing the results.</p>" +
         "<p>Then finish the experiment.</p>" +
       "</div>" +
