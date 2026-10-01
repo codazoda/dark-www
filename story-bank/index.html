@@ -141,6 +141,19 @@
     cursor: not-allowed;
   }
 
+  .compose-title {
+    flex: 1 1 auto;
+    min-width: 0;
+    text-align: center;
+    font-size: 16px;
+    font-weight: 600;
+    margin: 0;
+    padding: 0 4px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
   .view {
     flex: 1 1 auto;
     min-height: 0;
@@ -341,6 +354,7 @@
 
     <header id="compose-header" class="compose-header" hidden>
       <button type="button" id="cancel-btn" class="cancel-btn">Cancel</button>
+      <span id="compose-title" class="compose-title"></span>
       <button type="button" id="save-btn" class="save-btn" disabled>Save</button>
     </header>
 
@@ -350,12 +364,13 @@
     </main>
 
     <main id="view-compose" class="view" hidden>
-      <label for="compose-text" style="position:absolute; left:-9999px;">Story text</label>
+      <label for="compose-text" id="compose-label" style="position:absolute; left:-9999px;">Story text</label>
       <textarea id="compose-text" class="compose-text" placeholder="What do you see and what does it mean?"></textarea>
     </main>
 
     <main id="view-menu" class="view" hidden>
       <button type="button" id="export-btn" class="menu-action">Export stories</button>
+      <button type="button" id="template-btn" class="menu-action">Template</button>
     </main>
 
     <footer id="compose-footer" class="compose-footer" hidden>
@@ -370,11 +385,13 @@
   "use strict";
 
   var STORAGE_KEY = "story-bank:entries";
+  var STORAGE_KEY_TEMPLATE = "story-bank:template";
 
   var state = {
     entries: loadEntries(),
     view: "stories",
-    editingId: null
+    editingId: null,
+    composeMode: "story"
   };
 
   var elApp = document.getElementById("app");
@@ -391,9 +408,12 @@
   var elAddBtn = document.getElementById("add-btn");
   var elCancelBtn = document.getElementById("cancel-btn");
   var elSaveBtn = document.getElementById("save-btn");
+  var elComposeTitle = document.getElementById("compose-title");
+  var elComposeLabel = document.getElementById("compose-label");
   var elComposeText = document.getElementById("compose-text");
   var elComposeCounter = document.getElementById("compose-counter");
   var elExportBtn = document.getElementById("export-btn");
+  var elTemplateBtn = document.getElementById("template-btn");
 
   function loadEntries() {
     try {
@@ -408,6 +428,18 @@
 
   function saveEntries() {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(state.entries));
+  }
+
+  function loadTemplate() {
+    try {
+      return localStorage.getItem(STORAGE_KEY_TEMPLATE) || "";
+    } catch (e) {
+      return "";
+    }
+  }
+
+  function saveTemplate(text) {
+    localStorage.setItem(STORAGE_KEY_TEMPLATE, text);
   }
 
   function genId() {
@@ -602,13 +634,34 @@
   }
 
   function openCompose(editingId) {
+    state.composeMode = "story";
     state.editingId = editingId || null;
+    elComposeTitle.textContent = "";
+    elComposeLabel.textContent = "Story text";
+    elComposeText.placeholder = "What do you see and what does it mean?";
     if (editingId) {
       var entry = state.entries.find(function (e) { return e.id === editingId; });
       elComposeText.value = entry ? entry.text : "";
-      elComposeText.setSelectionRange(0, 0);
     } else {
-      elComposeText.value = "";
+      elComposeText.value = loadTemplate();
+    }
+    if (elComposeText.value) {
+      elComposeText.setSelectionRange(0, 0);
+    }
+    updateSaveDisabled();
+    updateWordCount();
+    showView("compose");
+  }
+
+  function openTemplateCompose() {
+    state.composeMode = "template";
+    state.editingId = null;
+    elComposeTitle.textContent = "Template";
+    elComposeLabel.textContent = "Template text";
+    elComposeText.placeholder = "Write a reusable template to start each new story with…";
+    elComposeText.value = loadTemplate();
+    if (elComposeText.value) {
+      elComposeText.setSelectionRange(0, 0);
     }
     updateSaveDisabled();
     updateWordCount();
@@ -633,7 +686,11 @@
   }
 
   function updateSaveDisabled() {
-    elSaveBtn.disabled = elComposeText.value.trim().length === 0;
+    if (state.composeMode === "template") {
+      elSaveBtn.disabled = false;
+    } else {
+      elSaveBtn.disabled = elComposeText.value.trim().length === 0;
+    }
   }
 
   function wordCount(text) {
@@ -653,14 +710,26 @@
   });
 
   elCancelBtn.addEventListener("click", function () {
+    var returnView = state.composeMode === "template" ? "menu" : "stories";
     state.editingId = null;
+    state.composeMode = "story";
     elComposeText.value = "";
     updateWordCount();
     autoGrowComposeText();
-    showView("stories");
+    showView(returnView);
   });
 
   elSaveBtn.addEventListener("click", function () {
+    if (state.composeMode === "template") {
+      saveTemplate(elComposeText.value);
+      state.composeMode = "story";
+      elComposeText.value = "";
+      updateWordCount();
+      autoGrowComposeText();
+      showView("menu");
+      return;
+    }
+
     var text = elComposeText.value;
     if (text.trim().length === 0) return;
 
@@ -700,6 +769,10 @@
 
   elTabMenu.addEventListener("click", function () {
     showView("menu");
+  });
+
+  elTemplateBtn.addEventListener("click", function () {
+    openTemplateCompose();
   });
 
   function pad(n) {
