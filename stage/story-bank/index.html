@@ -247,10 +247,10 @@
   /* Compose */
   .compose-text {
     width: 100%;
-    flex: 1 1 auto;
     min-height: 200px;
     border: none;
     resize: none;
+    overflow: hidden;
     font: inherit;
     font-size: 16px;
     line-height: 1.5;
@@ -579,6 +579,7 @@
     }
 
     if (view === "compose") {
+      autoGrowComposeText();
       elComposeText.focus();
     }
   }
@@ -594,6 +595,11 @@
     updateSaveDisabled();
     updateWordCount();
     showView("compose");
+  }
+
+  function autoGrowComposeText() {
+    elComposeText.style.height = "auto";
+    elComposeText.style.height = elComposeText.scrollHeight + "px";
   }
 
   function updateSaveDisabled() {
@@ -613,12 +619,14 @@
   elComposeText.addEventListener("input", function () {
     updateSaveDisabled();
     updateWordCount();
+    autoGrowComposeText();
   });
 
   elCancelBtn.addEventListener("click", function () {
     state.editingId = null;
     elComposeText.value = "";
     updateWordCount();
+    autoGrowComposeText();
     showView("stories");
   });
 
@@ -648,6 +656,7 @@
     state.editingId = null;
     elComposeText.value = "";
     updateWordCount();
+    autoGrowComposeText();
     showView("stories");
   });
 
