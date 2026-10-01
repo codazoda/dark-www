@@ -606,6 +606,7 @@
     if (editingId) {
       var entry = state.entries.find(function (e) { return e.id === editingId; });
       elComposeText.value = entry ? entry.text : "";
+      elComposeText.setSelectionRange(0, 0);
     } else {
       elComposeText.value = "";
     }
