@@ -42,7 +42,6 @@
   html, body {
     margin: 0;
     padding: 0;
-    height: 100%;
   }
 
   body {
@@ -62,6 +61,7 @@
     display: flex;
     flex-direction: column;
     min-height: 100vh;
+    min-height: 100dvh;
     max-width: 640px;
     margin: 0 auto;
     position: relative;
@@ -141,6 +141,8 @@
   .view {
     flex: 1 1 auto;
     padding: 12px;
+    display: flex;
+    flex-direction: column;
   }
 
   /* Stories list */
@@ -245,7 +247,8 @@
   /* Compose */
   .compose-text {
     width: 100%;
-    min-height: 60vh;
+    flex: 1 1 auto;
+    min-height: 200px;
     border: none;
     resize: none;
     font: inherit;
@@ -258,6 +261,14 @@
 
   .compose-text:focus {
     outline: none;
+  }
+
+  .compose-counter {
+    flex-shrink: 0;
+    margin: 4px;
+    font-size: 12px;
+    color: var(--text-secondary);
+    text-align: right;
   }
 
   /* Menu view */
@@ -280,7 +291,9 @@
   .fab {
     position: fixed;
     right: 20px;
+    right: calc(20px + env(safe-area-inset-right));
     bottom: 20px;
+    bottom: calc(20px + env(safe-area-inset-bottom));
     width: 56px;
     height: 56px;
     border-radius: 50%;
@@ -328,6 +341,7 @@
     <main id="view-compose" class="view" hidden>
       <label for="compose-text" style="position:absolute; left:-9999px;">Story text</label>
       <textarea id="compose-text" class="compose-text" placeholder="What do you see and what does it mean?"></textarea>
+      <p id="compose-counter" class="compose-counter" aria-live="polite">0 words</p>
     </main>
 
     <main id="view-menu" class="view" hidden>
@@ -362,6 +376,7 @@
   var elCancelBtn = document.getElementById("cancel-btn");
   var elSaveBtn = document.getElementById("save-btn");
   var elComposeText = document.getElementById("compose-text");
+  var elComposeCounter = document.getElementById("compose-counter");
   var elExportBtn = document.getElementById("export-btn");
 
   function loadEntries() {
@@ -577,6 +592,7 @@
       elComposeText.value = "";
     }
     updateSaveDisabled();
+    updateWordCount();
     showView("compose");
   }
 
@@ -584,11 +600,25 @@
     elSaveBtn.disabled = elComposeText.value.trim().length === 0;
   }
 
-  elComposeText.addEventListener("input", updateSaveDisabled);
+  function wordCount(text) {
+    var trimmed = text.trim();
+    return trimmed === "" ? 0 : trimmed.split(/\s+/).length;
+  }
+
+  function updateWordCount() {
+    var count = wordCount(elComposeText.value);
+    elComposeCounter.textContent = count + (count === 1 ? " word" : " words");
+  }
+
+  elComposeText.addEventListener("input", function () {
+    updateSaveDisabled();
+    updateWordCount();
+  });
 
   elCancelBtn.addEventListener("click", function () {
     state.editingId = null;
     elComposeText.value = "";
+    updateWordCount();
     showView("stories");
   });
 
@@ -617,6 +647,7 @@
     saveEntries();
     state.editingId = null;
     elComposeText.value = "";
+    updateWordCount();
     showView("stories");
   });
 
