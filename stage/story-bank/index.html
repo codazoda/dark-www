@@ -171,16 +171,9 @@
   }
 
   .story-item {
-    display: flex;
-    align-items: flex-start;
-    gap: 8px;
-    padding: 12px 4px;
+    display: block;
+    padding: 4px 4px 12px;
     border-bottom: 1px solid var(--border);
-  }
-
-  .story-content {
-    flex: 1 1 auto;
-    min-width: 0;
   }
 
   .story-header {
@@ -188,7 +181,6 @@
     justify-content: space-between;
     align-items: center;
     gap: 8px;
-    margin-bottom: 4px;
   }
 
   .story-time {
@@ -601,9 +593,6 @@
       li.className = "story-item";
       li.dataset.id = entry.id;
 
-      var content = document.createElement("div");
-      content.className = "story-content";
-
       var time = document.createElement("time");
       time.className = "story-time";
       time.setAttribute("datetime", entry.createdAt);
@@ -626,9 +615,6 @@
       var header = document.createElement("div");
       header.className = "story-header";
       header.appendChild(time);
-
-      content.appendChild(header);
-      content.appendChild(text);
 
       var actions = document.createElement("div");
       actions.className = "story-actions";
@@ -692,8 +678,9 @@
       actions.appendChild(menuBtn);
       actions.appendChild(menu);
 
-      li.appendChild(content);
-      li.appendChild(actions);
+      header.appendChild(actions);
+      li.appendChild(header);
+      li.appendChild(text);
       elStoryList.appendChild(li);
     });
   }
