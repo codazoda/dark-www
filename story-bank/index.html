@@ -171,23 +171,52 @@
   }
 
   .story-item {
-    display: flex;
-    align-items: flex-start;
-    gap: 8px;
-    padding: 12px 4px;
+    display: block;
+    padding: 4px 4px 12px;
     border-bottom: 1px solid var(--border);
   }
 
-  .story-content {
-    flex: 1 1 auto;
-    min-width: 0;
+  .story-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 8px;
   }
 
   .story-time {
     display: block;
+    min-width: 0;
     font-size: 14px;
     color: var(--text-secondary);
-    margin-bottom: 4px;
+  }
+
+  .copy-btn {
+    flex-shrink: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: none;
+    border: none;
+    color: inherit;
+    font-size: 16px;
+    line-height: 1;
+    width: 44px;
+    height: 44px;
+    cursor: pointer;
+    border-radius: 6px;
+  }
+
+  .copy-btn:hover {
+    background: var(--hover-bg);
+  }
+
+  .visually-hidden {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
   }
 
   .story-time .edited-tag {
@@ -204,6 +233,8 @@
   .story-actions {
     position: relative;
     flex-shrink: 0;
+    display: flex;
+    align-items: center;
   }
 
   .menu-btn {
@@ -485,6 +516,68 @@
     });
   }
 
+  var COPY_ICON =
+    '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" ' +
+    'stroke-width="2" stroke-linejoin="round" aria-hidden="true">' +
+    '<rect x="9" y="9" width="12" height="12" rx="3"/>' +
+    '<path d="M15 5a2 2 0 0 0-2-2H6a3 3 0 0 0-3 3v7a2 2 0 0 0 2 2"/></svg>';
+
+  var elCopyStatus = document.createElement("p");
+  elCopyStatus.className = "visually-hidden";
+  elCopyStatus.setAttribute("aria-live", "polite");
+  document.body.appendChild(elCopyStatus);
+
+  function copyText(str) {
+    function fallback() {
+      return new Promise(function (resolve, reject) {
+        var ta = document.createElement("textarea");
+        ta.value = str;
+        ta.setAttribute("readonly", "");
+        ta.style.position = "fixed";
+        ta.style.opacity = "0";
+        document.body.appendChild(ta);
+        ta.select();
+        var ok = false;
+        try { ok = document.execCommand("copy"); } catch (e) {}
+        document.body.removeChild(ta);
+        if (ok) { resolve(); } else { reject(new Error("copy failed")); }
+      });
+    }
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      return navigator.clipboard.writeText(str).catch(fallback);
+    }
+    return fallback();
+  }
+
+  function makeCopyButton(entry) {
+    var btn = document.createElement("button");
+    btn.type = "button";
+    btn.className = "copy-btn";
+    btn.title = "Copy story";
+    var label = "Copy story from " + formatShort(entry.createdAt);
+    var timer = null;
+    function reset() {
+      btn.innerHTML = COPY_ICON;
+      btn.setAttribute("aria-label", label);
+    }
+    function flash(glyph, msg) {
+      btn.textContent = glyph;
+      btn.setAttribute("aria-label", msg);
+      elCopyStatus.textContent = msg;
+      clearTimeout(timer);
+      timer = setTimeout(reset, 1500);
+    }
+    reset();
+    btn.addEventListener("click", function (ev) {
+      ev.stopPropagation();
+      copyText(entry.text).then(
+        function () { flash("✓", "Copied"); },
+        function () { flash("✗", "Copy failed"); }
+      );
+    });
+    return btn;
+  }
+
   function renderStories() {
     var visible = visibleEntriesSorted();
     elStoryList.innerHTML = "";
@@ -499,9 +592,6 @@
       var li = document.createElement("li");
       li.className = "story-item";
       li.dataset.id = entry.id;
-
-      var content = document.createElement("div");
-      content.className = "story-content";
 
       var time = document.createElement("time");
       time.className = "story-time";
@@ -522,8 +612,9 @@
       text.className = "story-text";
       text.textContent = entry.text;
 
-      content.appendChild(time);
-      content.appendChild(text);
+      var header = document.createElement("div");
+      header.className = "story-header";
+      header.appendChild(time);
 
       var actions = document.createElement("div");
       actions.className = "story-actions";
@@ -583,11 +674,13 @@
         }
       });
 
+      actions.appendChild(makeCopyButton(entry));
       actions.appendChild(menuBtn);
       actions.appendChild(menu);
 
-      li.appendChild(content);
-      li.appendChild(actions);
+      header.appendChild(actions);
+      li.appendChild(header);
+      li.appendChild(text);
       elStoryList.appendChild(li);
     });
   }
