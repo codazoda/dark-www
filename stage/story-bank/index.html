@@ -43,7 +43,6 @@
     margin: 0;
     padding: 0;
     height: 100%;
-    overflow: hidden;
   }
 
   body {
@@ -62,12 +61,10 @@
   #app {
     display: flex;
     flex-direction: column;
-    height: 100vh;
-    height: 100dvh;
+    min-height: 100vh;
     max-width: 640px;
     margin: 0 auto;
     position: relative;
-    overflow: hidden;
   }
 
   /* Tab header */
@@ -141,26 +138,9 @@
     cursor: not-allowed;
   }
 
-  .compose-title {
-    flex: 1 1 auto;
-    min-width: 0;
-    text-align: center;
-    font-size: 16px;
-    font-weight: 600;
-    margin: 0;
-    padding: 0 4px;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-  }
-
   .view {
     flex: 1 1 auto;
-    min-height: 0;
-    overflow-y: auto;
     padding: 12px;
-    display: flex;
-    flex-direction: column;
   }
 
   /* Stories list */
@@ -265,11 +245,9 @@
   /* Compose */
   .compose-text {
     width: 100%;
-    min-height: 200px;
-    flex-shrink: 0;
+    min-height: 60vh;
     border: none;
     resize: none;
-    overflow: hidden;
     font: inherit;
     font-size: 16px;
     line-height: 1.5;
@@ -280,19 +258,6 @@
 
   .compose-text:focus {
     outline: none;
-  }
-
-  .compose-footer {
-    flex-shrink: 0;
-    border-top: 1px solid var(--border);
-    padding: 4px 12px;
-  }
-
-  .compose-counter {
-    margin: 4px;
-    font-size: 12px;
-    color: var(--text-secondary);
-    text-align: right;
   }
 
   /* Menu view */
@@ -315,9 +280,7 @@
   .fab {
     position: fixed;
     right: 20px;
-    right: calc(20px + env(safe-area-inset-right));
     bottom: 20px;
-    bottom: calc(20px + env(safe-area-inset-bottom));
     width: 56px;
     height: 56px;
     border-radius: 50%;
@@ -354,7 +317,6 @@
 
     <header id="compose-header" class="compose-header" hidden>
       <button type="button" id="cancel-btn" class="cancel-btn">Cancel</button>
-      <span id="compose-title" class="compose-title"></span>
       <button type="button" id="save-btn" class="save-btn" disabled>Save</button>
     </header>
 
@@ -364,18 +326,13 @@
     </main>
 
     <main id="view-compose" class="view" hidden>
-      <label for="compose-text" id="compose-label" style="position:absolute; left:-9999px;">Story text</label>
+      <label for="compose-text" style="position:absolute; left:-9999px;">Story text</label>
       <textarea id="compose-text" class="compose-text" placeholder="What do you see and what does it mean?"></textarea>
     </main>
 
     <main id="view-menu" class="view" hidden>
       <button type="button" id="export-btn" class="menu-action">Export stories</button>
-      <button type="button" id="template-btn" class="menu-action">Template</button>
     </main>
-
-    <footer id="compose-footer" class="compose-footer" hidden>
-      <p id="compose-counter" class="compose-counter" aria-live="polite">0 words</p>
-    </footer>
 
     <button type="button" id="add-btn" class="fab" aria-label="New story">+</button>
   </div>
@@ -385,19 +342,15 @@
   "use strict";
 
   var STORAGE_KEY = "story-bank:entries";
-  var STORAGE_KEY_TEMPLATE = "story-bank:template";
 
   var state = {
     entries: loadEntries(),
     view: "stories",
-    editingId: null,
-    composeMode: "story"
+    editingId: null
   };
 
-  var elApp = document.getElementById("app");
   var elTabsHeader = document.getElementById("tabs-header");
   var elComposeHeader = document.getElementById("compose-header");
-  var elComposeFooter = document.getElementById("compose-footer");
   var elTabStories = document.getElementById("tab-stories");
   var elTabMenu = document.getElementById("tab-menu");
   var elViewStories = document.getElementById("view-stories");
@@ -408,12 +361,8 @@
   var elAddBtn = document.getElementById("add-btn");
   var elCancelBtn = document.getElementById("cancel-btn");
   var elSaveBtn = document.getElementById("save-btn");
-  var elComposeTitle = document.getElementById("compose-title");
-  var elComposeLabel = document.getElementById("compose-label");
   var elComposeText = document.getElementById("compose-text");
-  var elComposeCounter = document.getElementById("compose-counter");
   var elExportBtn = document.getElementById("export-btn");
-  var elTemplateBtn = document.getElementById("template-btn");
 
   function loadEntries() {
     try {
@@ -428,18 +377,6 @@
 
   function saveEntries() {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(state.entries));
-  }
-
-  function loadTemplate() {
-    try {
-      return localStorage.getItem(STORAGE_KEY_TEMPLATE) || "";
-    } catch (e) {
-      return "";
-    }
-  }
-
-  function saveTemplate(text) {
-    localStorage.setItem(STORAGE_KEY_TEMPLATE, text);
   }
 
   function genId() {
@@ -611,7 +548,6 @@
 
     elTabsHeader.hidden = view === "compose";
     elComposeHeader.hidden = view !== "compose";
-    elComposeFooter.hidden = view !== "compose";
 
     elAddBtn.hidden = view !== "stories";
 
@@ -628,108 +564,35 @@
     }
 
     if (view === "compose") {
-      autoGrowComposeText();
       elComposeText.focus();
     }
   }
 
   function openCompose(editingId) {
-    state.composeMode = "story";
     state.editingId = editingId || null;
-    elComposeTitle.textContent = "";
-    elComposeLabel.textContent = "Story text";
-    elComposeText.placeholder = "What do you see and what does it mean?";
     if (editingId) {
       var entry = state.entries.find(function (e) { return e.id === editingId; });
       elComposeText.value = entry ? entry.text : "";
     } else {
-      elComposeText.value = loadTemplate();
-    }
-    if (elComposeText.value) {
-      elComposeText.setSelectionRange(0, 0);
+      elComposeText.value = "";
     }
     updateSaveDisabled();
-    updateWordCount();
     showView("compose");
-  }
-
-  function openTemplateCompose() {
-    state.composeMode = "template";
-    state.editingId = null;
-    elComposeTitle.textContent = "Template";
-    elComposeLabel.textContent = "Template text";
-    elComposeText.placeholder = "Write a reusable template to start each new story with…";
-    elComposeText.value = loadTemplate();
-    if (elComposeText.value) {
-      elComposeText.setSelectionRange(0, 0);
-    }
-    updateSaveDisabled();
-    updateWordCount();
-    showView("compose");
-  }
-
-  function syncAppHeight() {
-    var height = window.visualViewport ? window.visualViewport.height : window.innerHeight;
-    elApp.style.height = height + "px";
-  }
-
-  syncAppHeight();
-  if (window.visualViewport) {
-    window.visualViewport.addEventListener("resize", syncAppHeight);
-  } else {
-    window.addEventListener("resize", syncAppHeight);
-  }
-
-  function autoGrowComposeText() {
-    elComposeText.style.height = "auto";
-    elComposeText.style.height = elComposeText.scrollHeight + "px";
   }
 
   function updateSaveDisabled() {
-    if (state.composeMode === "template") {
-      elSaveBtn.disabled = false;
-    } else {
-      elSaveBtn.disabled = elComposeText.value.trim().length === 0;
-    }
+    elSaveBtn.disabled = elComposeText.value.trim().length === 0;
   }
 
-  function wordCount(text) {
-    var trimmed = text.trim();
-    return trimmed === "" ? 0 : trimmed.split(/\s+/).length;
-  }
-
-  function updateWordCount() {
-    var count = wordCount(elComposeText.value);
-    elComposeCounter.textContent = count + (count === 1 ? " word" : " words");
-  }
-
-  elComposeText.addEventListener("input", function () {
-    updateSaveDisabled();
-    updateWordCount();
-    autoGrowComposeText();
-  });
+  elComposeText.addEventListener("input", updateSaveDisabled);
 
   elCancelBtn.addEventListener("click", function () {
-    var returnView = state.composeMode === "template" ? "menu" : "stories";
     state.editingId = null;
-    state.composeMode = "story";
     elComposeText.value = "";
-    updateWordCount();
-    autoGrowComposeText();
-    showView(returnView);
+    showView("stories");
   });
 
   elSaveBtn.addEventListener("click", function () {
-    if (state.composeMode === "template") {
-      saveTemplate(elComposeText.value);
-      state.composeMode = "story";
-      elComposeText.value = "";
-      updateWordCount();
-      autoGrowComposeText();
-      showView("menu");
-      return;
-    }
-
     var text = elComposeText.value;
     if (text.trim().length === 0) return;
 
@@ -754,8 +617,6 @@
     saveEntries();
     state.editingId = null;
     elComposeText.value = "";
-    updateWordCount();
-    autoGrowComposeText();
     showView("stories");
   });
 
@@ -769,10 +630,6 @@
 
   elTabMenu.addEventListener("click", function () {
     showView("menu");
-  });
-
-  elTemplateBtn.addEventListener("click", function () {
-    openTemplateCompose();
   });
 
   function pad(n) {
