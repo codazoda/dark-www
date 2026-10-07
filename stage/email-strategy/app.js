@@ -170,6 +170,11 @@
     return null;
   }
 
+  // One date per pitch: the recorded send date if set, else the planned date.
+  function pitchDate(p) {
+    return p.actual_send_date || p.planned_date || "";
+  }
+
   function addDays(dateStr, days) {
     if (!dateStr || days == null) return "";
     var d = new Date(dateStr + "T00:00:00");
@@ -349,7 +354,7 @@
           '<tr tabindex="0" data-action="edit-pitch" data-pitch-id="' + p.id + '">' +
             "<td>" + p.pitch_number + "</td>" +
             "<td><span class=\"status-badge " + badgeClass + "\">" + label + "</span></td>" +
-            "<td>" + (isSent(p) ? formatDate(p.actual_send_date) : formatDate(p.planned_date)) + "</td>" +
+            "<td>" + formatDate(pitchDate(p)) + "</td>" +
             "<td>" + (isSent(p) ? num(p.purchases) : "") + "</td>" +
             "<td>" + (isSent(p) ? money(p.revenue) : "") + "</td>" +
           "</tr>"
@@ -385,7 +390,7 @@
         "<h3>Today's job: Stay with the offer.</h3>" +
         "<p>Write whatever story moves you. The story can be technical, personal, useful, entertaining, strange, or completely unrelated to the product. You don't need to manufacture a lesson that connects it to the offer.</p>" +
         "<p>When the story is finished, make the offer.</p>" +
-        (next ? '<p><strong>Next send:</strong> ' + formatDate(next.planned_date) + " &mdash; Pitch " + next.pitch_number + "</p>" : "") +
+        (next ? '<p><strong>Next send:</strong> ' + formatDate(pitchDate(next)) + " &mdash; Pitch " + next.pitch_number + "</p>" : "") +
       "</div>" +
 
       '<div class="card">' +
