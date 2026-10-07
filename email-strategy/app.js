@@ -74,8 +74,42 @@
     return escapeHtml(s).replace(/\n/g, "<br>");
   }
 
+  function localToday() {
+    var d = new Date();
+    return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0");
+  }
+
+  // Sent only when the send date is a valid calendar date, today or earlier (local time).
   function isSent(pitch) {
-    return !!pitch.actual_send_date;
+    var m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(pitch.actual_send_date || "");
+    if (!m) return false;
+    var y = +m[1], mo = +m[2], d = +m[3];
+    var dt = new Date(y, mo - 1, d);
+    if (dt.getFullYear() !== y || dt.getMonth() !== mo - 1 || dt.getDate() !== d) return false;
+    return pitch.actual_send_date <= localToday();
+  }
+
+  function hasFuturePitch() {
+    return data.campaigns.some(function (c) {
+      return c.pitches.some(function (p) { return !!p.actual_send_date && !isSent(p); });
+    });
+  }
+
+  var midnightTimer = null;
+  function scheduleMidnightRender() {
+    clearTimeout(midnightTimer);
+    midnightTimer = null;
+    if (!hasFuturePitch()) return;
+    var now = new Date();
+    var next = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1, 0, 0, 1);
+    midnightTimer = setTimeout(function () {
+      // don't wipe an open form; try again shortly
+      if (ui.editingPitchId || ui.showChangeExperiment) {
+        midnightTimer = setTimeout(scheduleMidnightRender, 60000);
+        return;
+      }
+      render();
+    }, next - now);
   }
 
   function sentPitches(campaign) {
@@ -134,6 +168,11 @@
     if (cadence === "Weekly") return (pitchNumber - 1) * 7;
     if (cadence === "Twice weekly") return Math.round((pitchNumber - 1) * 3.5);
     return null;
+  }
+
+  // One date per pitch: the recorded send date if set, else the planned date.
+  function pitchDate(p) {
+    return p.actual_send_date || p.planned_date || "";
   }
 
   function addDays(dateStr, days) {
@@ -205,6 +244,8 @@
 
     document.getElementById("archive-nav-btn").textContent =
       "Archive" + (archivedCampaigns().length ? " (" + archivedCampaigns().length + ")" : "");
+
+    scheduleMidnightRender();
   }
 
   function renderNewCampaignForm() {
@@ -313,7 +354,7 @@
           '<tr tabindex="0" data-action="edit-pitch" data-pitch-id="' + p.id + '">' +
             "<td>" + p.pitch_number + "</td>" +
             "<td><span class=\"status-badge " + badgeClass + "\">" + label + "</span></td>" +
-            "<td>" + (isSent(p) ? formatDate(p.actual_send_date) : formatDate(p.planned_date)) + "</td>" +
+            "<td>" + formatDate(pitchDate(p)) + "</td>" +
             "<td>" + (isSent(p) ? num(p.purchases) : "") + "</td>" +
             "<td>" + (isSent(p) ? money(p.revenue) : "") + "</td>" +
           "</tr>"
@@ -349,7 +390,7 @@
         "<h3>Today's job: Stay with the offer.</h3>" +
         "<p>Write whatever story moves you. The story can be technical, personal, useful, entertaining, strange, or completely unrelated to the product. You don't need to manufacture a lesson that connects it to the offer.</p>" +
         "<p>When the story is finished, make the offer.</p>" +
-        (next ? '<p><strong>Next send:</strong> ' + formatDate(next.planned_date) + " &mdash; Pitch " + next.pitch_number + "</p>" : "") +
+        (next ? '<p><strong>Next send:</strong> ' + formatDate(pitchDate(next)) + " &mdash; Pitch " + next.pitch_number + "</p>" : "") +
       "</div>" +
 
       '<div class="card">' +
@@ -459,8 +500,8 @@
       .sort(function (a, b) { return a.pitch_number - b.pitch_number; })
       .map(function (p) {
         return (
-          "<tr><td>" + p.pitch_number + "</td><td>" + formatDate(p.actual_send_date) + "</td><td>" +
-          num(p.purchases) + "</td><td>" + money(p.revenue) + "</td></tr>"
+          "<tr><td>" + p.pitch_number + "</td><td>" + (isSent(p) ? formatDate(p.actual_send_date) : "") + "</td><td>" +
+          (isSent(p) ? num(p.purchases) : "") + "</td><td>" + (isSent(p) ? money(p.revenue) : "") + "</td></tr>"
         );
       })
       .join("");
@@ -549,8 +590,8 @@
       .sort(function (a, b) { return a.pitch_number - b.pitch_number; })
       .map(function (p) {
         return (
-          "<tr><td>" + p.pitch_number + "</td><td>" + formatDate(p.actual_send_date) + "</td><td>" +
-          num(p.purchases) + "</td><td>" + money(p.revenue) + "</td><td>" + num(p.opens) + "</td><td>" + num(p.unsubscribes) + "</td></tr>"
+          "<tr><td>" + p.pitch_number + "</td><td>" + (isSent(p) ? formatDate(p.actual_send_date) : "") + "</td><td>" +
+          (isSent(p) ? num(p.purchases) : "") + "</td><td>" + (isSent(p) ? money(p.revenue) : "") + "</td><td>" + (isSent(p) ? num(p.opens) : "") + "</td><td>" + (isSent(p) ? num(p.unsubscribes) : "") + "</td></tr>"
         );
       })
       .join("");
