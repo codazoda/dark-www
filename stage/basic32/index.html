@@ -75,6 +75,8 @@ id="toc-arithmetic-operators">Arithmetic Operators</a>
 <li><a href="#examples-10" id="toc-examples-10">Examples</a></li>
 <li><a href="#comments-10" id="toc-comments-10">Comments</a></li>
 </ul></li>
+<li><a href="#color-palette" id="toc-color-palette">Color
+Palette</a></li>
 <li><a href="#comparison-operators"
 id="toc-comparison-operators">Comparison Operators</a>
 <ul>
@@ -573,8 +575,9 @@ href="#auto">AUTO</a> · <a href="#battery">BATTERY</a> · <a
 href="#beep">BEEP</a> · <a href="#chr">CHR$</a> · <a
 href="#circle">CIRCLE</a> · <a href="#clear">CLEAR</a> · <a
 href="#close">CLOSE</a> · <a href="#cls">CLS</a> · <a
-href="#color">COLOR</a> · <a href="#comparison-operators">Comparison
-Operators</a> · <a href="#cont">CONT</a> · <a href="#cos">COS</a> · <a
+href="#color">COLOR</a> · <a href="#color-palette">Color Palette</a> ·
+<a href="#comparison-operators">Comparison Operators</a> · <a
+href="#cont">CONT</a> · <a href="#cos">COS</a> · <a
 href="#data">DATA</a> · <a href="#date">DATE$</a> · <a
 href="#def-fn">DEF FN</a> · <a href="#dim">DIM</a> · <a
 href="#edit">EDIT</a> · <a href="#else">ELSE</a> · <a
@@ -814,6 +817,104 @@ stays plain text. <a href="#line">LINE</a>, <a href="#pset">PSET</a>, <a
 href="#paint">PAINT</a>, and <a href="#fill">FILL</a> use the foreground
 when their color is left off; an explicit color overrides it for that
 one statement and does not change the <code>COLOR</code> state.</p>
+<h2 id="color-palette">Color Palette</h2>
+<p><strong>Reference</strong> — the 16 standard palette colors</p>
+<p>These are the palette numbers accepted wherever a <code>color</code>
+is taken (<a href="#color">COLOR</a>, <a href="#line">LINE</a>, <a
+href="#pset">PSET</a>, <a href="#paint">PAINT</a>, <a
+href="#fill">FILL</a>). <a href="#palette">PALETTE</a> can remap them;
+the table shows the standard values.</p>
+<table>
+<thead>
+<tr>
+<th style="text-align: right;">Number</th>
+<th>Color</th>
+<th>RGB</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: right;">0</td>
+<td>Black</td>
+<td><code>RGB(0,0,0)</code></td>
+</tr>
+<tr>
+<td style="text-align: right;">1</td>
+<td>Blue</td>
+<td><code>RGB(0,0,170)</code></td>
+</tr>
+<tr>
+<td style="text-align: right;">2</td>
+<td>Green</td>
+<td><code>RGB(0,170,0)</code></td>
+</tr>
+<tr>
+<td style="text-align: right;">3</td>
+<td>Cyan</td>
+<td><code>RGB(0,170,170)</code></td>
+</tr>
+<tr>
+<td style="text-align: right;">4</td>
+<td>Red</td>
+<td><code>RGB(170,0,0)</code></td>
+</tr>
+<tr>
+<td style="text-align: right;">5</td>
+<td>Magenta</td>
+<td><code>RGB(170,0,170)</code></td>
+</tr>
+<tr>
+<td style="text-align: right;">6</td>
+<td>Brown</td>
+<td><code>RGB(170,85,0)</code></td>
+</tr>
+<tr>
+<td style="text-align: right;">7</td>
+<td>Light Gray</td>
+<td><code>RGB(170,170,170)</code></td>
+</tr>
+<tr>
+<td style="text-align: right;">8</td>
+<td>Gray</td>
+<td><code>RGB(85,85,85)</code></td>
+</tr>
+<tr>
+<td style="text-align: right;">9</td>
+<td>Light Blue</td>
+<td><code>RGB(85,85,255)</code></td>
+</tr>
+<tr>
+<td style="text-align: right;">10</td>
+<td>Light Green</td>
+<td><code>RGB(85,255,85)</code></td>
+</tr>
+<tr>
+<td style="text-align: right;">11</td>
+<td>Light Cyan</td>
+<td><code>RGB(85,255,255)</code></td>
+</tr>
+<tr>
+<td style="text-align: right;">12</td>
+<td>Light Red</td>
+<td><code>RGB(255,85,85)</code></td>
+</tr>
+<tr>
+<td style="text-align: right;">13</td>
+<td>Light Magenta</td>
+<td><code>RGB(255,85,255)</code></td>
+</tr>
+<tr>
+<td style="text-align: right;">14</td>
+<td>Yellow</td>
+<td><code>RGB(255,255,85)</code></td>
+</tr>
+<tr>
+<td style="text-align: right;">15</td>
+<td>White</td>
+<td><code>RGB(255,255,255)</code></td>
+</tr>
+</tbody>
+</table>
 <h2 id="comparison-operators">Comparison Operators</h2>
 <p><strong>Operator group</strong> —
 <code>=  &lt;&gt;  &lt;  &gt;  &lt;=  &gt;=</code></p>
@@ -1611,98 +1712,8 @@ LINE -(50,10),4</code></pre>
 is <code>?ILLEGAL IN SCREEN 0 ERROR</code>. <code>color</code> is either
 a standard palette number 0 through 15, or a value returned by <a
 href="#rgb">RGB()</a>; an out-of-range palette number is
-<code>?ILLEGAL QUANTITY ERROR</code>. The 16 palette colors:</p>
-<table>
-<thead>
-<tr>
-<th style="text-align: right;">Number</th>
-<th>Color</th>
-<th>RGB</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td style="text-align: right;">0</td>
-<td>Black</td>
-<td><code>RGB(0,0,0)</code></td>
-</tr>
-<tr>
-<td style="text-align: right;">1</td>
-<td>Blue</td>
-<td><code>RGB(0,0,170)</code></td>
-</tr>
-<tr>
-<td style="text-align: right;">2</td>
-<td>Green</td>
-<td><code>RGB(0,170,0)</code></td>
-</tr>
-<tr>
-<td style="text-align: right;">3</td>
-<td>Cyan</td>
-<td><code>RGB(0,170,170)</code></td>
-</tr>
-<tr>
-<td style="text-align: right;">4</td>
-<td>Red</td>
-<td><code>RGB(170,0,0)</code></td>
-</tr>
-<tr>
-<td style="text-align: right;">5</td>
-<td>Magenta</td>
-<td><code>RGB(170,0,170)</code></td>
-</tr>
-<tr>
-<td style="text-align: right;">6</td>
-<td>Brown</td>
-<td><code>RGB(170,85,0)</code></td>
-</tr>
-<tr>
-<td style="text-align: right;">7</td>
-<td>Light Gray</td>
-<td><code>RGB(170,170,170)</code></td>
-</tr>
-<tr>
-<td style="text-align: right;">8</td>
-<td>Gray</td>
-<td><code>RGB(85,85,85)</code></td>
-</tr>
-<tr>
-<td style="text-align: right;">9</td>
-<td>Light Blue</td>
-<td><code>RGB(85,85,255)</code></td>
-</tr>
-<tr>
-<td style="text-align: right;">10</td>
-<td>Light Green</td>
-<td><code>RGB(85,255,85)</code></td>
-</tr>
-<tr>
-<td style="text-align: right;">11</td>
-<td>Light Cyan</td>
-<td><code>RGB(85,255,255)</code></td>
-</tr>
-<tr>
-<td style="text-align: right;">12</td>
-<td>Light Red</td>
-<td><code>RGB(255,85,85)</code></td>
-</tr>
-<tr>
-<td style="text-align: right;">13</td>
-<td>Light Magenta</td>
-<td><code>RGB(255,85,255)</code></td>
-</tr>
-<tr>
-<td style="text-align: right;">14</td>
-<td>Yellow</td>
-<td><code>RGB(255,255,85)</code></td>
-</tr>
-<tr>
-<td style="text-align: right;">15</td>
-<td>White</td>
-<td><code>RGB(255,255,255)</code></td>
-</tr>
-</tbody>
-</table>
+<code>?ILLEGAL QUANTITY ERROR</code>. The 16 palette colors are listed
+under <a href="#color-palette">Color Palette</a>.</p>
 <p>Coordinates outside the surface are clipped rather than erroring. <a
 href="#pset">PSET</a> sets one pixel with the same color and clipping
 rules. See <code>examples/gfxclock.bas</code> for a three-hand analog
