@@ -1,0 +1,2846 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BASIC32 language reference</title>
+<meta name="description" content="Complete reference for the BASIC32
+language: every command, statement, function and operator.">
+<link rel="stylesheet" href="neat.css">
+<link rel="stylesheet" href="custom.css">
+</head>
+<body>
+<h1>The BASIC32 language reference</h1>
+<nav id="TOC" aria-label="Contents">
+<ul>
+<li><a href="#entering-programs" id="toc-entering-programs">Entering
+programs</a></li>
+<li><a href="#running-the-examples"
+id="toc-running-the-examples">Running the examples</a></li>
+<li><a href="#index" id="toc-index">Index</a></li>
+<li><a href="#abs" id="toc-abs">ABS</a>
+<ul>
+<li><a href="#examples" id="toc-examples">Examples</a></li>
+<li><a href="#comments" id="toc-comments">Comments</a></li>
+</ul></li>
+<li><a href="#arithmetic-operators"
+id="toc-arithmetic-operators">Arithmetic Operators</a>
+<ul>
+<li><a href="#examples-1" id="toc-examples-1">Examples</a></li>
+<li><a href="#comments-1" id="toc-comments-1">Comments</a></li>
+</ul></li>
+<li><a href="#asc" id="toc-asc">ASC</a>
+<ul>
+<li><a href="#examples-2" id="toc-examples-2">Examples</a></li>
+<li><a href="#comments-2" id="toc-comments-2">Comments</a></li>
+</ul></li>
+<li><a href="#atn" id="toc-atn">ATN</a>
+<ul>
+<li><a href="#examples-3" id="toc-examples-3">Examples</a></li>
+<li><a href="#comments-3" id="toc-comments-3">Comments</a></li>
+</ul></li>
+<li><a href="#auto" id="toc-auto">AUTO</a>
+<ul>
+<li><a href="#examples-4" id="toc-examples-4">Examples</a></li>
+<li><a href="#comments-4" id="toc-comments-4">Comments</a></li>
+</ul></li>
+<li><a href="#beep" id="toc-beep">BEEP</a>
+<ul>
+<li><a href="#examples-5" id="toc-examples-5">Examples</a></li>
+<li><a href="#comments-5" id="toc-comments-5">Comments</a></li>
+</ul></li>
+<li><a href="#chr" id="toc-chr">CHR$</a>
+<ul>
+<li><a href="#examples-6" id="toc-examples-6">Examples</a></li>
+<li><a href="#comments-6" id="toc-comments-6">Comments</a></li>
+</ul></li>
+<li><a href="#circle" id="toc-circle">CIRCLE</a>
+<ul>
+<li><a href="#examples-7" id="toc-examples-7">Examples</a></li>
+<li><a href="#comments-7" id="toc-comments-7">Comments</a></li>
+</ul></li>
+<li><a href="#clear" id="toc-clear">CLEAR</a>
+<ul>
+<li><a href="#examples-8" id="toc-examples-8">Examples</a></li>
+<li><a href="#comments-8" id="toc-comments-8">Comments</a></li>
+</ul></li>
+<li><a href="#close" id="toc-close">CLOSE</a></li>
+<li><a href="#cls" id="toc-cls">CLS</a>
+<ul>
+<li><a href="#examples-9" id="toc-examples-9">Examples</a></li>
+<li><a href="#comments-9" id="toc-comments-9">Comments</a></li>
+</ul></li>
+<li><a href="#color" id="toc-color">COLOR</a>
+<ul>
+<li><a href="#examples-10" id="toc-examples-10">Examples</a></li>
+<li><a href="#comments-10" id="toc-comments-10">Comments</a></li>
+</ul></li>
+<li><a href="#comparison-operators"
+id="toc-comparison-operators">Comparison Operators</a>
+<ul>
+<li><a href="#examples-11" id="toc-examples-11">Examples</a></li>
+<li><a href="#comments-11" id="toc-comments-11">Comments</a></li>
+</ul></li>
+<li><a href="#logical-operators" id="toc-logical-operators">Logical
+Operators</a>
+<ul>
+<li><a href="#examples-12" id="toc-examples-12">Examples</a></li>
+<li><a href="#comments-12" id="toc-comments-12">Comments</a></li>
+</ul></li>
+<li><a href="#cont" id="toc-cont">CONT</a>
+<ul>
+<li><a href="#examples-13" id="toc-examples-13">Examples</a></li>
+<li><a href="#comments-13" id="toc-comments-13">Comments</a></li>
+</ul></li>
+<li><a href="#cos" id="toc-cos">COS</a>
+<ul>
+<li><a href="#examples-14" id="toc-examples-14">Examples</a></li>
+<li><a href="#comments-14" id="toc-comments-14">Comments</a></li>
+</ul></li>
+<li><a href="#data" id="toc-data">DATA</a>
+<ul>
+<li><a href="#examples-15" id="toc-examples-15">Examples</a></li>
+<li><a href="#comments-15" id="toc-comments-15">Comments</a></li>
+</ul></li>
+<li><a href="#date" id="toc-date">DATE$</a>
+<ul>
+<li><a href="#examples-16" id="toc-examples-16">Examples</a></li>
+<li><a href="#comments-16" id="toc-comments-16">Comments</a></li>
+</ul></li>
+<li><a href="#def-fn" id="toc-def-fn">DEF FN</a>
+<ul>
+<li><a href="#examples-17" id="toc-examples-17">Examples</a></li>
+<li><a href="#comments-17" id="toc-comments-17">Comments</a></li>
+</ul></li>
+<li><a href="#dim" id="toc-dim">DIM</a>
+<ul>
+<li><a href="#examples-18" id="toc-examples-18">Examples</a></li>
+<li><a href="#comments-18" id="toc-comments-18">Comments</a></li>
+</ul></li>
+<li><a href="#edit" id="toc-edit">EDIT</a>
+<ul>
+<li><a href="#comments-19" id="toc-comments-19">Comments</a></li>
+</ul></li>
+<li><a href="#else" id="toc-else">ELSE</a></li>
+<li><a href="#eof" id="toc-eof">EOF</a></li>
+<li><a href="#erase" id="toc-erase">ERASE</a></li>
+<li><a href="#exp" id="toc-exp">EXP</a>
+<ul>
+<li><a href="#examples-19" id="toc-examples-19">Examples</a></li>
+<li><a href="#comments-20" id="toc-comments-20">Comments</a></li>
+</ul></li>
+<li><a href="#files" id="toc-files">FILES</a>
+<ul>
+<li><a href="#examples-20" id="toc-examples-20">Examples</a></li>
+<li><a href="#comments-21" id="toc-comments-21">Comments</a></li>
+</ul></li>
+<li><a href="#end" id="toc-end">END</a>
+<ul>
+<li><a href="#examples-21" id="toc-examples-21">Examples</a></li>
+<li><a href="#comments-22" id="toc-comments-22">Comments</a></li>
+</ul></li>
+<li><a href="#fill" id="toc-fill">FILL</a>
+<ul>
+<li><a href="#examples-22" id="toc-examples-22">Examples</a></li>
+<li><a href="#comments-23" id="toc-comments-23">Comments</a></li>
+</ul></li>
+<li><a href="#fix" id="toc-fix">FIX</a></li>
+<li><a href="#fornext" id="toc-fornext">FOR/NEXT</a>
+<ul>
+<li><a href="#examples-23" id="toc-examples-23">Examples</a></li>
+<li><a href="#comments-24" id="toc-comments-24">Comments</a></li>
+</ul></li>
+<li><a href="#fre" id="toc-fre">FRE</a>
+<ul>
+<li><a href="#examples-24" id="toc-examples-24">Examples</a></li>
+</ul></li>
+<li><a href="#get" id="toc-get">GET</a>
+<ul>
+<li><a href="#examples-25" id="toc-examples-25">Examples</a></li>
+<li><a href="#comments-25" id="toc-comments-25">Comments</a></li>
+</ul></li>
+<li><a href="#gfonth" id="toc-gfonth">GFONTH</a>
+<ul>
+<li><a href="#examples-26" id="toc-examples-26">Examples</a></li>
+<li><a href="#comments-26" id="toc-comments-26">Comments</a></li>
+</ul></li>
+<li><a href="#gfontw" id="toc-gfontw">GFONTW</a>
+<ul>
+<li><a href="#examples-27" id="toc-examples-27">Examples</a></li>
+<li><a href="#comments-27" id="toc-comments-27">Comments</a></li>
+</ul></li>
+<li><a href="#gheight" id="toc-gheight">GHEIGHT</a>
+<ul>
+<li><a href="#examples-28" id="toc-examples-28">Examples</a></li>
+<li><a href="#comments-28" id="toc-comments-28">Comments</a></li>
+</ul></li>
+<li><a href="#gosub" id="toc-gosub">GOSUB</a>
+<ul>
+<li><a href="#examples-29" id="toc-examples-29">Examples</a></li>
+<li><a href="#comments-29" id="toc-comments-29">Comments</a></li>
+</ul></li>
+<li><a href="#goto" id="toc-goto">GOTO</a>
+<ul>
+<li><a href="#examples-30" id="toc-examples-30">Examples</a></li>
+<li><a href="#comments-30" id="toc-comments-30">Comments</a></li>
+</ul></li>
+<li><a href="#gprint" id="toc-gprint">GPRINT</a>
+<ul>
+<li><a href="#examples-31" id="toc-examples-31">Examples</a></li>
+<li><a href="#comments-31" id="toc-comments-31">Comments</a></li>
+</ul></li>
+<li><a href="#gwidth" id="toc-gwidth">GWIDTH</a>
+<ul>
+<li><a href="#examples-32" id="toc-examples-32">Examples</a></li>
+</ul></li>
+<li><a href="#hex" id="toc-hex">HEX$</a>
+<ul>
+<li><a href="#examples-33" id="toc-examples-33">Examples</a></li>
+<li><a href="#comments-32" id="toc-comments-32">Comments</a></li>
+</ul></li>
+<li><a href="#ifthen" id="toc-ifthen">IF/THEN</a>
+<ul>
+<li><a href="#examples-34" id="toc-examples-34">Examples</a></li>
+<li><a href="#else-1" id="toc-else-1">ELSE</a></li>
+<li><a href="#string-comparisons" id="toc-string-comparisons">String
+comparisons</a></li>
+<li><a href="#comments-33" id="toc-comments-33">Comments</a></li>
+</ul></li>
+<li><a href="#inkey" id="toc-inkey">INKEY</a>
+<ul>
+<li><a href="#examples-35" id="toc-examples-35">Examples</a></li>
+<li><a href="#comments-34" id="toc-comments-34">Comments</a></li>
+</ul></li>
+<li><a href="#inkey-1" id="toc-inkey-1">INKEY$</a>
+<ul>
+<li><a href="#examples-36" id="toc-examples-36">Examples</a></li>
+</ul></li>
+<li><a href="#input" id="toc-input">INPUT</a>
+<ul>
+<li><a href="#examples-37" id="toc-examples-37">Examples</a></li>
+<li><a href="#comments-35" id="toc-comments-35">Comments</a></li>
+</ul></li>
+<li><a href="#input-1" id="toc-input-1">INPUT$</a>
+<ul>
+<li><a href="#examples-38" id="toc-examples-38">Examples</a></li>
+<li><a href="#comments-36" id="toc-comments-36">Comments</a></li>
+</ul></li>
+<li><a href="#instr" id="toc-instr">INSTR</a>
+<ul>
+<li><a href="#examples-39" id="toc-examples-39">Examples</a></li>
+<li><a href="#comments-37" id="toc-comments-37">Comments</a></li>
+</ul></li>
+<li><a href="#int" id="toc-int">INT</a>
+<ul>
+<li><a href="#examples-40" id="toc-examples-40">Examples</a></li>
+<li><a href="#comments-38" id="toc-comments-38">Comments</a></li>
+</ul></li>
+<li><a href="#kill" id="toc-kill">KILL</a>
+<ul>
+<li><a href="#examples-41" id="toc-examples-41">Examples</a></li>
+<li><a href="#comments-39" id="toc-comments-39">Comments</a></li>
+</ul></li>
+<li><a href="#lcase" id="toc-lcase">LCASE$</a>
+<ul>
+<li><a href="#examples-42" id="toc-examples-42">Examples</a></li>
+<li><a href="#comments-40" id="toc-comments-40">Comments</a></li>
+</ul></li>
+<li><a href="#left" id="toc-left">LEFT$</a>
+<ul>
+<li><a href="#examples-43" id="toc-examples-43">Examples</a></li>
+<li><a href="#comments-41" id="toc-comments-41">Comments</a></li>
+</ul></li>
+<li><a href="#len" id="toc-len">LEN</a>
+<ul>
+<li><a href="#examples-44" id="toc-examples-44">Examples</a></li>
+<li><a href="#comments-42" id="toc-comments-42">Comments</a></li>
+</ul></li>
+<li><a href="#let" id="toc-let">LET</a>
+<ul>
+<li><a href="#examples-45" id="toc-examples-45">Examples</a></li>
+<li><a href="#comments-43" id="toc-comments-43">Comments</a></li>
+</ul></li>
+<li><a href="#line" id="toc-line">LINE</a>
+<ul>
+<li><a href="#examples-46" id="toc-examples-46">Examples</a></li>
+<li><a href="#comments-44" id="toc-comments-44">Comments</a></li>
+</ul></li>
+<li><a href="#list" id="toc-list">LIST</a>
+<ul>
+<li><a href="#examples-47" id="toc-examples-47">Examples</a></li>
+<li><a href="#comments-45" id="toc-comments-45">Comments</a></li>
+</ul></li>
+<li><a href="#load" id="toc-load">LOAD</a>
+<ul>
+<li><a href="#examples-48" id="toc-examples-48">Examples</a></li>
+<li><a href="#comments-46" id="toc-comments-46">Comments</a></li>
+</ul></li>
+<li><a href="#loc" id="toc-loc">LOC</a></li>
+<li><a href="#locate" id="toc-locate">LOCATE</a>
+<ul>
+<li><a href="#examples-49" id="toc-examples-49">Examples</a></li>
+<li><a href="#comments-47" id="toc-comments-47">Comments</a></li>
+</ul></li>
+<li><a href="#lof" id="toc-lof">LOF</a></li>
+<li><a href="#log" id="toc-log">LOG</a></li>
+<li><a href="#merge" id="toc-merge">MERGE</a>
+<ul>
+<li><a href="#comments-48" id="toc-comments-48">Comments</a></li>
+</ul></li>
+<li><a href="#mid" id="toc-mid">MID$</a>
+<ul>
+<li><a href="#examples-50" id="toc-examples-50">Examples</a></li>
+<li><a href="#comments-49" id="toc-comments-49">Comments</a></li>
+</ul></li>
+<li><a href="#name" id="toc-name">NAME</a></li>
+<li><a href="#new" id="toc-new">NEW</a>
+<ul>
+<li><a href="#examples-51" id="toc-examples-51">Examples</a></li>
+<li><a href="#comments-50" id="toc-comments-50">Comments</a></li>
+</ul></li>
+<li><a href="#oct" id="toc-oct">OCT$</a></li>
+<li><a href="#on" id="toc-on">ON</a>
+<ul>
+<li><a href="#examples-52" id="toc-examples-52">Examples</a></li>
+<li><a href="#comments-51" id="toc-comments-51">Comments</a></li>
+</ul></li>
+<li><a href="#open" id="toc-open">OPEN</a>
+<ul>
+<li><a href="#examples-53" id="toc-examples-53">Examples</a></li>
+<li><a href="#comments-52" id="toc-comments-52">Comments</a></li>
+</ul></li>
+<li><a href="#paint" id="toc-paint">PAINT</a>
+<ul>
+<li><a href="#examples-54" id="toc-examples-54">Examples</a></li>
+<li><a href="#comments-53" id="toc-comments-53">Comments</a></li>
+</ul></li>
+<li><a href="#palette" id="toc-palette">PALETTE</a>
+<ul>
+<li><a href="#examples-55" id="toc-examples-55">Examples</a></li>
+<li><a href="#comments-54" id="toc-comments-54">Comments</a></li>
+</ul></li>
+<li><a href="#pause" id="toc-pause">PAUSE</a>
+<ul>
+<li><a href="#examples-56" id="toc-examples-56">Examples</a></li>
+<li><a href="#comments-55" id="toc-comments-55">Comments</a></li>
+</ul></li>
+<li><a href="#play" id="toc-play">PLAY</a>
+<ul>
+<li><a href="#examples-57" id="toc-examples-57">Examples</a></li>
+<li><a href="#comments-56" id="toc-comments-56">Comments</a></li>
+</ul></li>
+<li><a href="#pmap" id="toc-pmap">PMAP</a></li>
+<li><a href="#point" id="toc-point">POINT</a>
+<ul>
+<li><a href="#examples-58" id="toc-examples-58">Examples</a></li>
+<li><a href="#comments-57" id="toc-comments-57">Comments</a></li>
+</ul></li>
+<li><a href="#pos" id="toc-pos">POS</a></li>
+<li><a href="#preset" id="toc-preset">PRESET</a></li>
+<li><a href="#print" id="toc-print">PRINT</a>
+<ul>
+<li><a href="#examples-59" id="toc-examples-59">Examples</a></li>
+<li><a href="#comments-58" id="toc-comments-58">Comments</a></li>
+</ul></li>
+<li><a href="#pset" id="toc-pset">PSET</a>
+<ul>
+<li><a href="#examples-60" id="toc-examples-60">Examples</a></li>
+<li><a href="#comments-59" id="toc-comments-59">Comments</a></li>
+</ul></li>
+<li><a href="#put" id="toc-put">PUT</a>
+<ul>
+<li><a href="#examples-61" id="toc-examples-61">Examples</a></li>
+<li><a href="#comments-60" id="toc-comments-60">Comments</a></li>
+</ul></li>
+<li><a href="#randomize" id="toc-randomize">RANDOMIZE</a>
+<ul>
+<li><a href="#examples-62" id="toc-examples-62">Examples</a></li>
+<li><a href="#comments-61" id="toc-comments-61">Comments</a></li>
+</ul></li>
+<li><a href="#read" id="toc-read">READ</a></li>
+<li><a href="#rem" id="toc-rem">REM</a>
+<ul>
+<li><a href="#examples-63" id="toc-examples-63">Examples</a></li>
+<li><a href="#comments-62" id="toc-comments-62">Comments</a></li>
+</ul></li>
+<li><a href="#renum" id="toc-renum">RENUM</a>
+<ul>
+<li><a href="#examples-64" id="toc-examples-64">Examples</a></li>
+<li><a href="#comments-63" id="toc-comments-63">Comments</a></li>
+</ul></li>
+<li><a href="#reset" id="toc-reset">RESET</a></li>
+<li><a href="#restore" id="toc-restore">RESTORE</a></li>
+<li><a href="#return" id="toc-return">RETURN</a>
+<ul>
+<li><a href="#examples-65" id="toc-examples-65">Examples</a></li>
+<li><a href="#comments-64" id="toc-comments-64">Comments</a></li>
+</ul></li>
+<li><a href="#rgb" id="toc-rgb">RGB</a>
+<ul>
+<li><a href="#examples-66" id="toc-examples-66">Examples</a></li>
+<li><a href="#comments-65" id="toc-comments-65">Comments</a></li>
+</ul></li>
+<li><a href="#right" id="toc-right">RIGHT$</a>
+<ul>
+<li><a href="#examples-67" id="toc-examples-67">Examples</a></li>
+<li><a href="#comments-66" id="toc-comments-66">Comments</a></li>
+</ul></li>
+<li><a href="#rnd" id="toc-rnd">RND</a>
+<ul>
+<li><a href="#examples-68" id="toc-examples-68">Examples</a></li>
+<li><a href="#comments-67" id="toc-comments-67">Comments</a></li>
+</ul></li>
+<li><a href="#run" id="toc-run">RUN</a>
+<ul>
+<li><a href="#examples-69" id="toc-examples-69">Examples</a></li>
+<li><a href="#comments-68" id="toc-comments-68">Comments</a></li>
+</ul></li>
+<li><a href="#save" id="toc-save">SAVE</a>
+<ul>
+<li><a href="#examples-70" id="toc-examples-70">Examples</a></li>
+<li><a href="#comments-69" id="toc-comments-69">Comments</a></li>
+</ul></li>
+<li><a href="#screen" id="toc-screen">SCREEN</a>
+<ul>
+<li><a href="#examples-71" id="toc-examples-71">Examples</a></li>
+<li><a href="#comments-70" id="toc-comments-70">Comments</a></li>
+</ul></li>
+<li><a href="#sgn" id="toc-sgn">SGN</a></li>
+<li><a href="#sin" id="toc-sin">SIN</a>
+<ul>
+<li><a href="#examples-72" id="toc-examples-72">Examples</a></li>
+<li><a href="#comments-71" id="toc-comments-71">Comments</a></li>
+</ul></li>
+<li><a href="#sleep" id="toc-sleep">SLEEP</a>
+<ul>
+<li><a href="#examples-73" id="toc-examples-73">Examples</a></li>
+<li><a href="#comments-72" id="toc-comments-72">Comments</a></li>
+</ul></li>
+<li><a href="#sound" id="toc-sound">SOUND</a>
+<ul>
+<li><a href="#examples-74" id="toc-examples-74">Examples</a></li>
+<li><a href="#comments-73" id="toc-comments-73">Comments</a></li>
+</ul></li>
+<li><a href="#space" id="toc-space">SPACE$</a></li>
+<li><a href="#spc" id="toc-spc">SPC</a>
+<ul>
+<li><a href="#examples-75" id="toc-examples-75">Examples</a></li>
+</ul></li>
+<li><a href="#sqr" id="toc-sqr">SQR</a>
+<ul>
+<li><a href="#examples-76" id="toc-examples-76">Examples</a></li>
+<li><a href="#comments-74" id="toc-comments-74">Comments</a></li>
+</ul></li>
+<li><a href="#stop" id="toc-stop">STOP</a>
+<ul>
+<li><a href="#comments-75" id="toc-comments-75">Comments</a></li>
+</ul></li>
+<li><a href="#str" id="toc-str">STR$</a>
+<ul>
+<li><a href="#examples-77" id="toc-examples-77">Examples</a></li>
+<li><a href="#comments-76" id="toc-comments-76">Comments</a></li>
+</ul></li>
+<li><a href="#string" id="toc-string">STRING$</a>
+<ul>
+<li><a href="#examples-78" id="toc-examples-78">Examples</a></li>
+</ul></li>
+<li><a href="#swap" id="toc-swap">SWAP</a>
+<ul>
+<li><a href="#examples-79" id="toc-examples-79">Examples</a></li>
+</ul></li>
+<li><a href="#tab" id="toc-tab">TAB</a>
+<ul>
+<li><a href="#examples-80" id="toc-examples-80">Examples</a></li>
+</ul></li>
+<li><a href="#tan" id="toc-tan">TAN</a></li>
+<li><a href="#timer" id="toc-timer">TIMER</a></li>
+<li><a href="#trontroff" id="toc-trontroff">TRON/TROFF</a></li>
+<li><a href="#view" id="toc-view">VIEW</a>
+<ul>
+<li><a href="#examples-81" id="toc-examples-81">Examples</a></li>
+<li><a href="#comments-77" id="toc-comments-77">Comments</a></li>
+</ul></li>
+<li><a href="#whilewend" id="toc-whilewend">WHILE/WEND</a>
+<ul>
+<li><a href="#examples-82" id="toc-examples-82">Examples</a></li>
+<li><a href="#comments-78" id="toc-comments-78">Comments</a></li>
+</ul></li>
+<li><a href="#write" id="toc-write">WRITE</a>
+<ul>
+<li><a href="#examples-83" id="toc-examples-83">Examples</a></li>
+</ul></li>
+<li><a href="#string-variables" id="toc-string-variables">String
+variables</a>
+<ul>
+<li><a href="#examples-84" id="toc-examples-84">Examples</a></li>
+<li><a href="#comments-79" id="toc-comments-79">Comments</a></li>
+</ul></li>
+<li><a href="#battery" id="toc-battery">BATTERY</a>
+<ul>
+<li><a href="#examples-85" id="toc-examples-85">Examples</a></li>
+<li><a href="#comments-80" id="toc-comments-80">Comments</a></li>
+</ul></li>
+<li><a href="#tick" id="toc-tick">TICK</a>
+<ul>
+<li><a href="#examples-86" id="toc-examples-86">Examples</a></li>
+<li><a href="#comments-81" id="toc-comments-81">Comments</a></li>
+</ul></li>
+<li><a href="#time" id="toc-time">TIME$</a>
+<ul>
+<li><a href="#examples-87" id="toc-examples-87">Examples</a></li>
+<li><a href="#comments-82" id="toc-comments-82">Comments</a></li>
+</ul></li>
+<li><a href="#ucase" id="toc-ucase">UCASE$</a>
+<ul>
+<li><a href="#examples-88" id="toc-examples-88">Examples</a></li>
+<li><a href="#comments-83" id="toc-comments-83">Comments</a></li>
+</ul></li>
+<li><a href="#val" id="toc-val">VAL</a>
+<ul>
+<li><a href="#examples-89" id="toc-examples-89">Examples</a></li>
+<li><a href="#comments-84" id="toc-comments-84">Comments</a></li>
+</ul></li>
+</ul>
+</nav>
+<main>
+<p>BASIC32 is a line-numbered BASIC close to classic 1980s home-computer
+dialects, with a small graphics extension. This reference documents
+every command, statement, function, special variable, operator group,
+and language rule the interpreter currently implements — nothing more,
+nothing speculative.</p>
+<h2 id="entering-programs">Entering programs</h2>
+<p>Typing a line that starts with a number stores (or replaces) that
+line in a program held in memory; typing a bare line number with nothing
+after it deletes that line. Anything else typed at the prompt — not
+starting with a line number — is an immediate statement: it executes
+right away and is never stored, e.g. <code>PRINT 2+2</code>.
+<code>RUN</code>, <code>LIST</code>, <code>NEW</code>,
+<code>RENUM</code>, <code>LOAD</code>, <code>SAVE</code>,
+<code>KILL</code>, <code>FILES</code>, <code>MERGE</code>,
+<code>CONT</code>, <code>AUTO</code>, and <code>EDIT</code> are direct
+commands rather than statements; see their entries below.</p>
+<p>The program in memory is lost at a power cycle or <code>NEW</code>.
+To keep one, use <a href="#save">SAVE</a>: saved programs live in the
+board's internal flash, survive a power cycle, and come back with <a
+href="#load">LOAD</a> or <code>RUN "FILE"</code>.</p>
+<p>A few rules apply everywhere in the language:</p>
+<ul>
+<li>Keywords and variable names are case-insensitive (<code>PRINT</code>
+and <code>print</code> are the same keyword; <code>X</code> and
+<code>x</code> are the same variable).</li>
+<li>A variable is <strong>numeric</strong> (a C <code>double</code>)
+unless its name ends in <code>$</code>, which makes it a
+<strong>string</strong> variable holding 0–255 bytes. <code>A</code> and
+<code>A$</code> are two different variables. Numeric names start at
+<code>0</code>; string names start at <code>""</code>. <a
+href="#dim">Arrays</a> of either type are declared with
+<code>DIM</code>, and one-line functions with <a href="#def-fn">DEF
+FN</a>. See <a href="#string-variables">String variables</a> for the
+string grammar, the string functions, and the type rules.</li>
+<li>Every statement that finishes without an error prints a
+<code>READY.</code> prompt on its own line afterward — except silently
+storing or deleting a numbered program line, which prints nothing.
+<code>RUN</code> prints <code>READY.</code> once the program stops (by
+reaching its last line, hitting <a href="#end"><code>END</code></a>, or
+erroring).</li>
+<li>One physical line — stored or typed direct — can hold several
+statements separated by <code>:</code>, run left to right
+(<code>PRINT "HI" : PAUSE 2</code>). A <code>:</code> inside a
+<code>"..."</code> string is ordinary text; <a
+href="#rem"><code>REM</code></a> and a <code>'</code> comment swallow
+the rest of the physical line, colons included; empty segments (leading,
+trailing, or doubled <code>:</code>) are harmless separators. <a
+href="#goto"><code>GOTO</code></a>, <a
+href="#gosub"><code>GOSUB</code></a>, and a numeric <a
+href="#ifthen"><code>IF ... THEN</code></a> jump to the <em>start</em>
+of a line; <a href="#return"><code>RETURN</code></a> and <a
+href="#fornext"><code>NEXT</code></a> resume at the statement right
+after the one that called or opened the loop, even mid-line. <a
+href="#end"><code>END</code></a>, an error, an unconditional jump, or a
+false <a href="#ifthen"><code>IF ... THEN</code></a> abandons the rest
+of the current physical line.</li>
+</ul>
+<h2 id="running-the-examples">Running the examples</h2>
+<p>The examples below are complete BASIC programs. Type them in line by
+line, or load them from a file, and <code>RUN</code> them.</p>
+<p>The <code>LIST</code> / <code>RUN</code> / direct-statement
+transcripts throughout this reference show how the interpreter responds
+to each line entered; they document the language.</p>
+<h2 id="index">Index</h2>
+<p><a href="#abs">ABS</a> · <a href="#arithmetic-operators">Arithmetic
+Operators</a> · <a href="#asc">ASC</a> · <a href="#atn">ATN</a> · <a
+href="#auto">AUTO</a> · <a href="#battery">BATTERY</a> · <a
+href="#beep">BEEP</a> · <a href="#chr">CHR$</a> · <a
+href="#circle">CIRCLE</a> · <a href="#clear">CLEAR</a> · <a
+href="#close">CLOSE</a> · <a href="#cls">CLS</a> · <a
+href="#color">COLOR</a> · <a href="#comparison-operators">Comparison
+Operators</a> · <a href="#cont">CONT</a> · <a href="#cos">COS</a> · <a
+href="#data">DATA</a> · <a href="#date">DATE$</a> · <a
+href="#def-fn">DEF FN</a> · <a href="#dim">DIM</a> · <a
+href="#edit">EDIT</a> · <a href="#else">ELSE</a> · <a
+href="#end">END</a> · <a href="#eof">EOF</a> · <a
+href="#erase">ERASE</a> · <a href="#exp">EXP</a> · <a
+href="#files">FILES</a> · <a href="#fill">FILL</a> · <a
+href="#fix">FIX</a> · <a href="#fornext">FOR/NEXT</a> · <a
+href="#fre">FRE</a> · <a href="#get">GET</a> · <a
+href="#gfonth">GFONTH</a> · <a href="#gfontw">GFONTW</a> · <a
+href="#gheight">GHEIGHT</a> · <a href="#gosub">GOSUB</a> · <a
+href="#goto">GOTO</a> · <a href="#gprint">GPRINT</a> · <a
+href="#gwidth">GWIDTH</a> · <a href="#hex">HEX$</a> · <a
+href="#ifthen">IF/THEN</a> · <a href="#inkey">INKEY</a> · <a
+href="#inkey-1">INKEY$</a> · <a href="#input">INPUT</a> · <a
+href="#input-1">INPUT$</a> · <a href="#instr">INSTR</a> · <a
+href="#int">INT</a> · <a href="#kill">KILL</a> · <a
+href="#lcase">LCASE$</a> · <a href="#left">LEFT$</a> · <a
+href="#len">LEN</a> · <a href="#let">LET</a> · <a href="#line">LINE</a>
+· <a href="#list">LIST</a> · <a href="#load">LOAD</a> · <a
+href="#loc">LOC</a> · <a href="#locate">LOCATE</a> · <a
+href="#lof">LOF</a> · <a href="#log">LOG</a> · <a
+href="#logical-operators">Logical Operators</a> · <a
+href="#merge">MERGE</a> · <a href="#mid">MID$</a> · <a
+href="#name">NAME</a> · <a href="#new">NEW</a> · <a href="#oct">OCT$</a>
+· <a href="#on">ON</a> · <a href="#open">OPEN</a> · <a
+href="#paint">PAINT</a> · <a href="#palette">PALETTE</a> · <a
+href="#pause">PAUSE</a> · <a href="#play">PLAY</a> · <a
+href="#pmap">PMAP</a> · <a href="#point">POINT</a> · <a
+href="#pos">POS</a> · <a href="#preset">PRESET</a> · <a
+href="#print">PRINT</a> · <a href="#pset">PSET</a> · <a
+href="#put">PUT</a> · <a href="#randomize">RANDOMIZE</a> · <a
+href="#read">READ</a> · <a href="#rem">REM</a> · <a
+href="#renum">RENUM</a> · <a href="#reset">RESET</a> · <a
+href="#restore">RESTORE</a> · <a href="#return">RETURN</a> · <a
+href="#rgb">RGB</a> · <a href="#right">RIGHT$</a> · <a
+href="#rnd">RND</a> · <a href="#run">RUN</a> · <a href="#save">SAVE</a>
+· <a href="#screen">SCREEN</a> · <a href="#sgn">SGN</a> · <a
+href="#sin">SIN</a> · <a href="#sleep">SLEEP</a> · <a
+href="#sound">SOUND</a> · <a href="#space">SPACE$</a> · <a
+href="#spc">SPC</a> · <a href="#sqr">SQR</a> · <a href="#stop">STOP</a>
+· <a href="#str">STR$</a> · <a href="#string-variables">String
+variables</a> · <a href="#string">STRING$</a> · <a href="#swap">SWAP</a>
+· <a href="#tab">TAB</a> · <a href="#tan">TAN</a> · <a
+href="#tick">TICK</a> · <a href="#time">TIME$</a> · <a
+href="#timer">TIMER</a> · <a href="#trontroff">TRON/TROFF</a> · <a
+href="#ucase">UCASE$</a> · <a href="#val">VAL</a> · <a
+href="#view">VIEW</a> · <a href="#whilewend">WHILE/WEND</a> · <a
+href="#write">WRITE</a></p>
+<h2 id="abs">ABS</h2>
+<p><strong>Function</strong> — <code>ABS(x)</code></p>
+<p>Returns the absolute value of <code>x</code>.</p>
+<h3 id="examples">Examples</h3>
+<pre class="basic"><code>PRINT ABS(-5)</code></pre>
+<p>Output: <code>5</code></p>
+<h3 id="comments">Comments</h3>
+<p>Takes exactly one parenthesized argument, like every BASIC32 function
+(there's no varargs or optional-argument form). See <a
+href="#int">INT</a>, <a href="#sqr">SQR</a>.</p>
+<h2 id="arithmetic-operators">Arithmetic Operators</h2>
+<p><strong>Operator group</strong> — <code>+  -  *  /</code> (binary),
+unary <code>+  -</code></p>
+<p><strong>Operator group</strong> — <code>MOD</code></p>
+<p>Ordinary arithmetic on numbers. Precedence, highest to lowest: unary
+<code>+</code>/<code>-</code>, then <code>*</code>/<code>/</code>, then
+<code>MOD</code>, then binary <code>+</code>/<code>-</code>, then the <a
+href="#comparison-operators">comparison operators</a>, then the <a
+href="#logical-operators">logical operators</a>. Parentheses override
+precedence. All values are C <code>double</code>s.</p>
+<p><code>a MOD b</code> is the remainder of dividing <code>a</code> by
+<code>b</code> after rounding both to whole numbers; it takes the sign
+of <code>a</code> (<code>-17 MOD 5</code> is <code>-2</code>).</p>
+<p>Number constants can also be written in hexadecimal or octal:
+<code>&amp;HFF</code> is 255 and <code>&amp;O17</code> is 15.</p>
+<h3 id="examples-1">Examples</h3>
+<pre class="basic"><code>PRINT 2+3*4
+PRINT (2+3)*4
+PRINT -5+2
+PRINT 17 MOD 5</code></pre>
+<p>Output: <code>14</code>, <code>20</code>, <code>-3</code>,
+<code>2</code></p>
+<h3 id="comments-1">Comments</h3>
+<p>Dividing by zero is a runtime error
+(<code>?DIVISION BY ZERO ERROR</code>), not infinity or NaN, and so is
+<code>MOD</code> by zero. There is no integer-division operator or
+exponentiation operator.</p>
+<h2 id="asc">ASC</h2>
+<p><strong>Function</strong> — <code>ASC(s$)</code></p>
+<p>Returns the unsigned byte value (0–255) of the first character of
+string expression <code>s$</code>.</p>
+<h3 id="examples-2">Examples</h3>
+<pre class="basic"><code>PRINT ASC(&quot;A&quot;)
+PRINT ASC(&quot;ABC&quot;)</code></pre>
+<p>Output: <code>65</code>, <code>65</code></p>
+<h3 id="comments-2">Comments</h3>
+<p><code>ASC("")</code> on an empty string is
+<code>?ILLEGAL QUANTITY ERROR</code>. The argument must be a string; a
+number is <code>?TYPE MISMATCH ERROR</code>. <code>ASC</code> is the
+inverse of <a href="#chr">CHR$</a> for a single byte. Bytes are not
+decoded as Unicode.</p>
+<h2 id="atn">ATN</h2>
+<p><strong>Function</strong> — <code>ATN(x)</code></p>
+<p>Arctangent of <code>x</code>, in radians (between -PI/2 and
+PI/2).</p>
+<h3 id="examples-3">Examples</h3>
+<pre class="basic"><code>PRINT ATN(1)*4</code></pre>
+<p>Output: <code>3.14159</code></p>
+<h3 id="comments-3">Comments</h3>
+<p><code>4*ATN(1)</code> is the usual way to get PI. See <a
+href="#tan">TAN</a>, <a href="#sin">SIN</a>, <a href="#cos">COS</a>.</p>
+<h2 id="auto">AUTO</h2>
+<p><strong>Command</strong> — <code>AUTO [start][,increment]</code></p>
+<p>Turns on automatic line numbering: the next input line comes up
+already typed with <code>start</code> (default 10) and a space, and each
+numbered line you enter brings up the next number,
+<code>increment</code> (default 10) higher.</p>
+<h3 id="examples-4">Examples</h3>
+<pre><code>AUTO 100,5
+100 PRINT &quot;HI&quot;
+105 END
+110</code></pre>
+<p>(<code>100 </code>, <code>105 </code> and <code>110 </code> were
+typed by <code>AUTO</code>; pressing Enter on the bare <code>110</code>
+ends it.)</p>
+<h3 id="comments-4">Comments</h3>
+<p><code>AUTO</code> ends when you enter a line with nothing after its
+number (which deletes nothing), erase the number and enter an empty
+line, or enter any line without a line number (that line then runs as
+usual). Pre-typed text is edited like typed text — Backspace removes it.
+A line number that already exists is replaced, as with any typed
+line.</p>
+<h2 id="beep">BEEP</h2>
+<p><strong>Statement</strong> — <code>BEEP</code></p>
+<p>Sounds a short beep: an 800 Hz tone for a quarter second, through the
+same path as <a href="#sound">SOUND</a>.</p>
+<h3 id="examples-5">Examples</h3>
+<pre class="basic"><code>10 PRINT &quot;DONE&quot;: BEEP</code></pre>
+<h3 id="comments-5">Comments</h3>
+<p>Blocks for the beep's length like <code>SOUND</code>. On a target
+with no speaker the program still waits that long.</p>
+<h2 id="chr">CHR$</h2>
+<p><strong>Function</strong> — <code>CHR$(n)</code></p>
+<p>Returns a one-byte string whose single character has byte value
+<code>n</code>. <code>n</code> is converted to an integer.</p>
+<h3 id="examples-6">Examples</h3>
+<pre class="basic"><code>PRINT CHR$(65)
+PRINT CHR$(42)</code></pre>
+<p>Output: <code>A</code>, <code>*</code></p>
+<h3 id="comments-6">Comments</h3>
+<p><code>n</code> outside 0–255 is <code>?ILLEGAL QUANTITY ERROR</code>.
+<code>CHR$(n)</code> is a string-typed value: it belongs in a string
+context (a <code>$</code> assignment, <a href="#print">PRINT</a>, or
+another string function's argument), not where a number is expected.
+Inverse of <a href="#asc">ASC</a>.</p>
+<h2 id="circle">CIRCLE</h2>
+<p><strong>Statement</strong> —
+<code>CIRCLE (x,y),radius[,[color][,[start][,[end][,aspect]]]]</code></p>
+<p>Draws a circle centered on <code>(x,y)</code> in <code>color</code>
+(default: the current <a href="#color">COLOR</a> foreground). With
+<code>start</code> and/or <code>end</code> it draws an arc instead; with
+<code>aspect</code> an ellipse.</p>
+<h3 id="examples-7">Examples</h3>
+<pre class="basic"><code>SCREEN 1
+CIRCLE (160,90),40
+CIRCLE (160,90),40,14,0,3.14159
+CIRCLE (160,90),40,12,-0.5,-5.8
+CIRCLE (160,90),40,10,,,0.5</code></pre>
+<p>A full circle; the top half as an arc; a pie slice (the negative
+angles also draw the two radius lines); a flat ellipse.</p>
+<h3 id="comments-7">Comments</h3>
+<p>Angles are radians, counterclockwise from 3 o'clock, between
+<code>-2*PI</code> and <code>2*PI</code>
+(<code>?ILLEGAL QUANTITY ERROR</code> outside). Leave <code>start</code>
+out to begin at 0 and <code>end</code> out to finish at
+<code>2*PI</code>. <code>aspect</code> is the vertical radius divided by
+the horizontal one (default 1); <code>radius</code> is always the larger
+of the two. Moves the current graphics position to the center. SCREEN 1
+only; clipped like <a href="#line">LINE</a>.</p>
+<h2 id="clear">CLEAR</h2>
+<p><strong>Statement</strong> — <code>CLEAR</code></p>
+<p>Forgets every variable, array, and <a href="#def-fn">DEF FN</a>,
+closes all open files, empties the
+<code>FOR</code>/<code>GOSUB</code>/<code>WHILE</code> stacks, and
+restarts <a href="#data">DATA</a>. The program itself stays.</p>
+<h3 id="examples-8">Examples</h3>
+<pre class="basic"><code>10 X=5: DIM A(3)
+20 CLEAR
+30 PRINT X</code></pre>
+<p>Output: <code>0</code></p>
+<h3 id="comments-8">Comments</h3>
+<p>Classic BASIC's memory-size arguments (<code>CLEAR ,32768</code>) are
+accepted and ignored. <a href="#run">RUN</a> does the same clearing
+before a program starts.</p>
+<h2 id="close">CLOSE</h2>
+<p><strong>Statement</strong> — <code>CLOSE [[#]n[, [#]n...]]</code></p>
+<p>Closes the numbered files, or every open file when no number is
+given. A file opened for output or append is written to storage as it
+closes. See <a href="#open">OPEN</a>.</p>
+<h2 id="cls">CLS</h2>
+<p><strong>Statement</strong> — <code>CLS</code></p>
+<p>Clears whichever screen is currently active: the text console in <a
+href="#screen">SCREEN</a> 0, or the graphics surface to black in SCREEN
+1.</p>
+<h3 id="examples-9">Examples</h3>
+<pre class="basic"><code>CLS</code></pre>
+<h3 id="comments-9">Comments</h3>
+<p>Switching screens with <code>SCREEN</code> preserves neither screen's
+contents, so <code>CLS</code> is the only way to blank either one. In
+SCREEN 1 it also returns the graphics text cursor (see <a
+href="#locate">LOCATE</a> and <a href="#print">PRINT</a>) to row 1,
+column 1.</p>
+<h2 id="color">COLOR</h2>
+<p><strong>Statement</strong> —
+<code>COLOR foreground[,background]</code></p>
+<p>Sets the current foreground and background colors. Each is a numeric
+expression: a palette index <code>0</code>-<code>15</code> or an
+<code>RGB(r,g,b)</code> value. An invalid value is
+<code>?ILLEGAL QUANTITY ERROR</code>; a missing, empty, or extra
+argument is <code>?SYNTAX ERROR</code>. Both values are checked before
+either is applied, so a bad background never leaves a half-changed
+foreground.</p>
+<h3 id="examples-10">Examples</h3>
+<pre class="basic"><code>COLOR 4          : REM red text, background unchanged
+COLOR 15,1       : REM white on blue
+COLOR RGB(255,128,0),0</code></pre>
+<h3 id="comments-10">Comments</h3>
+<p><code>COLOR foreground</code> leaves the background alone. A fresh
+interpreter starts at foreground <code>15</code> (white) on background
+<code>0</code> (black); the choice survives <a href="#cls">CLS</a>, <a
+href="#screen">SCREEN</a> changes, and <code>RUN</code>, and resets only
+when the interpreter starts. It works in either screen mode.</p>
+<p><a href="#print">PRINT</a> (SCREEN 0 and 1) and <a
+href="#gprint">GPRINT</a> draw each character cell opaque: the glyph in
+the foreground and the rest of the cell in the background, so a space
+clears its cell to the background. Newlines and cursor movement paint
+nothing, and text already on screen is not recolored. Serial output
+stays plain text. <a href="#line">LINE</a>, <a href="#pset">PSET</a>, <a
+href="#paint">PAINT</a>, and <a href="#fill">FILL</a> use the foreground
+when their color is left off; an explicit color overrides it for that
+one statement and does not change the <code>COLOR</code> state.</p>
+<h2 id="comparison-operators">Comparison Operators</h2>
+<p><strong>Operator group</strong> —
+<code>=  &lt;&gt;  &lt;  &gt;  &lt;=  &gt;=</code></p>
+<p>Compares two arithmetic expressions, or two string expressions, and
+evaluates to <code>-1</code> (true) or <code>0</code> (false) — an
+ordinary number, usable anywhere a number is, most commonly as <a
+href="#ifthen">IF</a>'s condition. True is <code>-1</code> (every bit
+set), as in classic BASIC, so the results combine correctly with the
+bitwise <a href="#logical-operators">logical operators</a>:
+<code>NOT</code> of a true comparison is false.</p>
+<h3 id="examples-11">Examples</h3>
+<pre class="basic"><code>PRINT 3&gt;2
+PRINT 1=2
+PRINT 2&lt;=2</code></pre>
+<p>Output: <code>-1</code>, <code>0</code>, <code>-1</code></p>
+<h3 id="comments-11">Comments</h3>
+<p>Below arithmetic and above the <a href="#logical-operators">logical
+operators</a> in precedence. Comparisons group left to right
+(<code>1&lt;2&lt;3</code> is <code>(1&lt;2)&lt;3</code>, not a range
+test); combine conditions with <code>AND</code>/<code>OR</code> instead.
+See <a href="#string-comparisons">String comparisons</a> for the string
+form.</p>
+<h2 id="logical-operators">Logical Operators</h2>
+<p><strong>Operator group</strong> —
+<code>NOT  AND  OR  XOR  EQV  IMP</code></p>
+<p>Bitwise operators on whole numbers: each operand is rounded to a
+32-bit integer and the operation is applied to every bit. Because true
+is <code>-1</code> (all bits set) and false is <code>0</code>, they also
+work as the logical connectives for conditions. Precedence, highest to
+lowest: <code>NOT</code>, <code>AND</code>, <code>OR</code>,
+<code>XOR</code>, <code>EQV</code>, <code>IMP</code> — all below the
+comparisons, so <code>A&gt;1 AND B&lt;2</code> needs no parentheses.</p>
+<table>
+<thead>
+<tr>
+<th>Operator</th>
+<th>Result bit is 1 when</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>NOT a</code></td>
+<td>the bit of <code>a</code> is 0</td>
+</tr>
+<tr>
+<td><code>a AND b</code></td>
+<td>both bits are 1</td>
+</tr>
+<tr>
+<td><code>a OR b</code></td>
+<td>either bit is 1</td>
+</tr>
+<tr>
+<td><code>a XOR b</code></td>
+<td>the bits differ</td>
+</tr>
+<tr>
+<td><code>a EQV b</code></td>
+<td>the bits are equal</td>
+</tr>
+<tr>
+<td><code>a IMP b</code></td>
+<td><code>a</code>'s bit is 0 or <code>b</code>'s bit is 1</td>
+</tr>
+</tbody>
+</table>
+<h3 id="examples-12">Examples</h3>
+<pre class="basic"><code>PRINT 12 AND 10; 12 OR 3; 12 XOR 10
+PRINT NOT 0; NOT -1
+IF X&gt;0 AND NOT X=5 THEN PRINT &quot;OK&quot;</code></pre>
+<p>Output: <code>8156</code>, <code>-10</code></p>
+<h3 id="comments-12">Comments</h3>
+<p>Operator words must stand alone (<code>A AND B</code>, not
+<code>AANDB</code>); a name that merely starts with one, like
+<code>ORANGE</code>, is an ordinary variable. A value beyond the 32-bit
+range is <code>?OVERFLOW ERROR</code>.</p>
+<h2 id="cont">CONT</h2>
+<p><strong>Command</strong> — <code>CONT</code></p>
+<p>Resumes a program stopped by <a href="#stop">STOP</a> or by BREAK
+(<code>Ctrl-C</code>), at the statement after the <code>STOP</code> or
+at the statement BREAK interrupted, with every variable, loop, open file
+and <code>GOSUB</code> intact.</p>
+<h3 id="examples-13">Examples</h3>
+<pre><code>10 PRINT &quot;A&quot;
+20 STOP
+30 PRINT &quot;B&quot;
+RUN
+A
+BREAK IN 20
+READY.
+CONT
+B</code></pre>
+<h3 id="comments-13">Comments</h3>
+<p>In between, direct statements can inspect or change variables
+(<code>PRINT X</code>, <code>X=0</code>). Editing the program, <a
+href="#new">NEW</a>, <a href="#load">LOAD</a>, <a
+href="#clear">CLEAR</a>, a normal end, or an error makes it impossible
+to resume: <code>?CAN'T CONTINUE ERROR</code>.</p>
+<h2 id="cos">COS</h2>
+<p><strong>Function</strong> — <code>COS(x)</code></p>
+<p>Cosine of <code>x</code>, where <code>x</code> is in radians.</p>
+<h3 id="examples-14">Examples</h3>
+<pre class="basic"><code>PRINT COS(0)</code></pre>
+<p>Output: <code>1</code></p>
+<h3 id="comments-14">Comments</h3>
+<p>Radians, not degrees — matching C's <code>cos()</code>, which the
+interpreter calls directly. See <a href="#sin">SIN</a>.</p>
+<h2 id="data">DATA</h2>
+<p><strong>Statement</strong> — <code>DATA item[, item...]</code>, with
+<a href="#read">READ</a> and <a href="#restore">RESTORE</a></p>
+<p>Holds constants for <a href="#read">READ</a>. Items are numbers or
+strings; a string needs quotes only if it contains a comma, a colon, or
+leading/trailing spaces. <code>DATA</code> does nothing when it
+runs.</p>
+<h3 id="examples-15">Examples</h3>
+<pre class="basic"><code>10 FOR I=1 TO 3
+20 READ N$, A
+30 PRINT N$; A
+40 NEXT
+50 DATA ANN, 36, BOB, 41
+60 DATA &quot;SMITH, C&quot;, 29</code></pre>
+<p>Output: <code>ANN36</code>, <code>BOB41</code>,
+<code>SMITH, C29</code></p>
+<h3 id="comments-15">Comments</h3>
+<p><code>READ</code> takes items in program order across every
+<code>DATA</code> line, wherever they sit. Reading past the last item is
+<code>?OUT OF DATA ERROR</code>; reading a string item into a numeric
+variable is <code>?SYNTAX ERROR</code>; an empty item reads as
+<code>0</code> or <code>""</code>.</p>
+<h2 id="date">DATE$</h2>
+<p><strong>Special variable (readable and assignable)</strong> —
+<code>DATE$</code></p>
+<p>The current local date as a 10-character string,
+<code>MM-DD-YYYY</code>, with leading zeroes.</p>
+<h3 id="examples-16">Examples</h3>
+<pre class="basic"><code>PRINT DATE$</code></pre>
+<p>Output: <code>09-10-2026</code></p>
+<pre class="basic"><code>DATE$ = &quot;09-10-2026&quot;
+LET DATE$ = &quot;09-10-2026&quot;
+PRINT DATE$</code></pre>
+<p>Output: <code>09-10-2026</code></p>
+<h3 id="comments-16">Comments</h3>
+<p>Not a function call — like <a href="#tick">TICK</a>, it's read like a
+variable with no <code>()</code>, and it's re-read from the clock every
+time it's evaluated. It is a string value: it works anywhere a string
+expression is accepted (<code>PRINT</code>, <code>GPRINT</code>,
+assignment to a <code>$</code> variable, and inside <a
+href="#left">LEFT$</a>, <a href="#mid">MID$</a>, <a href="#val">VAL</a>,
+and the rest); using it where a number is expected is
+<code>?TYPE MISMATCH ERROR</code>.</p>
+<p>Assigning it — with implicit assignment (<code>DATE$ = ...</code>) or
+<code>LET</code> — sets the system clock's date, accepting any valid
+string expression on the right-hand side, not just a literal. The value
+must match the exact <code>MM-DD-YYYY</code> format with leading zeroes,
+and name a real calendar date (<code>02-29</code> only on a leap year);
+anything else — malformed strings, out-of-range fields, an impossible
+date — is <code>?ILLEGAL QUANTITY ERROR</code> and leaves the clock
+unchanged. Setting <code>DATE$</code> preserves the current time of day
+and the clock keeps advancing normally afterward. <a
+href="#input"><code>INPUT DATE$</code></a> is still rejected — setting
+the clock is assignment syntax, not a new <code>INPUT</code>
+destination.</p>
+<p>The clock has no battery or network backing. The firmware seeds it at
+boot to a fixed default, <code>01-01-1970</code>, rather than the build
+time, so it's consistent across reboots instead of merely approximate —
+the value has no wall-clock meaning, it's a starting point the clock
+then advances from, until a program or a direct-mode command corrects it
+with an assignment. See <a href="#time">TIME$</a>.</p>
+<h2 id="def-fn">DEF FN</h2>
+<p><strong>Statement</strong> —
+<code>DEF FNname[(param[, param...])] = expression</code></p>
+<p>Defines a one-line function. Call it as <code>FNname(args)</code>
+anywhere an expression is allowed. A name ending in <code>$</code> makes
+a string function.</p>
+<h3 id="examples-17">Examples</h3>
+<pre class="basic"><code>10 DEF FNHYP(A,B)=SQR(A*A+B*B)
+20 DEF FNI$(S$)=LEFT$(S$,1)
+30 PRINT FNHYP(3,4); FNI$(&quot;BASIC&quot;)</code></pre>
+<p>Output: <code>5B</code></p>
+<h3 id="comments-17">Comments</h3>
+<p>Up to 8 parameters, each an ordinary variable name: during a call the
+parameters take the argument values, and afterwards they are put back,
+so a parameter never changes a program variable of the same name. Any
+other variable in the body is the program's own. Defining a name again
+replaces it. Calling an undefined function is
+<code>?UNDEFINED USER FUNCTION ERROR</code>; <code>FN NAME</code> with a
+space is the same as <code>FNNAME</code>. Functions may call other
+functions, 16 deep.</p>
+<h2 id="dim">DIM</h2>
+<p><strong>Statement</strong> —
+<code>DIM name(bound[, bound...])[, name(...)...]</code></p>
+<p>Creates arrays. Each subscript runs from 0 to its bound, so
+<code>DIM A(10)</code> holds 11 numbers. A <code>$</code> name makes a
+string array. Up to 4 dimensions.</p>
+<h3 id="examples-18">Examples</h3>
+<pre class="basic"><code>10 DIM A(5), B$(2,3)
+20 A(5)=7: B$(1,2)=&quot;HI&quot;
+30 PRINT A(5); B$(1,2); A(0)</code></pre>
+<p>Output: <code>7HI0</code></p>
+<h3 id="comments-18">Comments</h3>
+<p>Elements start at 0 or <code>""</code>. An array used without a
+<code>DIM</code> is created automatically with every bound at 10.
+Subscripts are rounded; one outside the bounds, or the wrong number of
+subscripts, is <code>?SUBSCRIPT OUT OF RANGE ERROR</code>.
+<code>DIM</code> of an existing array is
+<code>?DUPLICATE DEFINITION ERROR</code> — <a href="#erase">ERASE</a> it
+first. Arrays have their own names: <code>A</code>, <code>A$</code>,
+<code>A()</code> and <code>A$()</code> are four different things.</p>
+<h2 id="edit">EDIT</h2>
+<p><strong>Command</strong> — <code>EDIT line</code></p>
+<p>Brings up stored line <code>line</code> as the next input line,
+already typed, so it can be changed with Backspace and retyped, then
+entered with Enter.</p>
+<h3 id="comments-19">Comments</h3>
+<p>The line editor has no cursor movement, so editing means backspacing
+to the change. A line number that doesn't exist is
+<code>?UNDEF'D STATEMENT ERROR</code>.</p>
+<h2 id="else">ELSE</h2>
+<p>See <a href="#ifthen">IF/THEN</a>.</p>
+<h2 id="eof">EOF</h2>
+<p><strong>Function</strong> — <code>EOF(n)</code></p>
+<p><code>-1</code> once input file <code>n</code> has nothing left to
+read, else <code>0</code>. See <a href="#open">OPEN</a>.</p>
+<h2 id="erase">ERASE</h2>
+<p><strong>Statement</strong> — <code>ERASE name[, name...]</code></p>
+<p>Deletes arrays, freeing their memory so the names can be <a
+href="#dim">DIM</a>med again. Erasing an array that doesn't exist is
+<code>?ILLEGAL QUANTITY ERROR</code>.</p>
+<h2 id="exp">EXP</h2>
+<p><strong>Function</strong> — <code>EXP(x)</code></p>
+<p>e raised to the power <code>x</code>.</p>
+<h3 id="examples-19">Examples</h3>
+<pre class="basic"><code>PRINT EXP(1)</code></pre>
+<p>Output: <code>2.71828</code></p>
+<h3 id="comments-20">Comments</h3>
+<p><code>EXP(x)</code> above about 709 is <code>?OVERFLOW ERROR</code>.
+See <a href="#log">LOG</a>.</p>
+<h2 id="files">FILES</h2>
+<p><strong>Command</strong> — <code>FILES</code></p>
+<p>Lists the names of the saved program files in internal flash, one per
+line, in alphabetical order that ignores case, followed by the
+<code>READY.</code> prompt.</p>
+<h3 id="examples-20">Examples</h3>
+<pre class="basic"><code>SAVE &quot;PONG&quot;
+SAVE &quot;clock&quot;
+FILES</code></pre>
+<p>Output:</p>
+<pre><code>clock
+PONG
+READY.</code></pre>
+<h3 id="comments-21">Comments</h3>
+<p>With no saved files, <code>FILES</code> prints nothing before
+<code>READY.</code>. Names are shown exactly as they were saved.
+<code>FILES</code> takes no arguments; <code>FILES "X"</code> is
+<code>?SYNTAX ERROR</code>. See <a href="#save">SAVE</a>, <a
+href="#load">LOAD</a>, <a href="#kill">KILL</a>.</p>
+<h2 id="end">END</h2>
+<p><strong>Statement</strong> — <code>END</code></p>
+<p>Stops program execution immediately.</p>
+<h3 id="examples-21">Examples</h3>
+<pre class="basic"><code>10 PRINT &quot;A&quot;
+20 END
+30 PRINT &quot;B&quot;
+RUN</code></pre>
+<p>Output: <code>A</code> (line 30 never runs)</p>
+<h3 id="comments-22">Comments</h3>
+<p>Only meaningful inside a running program; typed directly it does
+nothing observable. It stops immediately — any statements after
+<code>END</code> on the same physical line don't run. Unlike <a
+href="#new"><code>NEW</code></a>, <code>END</code> doesn't clear the
+stored program or variables — a later <code>RUN</code> starts over from
+the top with variables left however the previous run left them.</p>
+<h2 id="fill">FILL</h2>
+<p><strong>Statement</strong> — <code>FILL (x,y)[,color]</code></p>
+<p>Samples the displayed color at the zero-based pixel
+<code>(x,y)</code> on the graphics surface, then replaces every pixel in
+its four-way (up, down, left, right) connected region of that exact
+color with <code>color</code>, or with the current <a
+href="#color">COLOR</a> foreground when <code>color</code> is
+omitted.</p>
+<h3 id="examples-22">Examples</h3>
+<pre class="basic"><code>SCREEN 1
+LINE (50,10)-(10,80),4
+LINE -(90,80),4
+LINE -(50,10),4
+FILL (50,40),2</code></pre>
+<h3 id="comments-23">Comments</h3>
+<p>Only valid in <a href="#screen">SCREEN</a> 1 — using it in screen 0
+is <code>?ILLEGAL IN SCREEN 0 ERROR</code>. <code>color</code> is a
+standard palette number or an <a href="#rgb">RGB()</a> value, same as <a
+href="#line">LINE</a>; an out-of-range palette number is
+<code>?ILLEGAL QUANTITY ERROR</code>. Unlike <a href="#paint">PAINT</a>,
+<code>FILL</code> has no separate border color — every pixel that
+doesn't exactly match the seed's captured color acts as a boundary, so
+the fill stops at the first color change in every direction rather than
+at a named border color.</p>
+<p>A seed pixel outside the graphics surface is a clipped no-op. If the
+seed already displays <code>color</code>, <code>FILL</code> changes
+nothing (comparing displayed colors, so a palette number and an <a
+href="#rgb">RGB()</a> value that render identically also count as
+already matching). A large fill still terminates safely — it never
+recurses and never grows unbounded.</p>
+<h2 id="fix">FIX</h2>
+<p><strong>Function</strong> — <code>FIX(x)</code></p>
+<p><code>x</code> with its fractional part dropped, toward zero:
+<code>FIX(-2.5)</code> is <code>-2</code> where <a
+href="#int">INT</a><code>(-2.5)</code> is <code>-3</code>.</p>
+<h2 id="fornext">FOR/NEXT</h2>
+<p><strong>Statement</strong> —
+<code>FOR var=start TO limit [STEP step]</code> ...
+<code>NEXT [var]</code></p>
+<p>Repeats the statements between <code>FOR</code> and its matching
+<code>NEXT</code>, counting <code>var</code> from <code>start</code> to
+<code>limit</code> inclusive, in increments of <code>step</code>
+(default <code>1</code>).</p>
+<h3 id="examples-23">Examples</h3>
+<pre class="basic"><code>10 FOR I=1 TO 3
+20 PRINT I
+30 NEXT I
+RUN</code></pre>
+<p>Output: <code>1</code>, <code>2</code>, <code>3</code></p>
+<pre class="basic"><code>10 FOR I=1 TO 5 STEP 2
+20 PRINT I
+30 NEXT I
+RUN</code></pre>
+<p>Output: <code>1</code>, <code>3</code>, <code>5</code></p>
+<h3 id="comments-24">Comments</h3>
+<p>The loop body always runs at least once before the exit condition is
+checked — <code>FOR I=5 TO 1</code> (no <code>STEP</code>) still runs
+once with <code>I=5</code>, since the default step is <code>+1</code>
+and the check only happens at <code>NEXT</code>. <code>FOR</code>, its
+body, and <code>NEXT</code> can share one physical line
+(<code>FOR I=1 TO 3 : PRINT I : NEXT I</code>): each <code>NEXT</code>
+iteration resumes at the statement right after <code>FOR</code>,
+mid-line included. The variable name after <code>NEXT</code> is optional
+and, if given, isn't checked against the loop's own variable — Phase 1
+always operates on the top-of-stack loop, so <code>NEXT</code> alone and
+<code>NEXT I</code> behave identically. Loops nest up to 16 deep
+(<code>?FOR TOO DEEP ERROR</code> beyond that); a <code>NEXT</code> with
+no matching <code>FOR</code> is <code>?NEXT WITHOUT FOR ERROR</code>.
+Like <a href="#goto">GOTO</a>, both <code>FOR</code> and
+<code>NEXT</code> are only legal inside a running program — typed
+directly, either is <code>?ILLEGAL DIRECT ERROR</code>.</p>
+<h2 id="fre">FRE</h2>
+<p><strong>Function</strong> — <code>FRE(x)</code></p>
+<p>Bytes of memory currently free on the board. The argument (a number
+or a string) is ignored.</p>
+<h3 id="examples-24">Examples</h3>
+<pre class="basic"><code>PRINT FRE(0)</code></pre>
+<h2 id="get">GET</h2>
+<p><strong>Statement</strong> —
+<code>GET (x1,y1)-(x2,y2), array</code></p>
+<p>Copies a rectangle of the graphics screen into a numeric array, to
+draw again with <a href="#put">PUT</a>. Element 0 holds the width,
+element 1 the height, then one packed RGB value per pixel, row by
+row.</p>
+<h3 id="examples-25">Examples</h3>
+<pre class="basic"><code>10 SCREEN 1
+20 DIM S(16*16+2)
+30 CIRCLE (8,8),7,14
+40 GET (0,0)-(15,15),S
+50 PUT (100,50),S</code></pre>
+<h3 id="comments-25">Comments</h3>
+<p><a href="#dim">DIM</a> the array first with at least
+<code>width*height+2</code> elements, and keep the rectangle inside the
+screen (or <a href="#view">VIEW</a>); otherwise
+<code>?ILLEGAL QUANTITY ERROR</code>. SCREEN 1 only. Random-access files
+(<code>GET #</code>) aren't supported.</p>
+<h2 id="gfonth">GFONTH</h2>
+<p><strong>Special variable (read-only)</strong> —
+<code>GFONTH</code></p>
+<p>The graphics text cell height in pixels — the line height of the
+fixed-width font <a href="#print">PRINT</a> and <a
+href="#gprint">GPRINT</a> draw in <a href="#screen">SCREEN</a> 1.</p>
+<h3 id="examples-26">Examples</h3>
+<pre class="basic"><code>SCREEN 1
+ROWS = INT(GHEIGHT/GFONTH)</code></pre>
+<h3 id="comments-26">Comments</h3>
+<p>Fixed by the console font the board draws with, so a SCREEN 1 program
+that positions text with <a href="#locate">LOCATE</a> derives its
+row/column counts from <code>GHEIGHT/GFONTH</code> and
+<code>GWIDTH/GFONTW</code> rather than assuming either. See <a
+href="#gfontw">GFONTW</a>.</p>
+<h2 id="gfontw">GFONTW</h2>
+<p><strong>Special variable (read-only)</strong> —
+<code>GFONTW</code></p>
+<p>The graphics text cell width in pixels — the advance width of the
+fixed-width font <a href="#print">PRINT</a> and <a
+href="#gprint">GPRINT</a> draw in <a href="#screen">SCREEN</a> 1. So in
+graphics mode <code>LOCATE row,col</code> starts the next
+<code>PRINT</code> at pixel
+<code>((col-1)*GFONTW, (row-1)*GFONTH)</code>.</p>
+<h3 id="examples-27">Examples</h3>
+<pre class="basic"><code>SCREEN 1
+COLS = INT(GWIDTH/GFONTW)</code></pre>
+<h3 id="comments-27">Comments</h3>
+<p>See <a href="#gfonth">GFONTH</a> for why a program reads these rather
+than hardcoding a cell size.</p>
+<h2 id="gheight">GHEIGHT</h2>
+<p><strong>Special variable (read-only)</strong> —
+<code>GHEIGHT</code></p>
+<p>The drawable graphics surface's height in pixels, for use in <a
+href="#screen">SCREEN</a> 1 programs.</p>
+<h3 id="examples-28">Examples</h3>
+<pre class="basic"><code>PRINT GHEIGHT</code></pre>
+<h3 id="comments-28">Comments</h3>
+<p>Fixed to the round display's usable drawing area. The surface size is
+meant to be queried, not assumed, so a program can center or scale
+itself without hardcoding a resolution. See <a
+href="#gwidth">GWIDTH</a>, <a href="#line">LINE</a>.</p>
+<h2 id="gosub">GOSUB</h2>
+<p><strong>Statement</strong> — <code>GOSUB line</code></p>
+<p>Calls the subroutine that starts at the given line number. Execution
+jumps there and continues until a <a href="#return">RETURN</a>, which
+resumes at the statement right after the <code>GOSUB</code>.</p>
+<h3 id="examples-29">Examples</h3>
+<pre class="basic"><code>10 GOSUB 100
+20 PRINT &quot;BACK&quot;
+30 END
+100 PRINT &quot;IN SUB&quot;
+110 RETURN
+RUN</code></pre>
+<p>Output: <code>IN SUB</code>, then <code>BACK</code> (line 30's
+<code>END</code> stops the program before it falls into line 100 a
+second time)</p>
+<pre class="basic"><code>10 GOSUB 100
+20 GOSUB 100
+30 END
+100 PRINT &quot;HELLO&quot;
+110 RETURN
+RUN</code></pre>
+<p>Output: <code>HELLO</code>, <code>HELLO</code></p>
+<h3 id="comments-29">Comments</h3>
+<p>Only legal inside a running program — typed directly it's
+<code>?ILLEGAL DIRECT ERROR</code>. A <code>GOSUB</code> to a line that
+isn't in the stored program is <code>?UNDEF'D STATEMENT ERROR</code>.
+Calls nest up to 16 deep, sharing no space with <a
+href="#fornext">FOR/NEXT</a>; a 17th pending call is
+<code>?GOSUB TOO DEEP ERROR</code>. Every <a href="#run">RUN</a> starts
+with an empty return stack, so a program stopped by <code>Ctrl-C</code>
+(BREAK), an error, or reaching its end never leaks pending calls into
+the next run. There is no <code>ON ... GOSUB</code>, no arguments, and
+no local variables — a subroutine reads and writes the same global
+variables as its caller. Pairs with <a href="#return">RETURN</a>.</p>
+<h2 id="goto">GOTO</h2>
+<p><strong>Statement</strong> — <code>GOTO line</code></p>
+<p>Jumps unconditionally to the given line number.</p>
+<h3 id="examples-30">Examples</h3>
+<pre class="basic"><code>10 GOTO 30
+20 PRINT &quot;SKIPPED&quot;
+30 PRINT &quot;HERE&quot;
+RUN</code></pre>
+<p>Output: <code>HERE</code> (line 20 never runs)</p>
+<h3 id="comments-30">Comments</h3>
+<p>Only legal inside a running program — typed directly it's
+<code>?ILLEGAL DIRECT ERROR</code>. Jumping to a line number that
+doesn't exist in the stored program is
+<code>?UNDEF'D STATEMENT ERROR</code>. The jump lands on the first
+statement of the target line, and any statements after <code>GOTO</code>
+on its own line never run. Most often used as <a href="#ifthen">IF</a>'s
+<code>THEN</code> target for conditional branching.</p>
+<h2 id="gprint">GPRINT</h2>
+<p><strong>Statement</strong> — <code>GPRINT x,y,print-list</code></p>
+<p>Draws a <a href="#print">PRINT</a> list on the graphics surface, in
+the current <a href="#color">COLOR</a> foreground on an opaque
+background-colored cell per character,, starting at the zero-based pixel
+coordinate <code>(x,y)</code> (top-left origin). <code>print-list</code>
+follows the same string-literal, expression,
+<code>,</code>/<code>;</code> separator, and trailing-separator rules as
+<code>PRINT</code>.</p>
+<h3 id="examples-31">Examples</h3>
+<pre class="basic"><code>SCREEN 1
+GPRINT 2,2,&quot;HELLO&quot;
+GPRINT 0,20,&quot;X=&quot;;X</code></pre>
+<h3 id="comments-31">Comments</h3>
+<p>BASIC32-specific — not a classic-BASIC statement. Only valid in <a
+href="#screen">SCREEN</a> 1 (<code>?ILLEGAL IN SCREEN 0 ERROR</code>
+otherwise). Unlike graphics-mode <code>PRINT</code>, <code>GPRINT</code>
+neither reads nor moves the graphics text cursor, so it and
+<code>LOCATE</code>/<code>PRINT</code> can be mixed freely; a trailing
+newline from the list is ignored, since it has no meaning at an absolute
+origin. A <code>,</code> in the list still advances by the same 8-column
+zones as <code>PRINT</code>, but measured from <code>(x,y)</code> as the
+list's own column 1 rather than from any screen column, and a zone past
+the last one that fits the graphics surface's width starts a new line
+directly below <code>(x,y)</code> rather than wrapping relative to the
+console or graphics text cursor. Pixels outside the surface are clipped,
+like <a href="#line">LINE</a>. The font cell is <a
+href="#gfontw">GFONTW</a> × <a href="#gfonth">GFONTH</a>.</p>
+<h2 id="gwidth">GWIDTH</h2>
+<p><strong>Special variable (read-only)</strong> —
+<code>GWIDTH</code></p>
+<p>The drawable graphics surface's width in pixels. See <a
+href="#gheight">GHEIGHT</a> for how it's derived.</p>
+<h3 id="examples-32">Examples</h3>
+<pre class="basic"><code>PRINT GWIDTH</code></pre>
+<h2 id="hex">HEX$</h2>
+<p><strong>Function</strong> — <code>HEX$(n)</code></p>
+<p><code>n</code>, rounded, as hexadecimal digits. A negative number
+shows its 32-bit two's complement.</p>
+<h3 id="examples-33">Examples</h3>
+<pre class="basic"><code>PRINT HEX$(255); &quot; &quot;; HEX$(-1)</code></pre>
+<p>Output: <code>FF FFFFFFFF</code></p>
+<h3 id="comments-32">Comments</h3>
+<p><code>&amp;HFF</code> writes a hexadecimal constant; see <a
+href="#arithmetic-operators">Arithmetic Operators</a>. See <a
+href="#oct">OCT$</a>.</p>
+<h2 id="ifthen">IF/THEN</h2>
+<p><strong>Statement</strong> —
+<code>IF condition THEN line|statements [ELSE line|statements]</code>,
+or <code>IF condition GOTO line</code></p>
+<p>Evaluates <code>condition</code>. If it's nonzero (true), either
+jumps to <code>THEN</code>'s line number or runs the statement(s) after
+<code>THEN</code>. <code>THEN</code> governs the rest of the physical
+line: a true condition runs every <code>:</code>-separated statement on
+it, a false condition skips them all and continues at the next line —
+or, when the line has an <code>ELSE</code>, at the statement(s) after
+the <code>ELSE</code>.</p>
+<h3 id="examples-34">Examples</h3>
+<pre class="basic"><code>10 X=5
+20 IF X=5 THEN PRINT &quot;FIVE&quot;
+30 IF X=5 THEN 50
+40 PRINT &quot;SKIPPED&quot;
+50 PRINT &quot;END&quot;
+RUN</code></pre>
+<p>Output: <code>FIVE</code>, <code>END</code> (line 40 never runs)</p>
+<pre class="basic"><code>10 X=5
+20 IF X=5 THEN PRINT &quot;A&quot; : PRINT &quot;B&quot;
+30 IF X=9 THEN PRINT &quot;C&quot; : PRINT &quot;D&quot;
+RUN</code></pre>
+<p>Output: <code>A</code>, <code>B</code> (line 30's condition is false,
+so neither <code>C</code> nor <code>D</code> prints)</p>
+<pre class="basic"><code>10 FOR N=1 TO 3
+20 IF N=2 THEN PRINT &quot;TWO&quot; ELSE PRINT N : PRINT &quot;-&quot;
+30 NEXT
+RUN</code></pre>
+<p>Output: <code>1</code>, <code>-</code>, <code>TWO</code>,
+<code>3</code>, <code>-</code></p>
+<h3 id="else-1">ELSE</h3>
+<p><code>ELSE</code> runs its statements (or jumps to its line number)
+only when the condition is false; when the condition is true, reaching
+<code>ELSE</code> ends the line. Each side may hold several
+<code>:</code>-separated statements. When <code>IF</code>s are nested on
+one line, each <code>ELSE</code> belongs to the nearest <code>IF</code>
+that doesn't already have one, so
+<code>IF A THEN IF B THEN X ELSE Y ELSE Z</code> runs <code>Y</code>
+when only <code>A</code> is true and <code>Z</code> when <code>A</code>
+is false.</p>
+<h3 id="string-comparisons">String comparisons</h3>
+<p>A condition whose left side starts with a string expression (a
+<code>"literal"</code>, a <code>$</code> variable, or a string-returning
+function) is a string comparison: two string expressions joined by one
+of <code>=</code>, <code>&lt;&gt;</code>, <code>&lt;</code>,
+<code>&gt;</code>, <code>&lt;=</code>, or <code>&gt;=</code>.</p>
+<pre class="basic"><code>10 A$=&quot;yes&quot;
+20 IF A$ = &quot;yes&quot; THEN PRINT &quot;YES&quot;
+30 IF A$ &lt;&gt; &quot;no&quot; THEN PRINT &quot;NOT NO&quot;
+40 IF A$ &gt; &quot;M&quot; THEN PRINT &quot;AFTER M&quot;
+50 IF UCASE$(A$) = &quot;YES&quot; THEN PRINT &quot;UPPER&quot;
+RUN</code></pre>
+<p>Output: <code>YES</code>, <code>NOT NO</code>, <code>AFTER M</code>,
+<code>UPPER</code></p>
+<p>Comparison is bytewise and <strong>case-sensitive</strong>:
+<code>"a"</code> is not equal to <code>"A"</code>, and every lowercase
+letter sorts after every uppercase letter. When one value is a prefix of
+the other, the shorter one sorts first (<code>"A" &lt; "AB"</code>), and
+the empty string sorts before any non-empty string. To compare without
+regard to case, normalise both sides with <a href="#ucase">UCASE$</a> or
+<a href="#lcase">LCASE$</a> first; there is no separate case-insensitive
+operator.</p>
+<p>A string compared with a number, on either side, is
+<code>?TYPE MISMATCH ERROR</code>, and so is a string with no operator
+after it. A string comparison is an ordinary expression worth
+<code>-1</code> or <code>0</code>: it can be combined with <a
+href="#logical-operators">AND/OR</a>, printed, or assigned.</p>
+<h3 id="comments-33">Comments</h3>
+<p>The statement form chains:
+<code>IF X=5 THEN PRINT "HI" : GOSUB 200</code> runs both when
+<code>X=5</code> and neither otherwise. The numeric form
+(<code>IF X=5 THEN 100</code>) jumps to the start of that line;
+<code>IF X=5 GOTO 100</code> is the same. See <a
+href="#comparison-operators">Comparison Operators</a> and <a
+href="#logical-operators">Logical Operators</a> for what
+<code>condition</code> typically looks like.</p>
+<h2 id="inkey">INKEY</h2>
+<p><strong>Special variable (read-only)</strong> —
+<code>INKEY</code></p>
+<p>Returns the next queued key code as an ASCII value, or
+<code>-1</code> if nothing is waiting. Never blocks, so a program can
+poll it in a loop without stalling. It drains the board's own
+button/BLE-keyboard queue, which delivers one event per keystroke.</p>
+<h3 id="examples-35">Examples</h3>
+<pre class="basic"><code>10 K = INKEY
+20 IF K = -1 THEN GOTO 10
+30 PRINT &quot;GOT &quot;;K</code></pre>
+<h3 id="comments-34">Comments</h3>
+<p>Not a function call — like <a href="#tick">TICK</a>, it's read like a
+variable with no <code>()</code>. <code>Ctrl-C</code> (ASCII 3) is
+reserved as BREAK and never comes back from <code>INKEY</code>; see <a
+href="#run">RUN</a>. <a href="#inkey-1">INKEY$</a> reads the same queue
+as a one-character string.</p>
+<h2 id="inkey-1">INKEY$</h2>
+<p><strong>Special variable (read-only)</strong> —
+<code>INKEY$</code></p>
+<p>The next queued key as a one-character string, or <code>""</code>
+when no key is waiting. Never blocks. The string form of <a
+href="#inkey">INKEY</a>.</p>
+<h3 id="examples-36">Examples</h3>
+<pre class="basic"><code>10 K$ = INKEY$
+20 IF K$ = &quot;&quot; THEN 10
+30 PRINT &quot;GOT &quot;;K$</code></pre>
+<h2 id="input">INPUT</h2>
+<p><strong>Statement</strong> — <code>INPUT var</code>, or
+<code>INPUT #file, var[, var...]</code></p>
+<p>Prompts with <code>? </code> and reads one line of input into a
+single variable or array element. A <code>$</code> on the name reads a
+string; otherwise it reads a number. Works in direct mode and in a
+stored program. The <code>#file</code> form reads from an open file
+instead; see <a href="#open">OPEN</a>.</p>
+<h3 id="examples-37">Examples</h3>
+<pre class="basic"><code>10 INPUT NAME$
+20 INPUT AGE
+30 PRINT &quot;HELLO &quot;;NAME$
+40 PRINT &quot;NEXT YEAR YOU ARE &quot;;AGE+1</code></pre>
+<p>Session:</p>
+<pre><code>? Ada
+? 36
+HELLO Ada
+NEXT YEAR YOU ARE 37</code></pre>
+<h3 id="comments-35">Comments</h3>
+<p>Exactly one variable per keyboard <code>INPUT</code>. A prompt string
+(<code>INPUT "NAME"; N$</code>) and a comma-separated list of variables
+are out of scope for this version; <a href="#open">INPUT #</a> does take
+a list.</p>
+<p>The line is read one character at a time through the same input queue
+<a href="#inkey">INKEY</a> drains — on this board, the
+<code>BOOT</code>/<code>PWR</code> buttons and the USB serial link.
+Typed characters echo and a backspace (BS or DEL) erases the last one,
+matching the <code>READY.</code> line editor.</p>
+<ul>
+<li><strong>String target:</strong> the line is stored verbatim without
+its newline, including embedded spaces. A line longer than 255 bytes is
+<code>?STRING TOO LONG ERROR</code>.</li>
+<li><strong>Numeric target:</strong> the whole trimmed line must be a
+valid number. Any other input prints <code>?REDO FROM START</code> and
+re-prompts until a number is entered.</li>
+</ul>
+<p>There is no end-of-file on the serial link, so an <code>INPUT</code>
+with no input available simply waits. Press <strong>Ctrl-C</strong> at
+the prompt to abandon it: the statement ends with
+<code>?INPUT ERROR</code>, which stops a running program the way any
+other error does.</p>
+<h2 id="input-1">INPUT$</h2>
+<p><strong>Function</strong> — <code>INPUT$(n[, [#]file])</code></p>
+<p>Reads exactly <code>n</code> characters (1–255): from the keyboard,
+waiting for each key without echoing it, or from an input file opened
+with <a href="#open">OPEN</a>.</p>
+<h3 id="examples-38">Examples</h3>
+<pre class="basic"><code>10 PRINT &quot;PRESS Y OR N&quot;
+20 K$ = INPUT$(1)
+30 PRINT &quot;YOU PRESSED &quot;;K$</code></pre>
+<h3 id="comments-36">Comments</h3>
+<p><code>Ctrl-C</code> while waiting for keys is
+<code>?INPUT ERROR</code>. Reading past the end of a file is
+<code>?INPUT PAST END ERROR</code>.</p>
+<h2 id="instr">INSTR</h2>
+<p><strong>Function</strong> —
+<code>INSTR([start,] text$, find$)</code></p>
+<p>The position (1-based) of the first <code>find$</code> in
+<code>text$</code> at or after character <code>start</code> (default 1),
+or <code>0</code> when there is none.</p>
+<h3 id="examples-39">Examples</h3>
+<pre class="basic"><code>PRINT INSTR(&quot;HELLO&quot;, &quot;L&quot;); INSTR(4, &quot;HELLO&quot;, &quot;L&quot;); INSTR(&quot;HELLO&quot;, &quot;Z&quot;)</code></pre>
+<p>Output: <code>340</code></p>
+<h3 id="comments-37">Comments</h3>
+<p>An empty <code>find$</code> matches at <code>start</code>.
+<code>start</code> must be 1–255.</p>
+<h2 id="int">INT</h2>
+<p><strong>Function</strong> — <code>INT(x)</code></p>
+<p>Rounds <code>x</code> toward negative infinity (floor), not toward
+zero.</p>
+<h3 id="examples-40">Examples</h3>
+<pre class="basic"><code>PRINT INT(3.7)
+PRINT INT(-3.7)</code></pre>
+<p>Output: <code>3</code>, <code>-4</code></p>
+<h3 id="comments-38">Comments</h3>
+<p><code>INT(-3.7)</code> is <code>-4</code>, not <code>-3</code> — this
+is floor, not truncation.</p>
+<h2 id="kill">KILL</h2>
+<p><strong>Command</strong> — <code>KILL "FILE"</code></p>
+<p>Deletes one saved program file from internal flash.</p>
+<h3 id="examples-41">Examples</h3>
+<pre class="basic"><code>KILL &quot;OLDTEST&quot;</code></pre>
+<h3 id="comments-39">Comments</h3>
+<p>The name must match a saved file, ignoring case, and is taken
+literally: <code>KILL "A*"</code> is <code>?BAD FILE NAME ERROR</code>
+rather than a wildcard, and a missing file is
+<code>?FILE NOT FOUND ERROR</code>. Filenames are described under <a
+href="#save">SAVE</a>. Deleting a file doesn't touch the program in
+memory. See <a href="#files">FILES</a>.</p>
+<h2 id="lcase">LCASE$</h2>
+<p><strong>Function</strong> — <code>LCASE$(s$)</code></p>
+<p>Returns a new string in which every ASCII capital letter
+<code>A</code>–<code>Z</code> in string expression <code>s$</code> is
+converted to lowercase.</p>
+<h3 id="examples-42">Examples</h3>
+<pre class="basic"><code>PRINT LCASE$(&quot;Hello, World 42!&quot;)</code></pre>
+<p>Output: <code>hello, world 42!</code></p>
+<h3 id="comments-40">Comments</h3>
+<p>Only the ASCII letters <code>A</code>–<code>Z</code> change. Digits,
+punctuation, spaces, and every byte outside the ASCII letter ranges pass
+through unchanged, and the result has the same length as <code>s$</code>
+(see <a href="#len">LEN</a>). The argument is a string expression, so
+<code>LCASE$</code> nests and works anywhere one is valid: a
+<code>$</code> assignment, <a href="#print">PRINT</a>, another string
+function's argument, or either side of a string <a href="#ifthen">IF</a>
+comparison. A number argument is <code>?TYPE MISMATCH ERROR</code>. Case
+conversion is not locale- or Unicode-aware. The upper-case form is <a
+href="#ucase">UCASE$</a>.</p>
+<h2 id="left">LEFT$</h2>
+<p><strong>Function</strong> — <code>LEFT$(s$, n)</code></p>
+<p>Returns the first <code>n</code> bytes of string expression
+<code>s$</code>. <code>n</code> is converted to an integer.</p>
+<h3 id="examples-43">Examples</h3>
+<pre class="basic"><code>PRINT LEFT$(&quot;PROGRAM&quot;, 4)
+PRINT LEFT$(&quot;HI&quot;, 0)
+PRINT LEFT$(&quot;HI&quot;, 99)</code></pre>
+<p>Output: <code>PROG</code>, `` (empty), <code>HI</code></p>
+<h3 id="comments-41">Comments</h3>
+<p><code>n</code> of <code>0</code> returns <code>""</code>; an
+<code>n</code> larger than the string returns the whole string. A
+negative <code>n</code> is <code>?ILLEGAL QUANTITY ERROR</code>. The
+first argument must be a string; a number is
+<code>?TYPE MISMATCH ERROR</code>. See <a href="#right">RIGHT$</a>, <a
+href="#mid">MID$</a>.</p>
+<h2 id="len">LEN</h2>
+<p><strong>Function</strong> — <code>LEN(s$)</code></p>
+<p>Returns the length of string expression <code>s$</code> in bytes, as
+a number.</p>
+<h3 id="examples-44">Examples</h3>
+<pre class="basic"><code>PRINT LEN(&quot;HELLO&quot;)
+A$ = &quot;&quot;:PRINT LEN(A$)</code></pre>
+<p>Output: <code>5</code>, <code>0</code></p>
+<h3 id="comments-42">Comments</h3>
+<p>Counts bytes, not decoded characters. The argument must be a string;
+a number is <code>?TYPE MISMATCH ERROR</code>.</p>
+<h2 id="let">LET</h2>
+<p><strong>Statement</strong> — <code>[LET] var=expr</code></p>
+<p>Assigns <code>expr</code>'s value to <code>var</code>. The
+<code>LET</code> keyword is optional; <code>var=expr</code> alone works
+identically. A <code>var</code> ending in <code>$</code> takes a string
+expression; any other <code>var</code> takes a numeric expression.</p>
+<h3 id="examples-45">Examples</h3>
+<pre class="basic"><code>LET X=5
+PRINT X
+Y=10
+PRINT Y
+NAME$ = &quot;JOEL&quot;
+PRINT NAME$</code></pre>
+<p>Output: <code>5</code>, <code>10</code>, <code>JOEL</code></p>
+<h3 id="comments-43">Comments</h3>
+<p>Names are case-insensitive and created automatically the first time
+they are assigned or read — a numeric name starts at <code>0</code>, a
+string name at <code>""</code>. Assigning a string to a numeric name, or
+a number to a <code>$</code> name, is <code>?TYPE MISMATCH ERROR</code>.
+See <a href="#string-variables">String variables</a> for the full type
+rules and the string expression grammar.</p>
+<h2 id="line">LINE</h2>
+<p><strong>Statement</strong> —
+<code>LINE (x1,y1)-(x2,y2)[,color][,B|BF]</code> or
+<code>LINE -(x2,y2)[,color]</code></p>
+<p>Draws a one-pixel-wide line between two integer pixel coordinates on
+the graphics surface, in the given <code>color</code> (default: the
+current <a href="#color">COLOR</a> foreground; write <code>,B</code> or
+<code>,BF</code> alone for a default-color rectangle). Coordinates start
+at <code>(0,0)</code> in the top-left. With <code>,B</code>, draws the
+rectangle having <code>(x1,y1)</code> and <code>(x2,y2)</code> as
+opposite corners as a one-pixel border instead. With <code>,BF</code>,
+draws that same rectangle filled solid. The continuation form, a leading
+<code>-</code> with no first point, draws from the previous successful
+<code>LINE</code>'s second endpoint — see "Current graphics position"
+below.</p>
+<h3 id="examples-46">Examples</h3>
+<pre class="basic"><code>SCREEN 1
+LINE (0,0)-(10,10),2
+LINE (0,0)-(10,10),RGB(40,200,80)
+LINE (10,10)-(100,50),4,B
+LINE (20,20)-(90,40),2,BF</code></pre>
+<p>Connected polygon via continuation:</p>
+<pre class="basic"><code>LINE (50,10)-(10,80),4
+LINE -(90,80),4
+LINE -(50,10),4</code></pre>
+<h3 id="comments-44">Comments</h3>
+<p>Only valid in <a href="#screen">SCREEN</a> 1 — using it in screen 0
+is <code>?ILLEGAL IN SCREEN 0 ERROR</code>. <code>color</code> is either
+a standard palette number 0 through 15, or a value returned by <a
+href="#rgb">RGB()</a>; an out-of-range palette number is
+<code>?ILLEGAL QUANTITY ERROR</code>. The 16 palette colors:</p>
+<table>
+<thead>
+<tr>
+<th style="text-align: right;">Number</th>
+<th>Color</th>
+<th>RGB</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: right;">0</td>
+<td>Black</td>
+<td><code>RGB(0,0,0)</code></td>
+</tr>
+<tr>
+<td style="text-align: right;">1</td>
+<td>Blue</td>
+<td><code>RGB(0,0,170)</code></td>
+</tr>
+<tr>
+<td style="text-align: right;">2</td>
+<td>Green</td>
+<td><code>RGB(0,170,0)</code></td>
+</tr>
+<tr>
+<td style="text-align: right;">3</td>
+<td>Cyan</td>
+<td><code>RGB(0,170,170)</code></td>
+</tr>
+<tr>
+<td style="text-align: right;">4</td>
+<td>Red</td>
+<td><code>RGB(170,0,0)</code></td>
+</tr>
+<tr>
+<td style="text-align: right;">5</td>
+<td>Magenta</td>
+<td><code>RGB(170,0,170)</code></td>
+</tr>
+<tr>
+<td style="text-align: right;">6</td>
+<td>Brown</td>
+<td><code>RGB(170,85,0)</code></td>
+</tr>
+<tr>
+<td style="text-align: right;">7</td>
+<td>Light Gray</td>
+<td><code>RGB(170,170,170)</code></td>
+</tr>
+<tr>
+<td style="text-align: right;">8</td>
+<td>Gray</td>
+<td><code>RGB(85,85,85)</code></td>
+</tr>
+<tr>
+<td style="text-align: right;">9</td>
+<td>Light Blue</td>
+<td><code>RGB(85,85,255)</code></td>
+</tr>
+<tr>
+<td style="text-align: right;">10</td>
+<td>Light Green</td>
+<td><code>RGB(85,255,85)</code></td>
+</tr>
+<tr>
+<td style="text-align: right;">11</td>
+<td>Light Cyan</td>
+<td><code>RGB(85,255,255)</code></td>
+</tr>
+<tr>
+<td style="text-align: right;">12</td>
+<td>Light Red</td>
+<td><code>RGB(255,85,85)</code></td>
+</tr>
+<tr>
+<td style="text-align: right;">13</td>
+<td>Light Magenta</td>
+<td><code>RGB(255,85,255)</code></td>
+</tr>
+<tr>
+<td style="text-align: right;">14</td>
+<td>Yellow</td>
+<td><code>RGB(255,255,85)</code></td>
+</tr>
+<tr>
+<td style="text-align: right;">15</td>
+<td>White</td>
+<td><code>RGB(255,255,255)</code></td>
+</tr>
+</tbody>
+</table>
+<p>Coordinates outside the surface are clipped rather than erroring. <a
+href="#pset">PSET</a> sets one pixel with the same color and clipping
+rules. See <code>examples/gfxclock.bas</code> for a three-hand analog
+clock with a digital <code>HH:MM</code> readout, built from
+<code>LINE</code>, graphics-mode <a href="#locate">LOCATE</a>/<a
+href="#print">PRINT</a>, <a href="#screen">SCREEN</a>, <a
+href="#gwidth">GWIDTH</a>/<a href="#gheight">GHEIGHT</a>, <a
+href="#gfontw">GFONTW</a>/<a href="#gfonth">GFONTH</a>, <a
+href="#time">TIME$</a>, <a href="#val">VAL</a>, <a href="#int">INT</a>,
+<a href="#sin">SIN</a>, and <a href="#cos">COS</a>.</p>
+<h4 id="b-and-bf-rectangles"><code>B</code> and <code>BF</code>
+rectangles</h4>
+<p><code>B</code> and <code>BF</code> are case-insensitive and only
+valid on the full <code>(x1,y1)-(x2,y2)</code> form — using either on a
+continuation line (<code>LINE -(x2,y2),color,B</code>) is
+<code>?SYNTAX ERROR</code>, and so is an unrecognized mode, a comma with
+nothing recognizable after it, or anything after a valid
+<code>B</code>/<code>BF</code>. The two corners work in either order —
+<code>(x1,y1)</code> and <code>(x2,y2)</code> can name any two opposite
+corners, and the rectangle drawn is the same either way. A rectangle
+where the corners share an x coordinate draws a vertical line, share a y
+coordinate draws a horizontal line, and share both draws a single pixel.
+Both border and fill are inclusive of both corners; a rectangle that is
+partly or wholly off-screen clips without error.</p>
+<h4 id="current-graphics-position">Current graphics position</h4>
+<p>BASIC32 tracks a current graphics position, initialized to
+<code>(0,0)</code> and reset to <code>(0,0)</code> when the interpreter
+starts, <a href="#new">NEW</a> runs, <a href="#screen">SCREEN</a> runs,
+or <a href="#cls">CLS</a> clears the graphics surface (screen 1). Every
+successful <code>LINE</code> — plain, <code>B</code>, or <code>BF</code>
+— moves it to <code>(x2,y2)</code> as written, even for a rectangle. <a
+href="#pset">PSET</a> and <a href="#preset">PRESET</a> move it to their
+pixel, <a href="#circle">CIRCLE</a> to its center, and <a
+href="#view">VIEW</a> back to <code>(0,0)</code>. <a
+href="#point">POINT(n)</a> reads it. <code>LINE -(x2,y2),color</code>
+starts from wherever the position currently is, which is what lets a
+chain of continuation lines draw a closed polygon without repeating each
+segment's start point, as in the example above.</p>
+<h2 id="list">LIST</h2>
+<p><strong>Command</strong> — <code>LIST</code></p>
+<p>Prints every stored program line, in line-number order, as
+<code>&lt;number&gt; &lt;text&gt;</code>.</p>
+<h3 id="examples-47">Examples</h3>
+<pre class="basic"><code>10 PRINT &quot;HELLO&quot;
+20 GOTO 10
+LIST</code></pre>
+<p>Output:</p>
+<pre><code>10 PRINT &quot;HELLO&quot;
+20 GOTO 10</code></pre>
+<h3 id="comments-45">Comments</h3>
+<p>Prints nothing if no lines are stored. See <a href="#new">NEW</a>, <a
+href="#run">RUN</a>.</p>
+<h2 id="load">LOAD</h2>
+<p><strong>Command</strong> — <code>LOAD "FILE"</code></p>
+<p>Replaces the program in memory with a program saved under
+<code>FILE</code>, and clears the variables, exactly as <a
+href="#new">NEW</a> does. The program is not run; use <a
+href="#run">RUN</a> afterward, or <code>RUN "FILE"</code> to load and
+run in one step.</p>
+<h3 id="examples-48">Examples</h3>
+<pre class="basic"><code>LOAD &quot;PONG&quot;
+LIST
+RUN</code></pre>
+<h3 id="comments-46">Comments</h3>
+<p>The file is read and checked in full before anything changes. A
+missing file reports <code>?FILE NOT FOUND ERROR</code>. A file larger
+than 64 KiB reports <code>?FILE TOO LARGE ERROR</code>. A file with a
+nonblank line that doesn't start with a line number, or a line number
+with no statement after it, reports <code>?BAD FILE ERROR</code>. Each
+of these leaves the program and variables in memory exactly as they
+were.</p>
+<p>A line in a saved file is a line number, one space, and the statement
+text, ending in a line feed. Files written by <a href="#save">SAVE</a>
+use this form; a file written on a computer may use CRLF line endings,
+and blank lines are ignored. Lines are read with the same rules as
+typing them in, so a line of 511 characters or more is rejected. See <a
+href="#save">SAVE</a> for filename rules.</p>
+<h2 id="loc">LOC</h2>
+<p><strong>Function</strong> — <code>LOC(n)</code></p>
+<p>Bytes read so far from input file <code>n</code>, or written so far
+to output file <code>n</code>. See <a href="#open">OPEN</a>.</p>
+<h2 id="locate">LOCATE</h2>
+<p><strong>Statement</strong> — <code>LOCATE row,col</code></p>
+<p>Moves the active screen's text cursor to a 1-based row and column
+before the next <a href="#print">PRINT</a>.</p>
+<h3 id="examples-49">Examples</h3>
+<pre class="basic"><code>CLS
+LOCATE 2,3
+PRINT &quot;X&quot;</code></pre>
+<pre class="basic"><code>SCREEN 1
+LOCATE 5,10
+PRINT &quot;SCORE:&quot;;SCORE</code></pre>
+<h3 id="comments-47">Comments</h3>
+<p>In <a href="#screen">SCREEN</a> 0 it positions the text console's
+cursor; in SCREEN 1 it positions the graphics text cursor, whose cells
+are <a href="#gfontw">GFONTW</a> × <a href="#gfonth">GFONTH</a> pixels,
+so <code>LOCATE 5,10</code> there starts the next <code>PRINT</code> at
+pixel <code>((10-1)*GFONTW, (5-1)*GFONTH)</code>. The two cursors are
+independent state.</p>
+<p>An out-of-range row or column is clamped to the last fully visible
+character cell rather than erroring: the fixed 20×10 console in SCREEN
+0, or the graphics surface's cell grid in SCREEN 1.</p>
+<h2 id="lof">LOF</h2>
+<p><strong>Function</strong> — <code>LOF(n)</code></p>
+<p>The length in bytes of open file <code>n</code> (for an output file,
+what has been written so far). See <a href="#open">OPEN</a>.</p>
+<h2 id="log">LOG</h2>
+<p><strong>Function</strong> — <code>LOG(x)</code></p>
+<p>Natural logarithm of <code>x</code>. <code>x</code> must be greater
+than 0, else <code>?ILLEGAL QUANTITY ERROR</code>. See <a
+href="#exp">EXP</a>.</p>
+<h2 id="merge">MERGE</h2>
+<p><strong>Command</strong> — <code>MERGE "FILE"</code></p>
+<p>Adds the lines of a saved program to the one in memory. Where both
+have the same line number, the file's line wins. Variables are kept.</p>
+<h3 id="comments-48">Comments</h3>
+<p>The file is checked in full first, like <a href="#load">LOAD</a>: a
+file that isn't a valid program is <code>?BAD FILE ERROR</code> and
+changes nothing.</p>
+<h2 id="mid">MID$</h2>
+<p><strong>Function</strong> — <code>MID$(s$, start, length)</code></p>
+<p>Returns up to <code>length</code> bytes of string expression
+<code>s$</code>, beginning at 1-based position <code>start</code>.
+<code>start</code> and <code>length</code> are converted to
+integers.</p>
+<h3 id="examples-50">Examples</h3>
+<pre class="basic"><code>PRINT MID$(&quot;PROGRAM&quot;, 2, 3)
+PRINT MID$(&quot;PROGRAM&quot;, 4, 99)
+PRINT MID$(&quot;PROGRAM&quot;, 20, 3)</code></pre>
+<p>Output: <code>ROG</code>, <code>GRAM</code>, `` (empty)</p>
+<h3 id="comments-49">Comments</h3>
+<p>Position <code>1</code> is the first byte. A <code>start</code> past
+the end returns <code>""</code>; a <code>length</code> that runs past
+the end is clipped to what remains. A <code>start</code> below
+<code>1</code>, or a negative <code>length</code>, is
+<code>?ILLEGAL QUANTITY ERROR</code>. This is the three-argument form
+only — there is no <code>MID$(s$, start)</code> "to the end" shorthand
+and no <code>MID$</code> assignment statement. The first argument must
+be a string; a number is <code>?TYPE MISMATCH ERROR</code>. See <a
+href="#left">LEFT$</a>, <a href="#right">RIGHT$</a>.</p>
+<h2 id="name">NAME</h2>
+<p><strong>Statement</strong> — <code>NAME "old" AS "new"</code></p>
+<p>Renames a saved file (program or data). Renaming onto another
+existing file is <code>?FILE ALREADY EXISTS ERROR</code>; changing only
+the case of a name is allowed. Names follow the same rules as <a
+href="#save">SAVE</a>.</p>
+<h2 id="new">NEW</h2>
+<p><strong>Command</strong> — <code>NEW</code></p>
+<p>Clears the stored program and all variables — numeric and string, the
+latter's storage freed — and resets to <a href="#screen">SCREEN</a> 0.
+Saved files are not touched.</p>
+<h3 id="examples-51">Examples</h3>
+<pre class="basic"><code>10 PRINT &quot;A&quot;
+NEW
+LIST</code></pre>
+<p>Output: nothing (the program is gone)</p>
+<h3 id="comments-50">Comments</h3>
+<p>Irreversible — there's no undo. The program lives in RAM until it is
+<a href="#save">SAVE</a>d, so <code>NEW</code> or a power cycle discards
+any unsaved work. To keep a copy, <code>SAVE</code> it first, then
+reload it with <a href="#load">LOAD</a>.</p>
+<h2 id="oct">OCT$</h2>
+<p><strong>Function</strong> — <code>OCT$(n)</code></p>
+<p><code>n</code>, rounded, as octal digits; <code>OCT$(8)</code> is
+<code>10</code>. <code>&amp;O17</code> writes an octal constant. See <a
+href="#hex">HEX$</a>.</p>
+<h2 id="on">ON</h2>
+<p><strong>Statement</strong> — <code>ON n GOTO line[, line...]</code>
+or <code>ON n GOSUB line[, line...]</code></p>
+<p>Jumps to (or calls) the <code>n</code>th line in the list.
+<code>n</code> is rounded; <code>0</code> or a number past the end of
+the list does nothing and the program carries on with the next
+statement.</p>
+<h3 id="examples-52">Examples</h3>
+<pre class="basic"><code>10 FOR I=1 TO 3
+20 ON I GOSUB 100,200,300
+30 NEXT
+40 END
+100 PRINT &quot;ONE&quot;: RETURN
+200 PRINT &quot;TWO&quot;: RETURN
+300 PRINT &quot;THREE&quot;: RETURN</code></pre>
+<p>Output: <code>ONE</code>, <code>TWO</code>, <code>THREE</code></p>
+<h3 id="comments-51">Comments</h3>
+<p>A negative <code>n</code> or one above 255 is
+<code>?ILLEGAL QUANTITY ERROR</code>. <code>ON</code> works only in a
+program. <a href="#renum">RENUM</a> updates the line numbers in the
+list.</p>
+<h2 id="open">OPEN</h2>
+<p><strong>Statement</strong> —
+<code>OPEN "name" FOR INPUT|OUTPUT|APPEND AS [#]n</code>, or
+<code>OPEN "I"|"O"|"A", [#]n, "name"</code></p>
+<p>Opens a data file in the board's storage as file number
+<code>n</code> (1–4). <code>OUTPUT</code> starts it empty,
+<code>APPEND</code> adds to the end of what is there, and
+<code>INPUT</code> reads it from the start. Then:</p>
+<ul>
+<li><code>PRINT #n, list</code> writes like <a
+href="#print">PRINT</a>.</li>
+<li><code>WRITE #n, list</code> writes like <a href="#write">WRITE</a>:
+quoted strings, commas.</li>
+<li><code>INPUT #n, var[, var...]</code> reads comma- or line-separated
+fields back.</li>
+<li><a href="#input-1">INPUT$</a><code>(count, #n)</code> reads raw
+characters.</li>
+<li><a href="#eof">EOF</a><code>(n)</code>, <a
+href="#loc">LOC</a><code>(n)</code>, and <a
+href="#lof">LOF</a><code>(n)</code> report on it.</li>
+<li><a href="#close">CLOSE</a> <code>#n</code> closes it; <a
+href="#reset">RESET</a> closes all.</li>
+</ul>
+<h3 id="examples-53">Examples</h3>
+<pre class="basic"><code>10 OPEN &quot;SCORES.TXT&quot; FOR OUTPUT AS #1
+20 WRITE #1, &quot;ANN&quot;, 90
+30 WRITE #1, &quot;BOB&quot;, 75
+40 CLOSE #1
+50 OPEN &quot;SCORES.TXT&quot; FOR INPUT AS #1
+60 WHILE NOT EOF(1)
+70 INPUT #1, N$, S
+80 PRINT N$; &quot; &quot;; S
+90 WEND
+100 CLOSE</code></pre>
+<p>Output: <code>ANN 90</code>, <code>BOB 75</code></p>
+<h3 id="comments-52">Comments</h3>
+<p>Files are kept whole in memory while open, up to 64 KB each: an input
+file is read in full when it opens, and an output file is written in one
+step when it closes — so a file written but never closed is never saved.
+Every open file is closed (and written) by <code>CLOSE</code>,
+<code>RESET</code>, <a href="#clear">CLEAR</a>, <a href="#new">NEW</a>,
+<a href="#load">LOAD</a>, <a href="#run">RUN</a>, and when a program
+ends, except after <a href="#stop">STOP</a> or BREAK, which leave them
+open for <a href="#cont">CONT</a>.</p>
+<p><code>INPUT #</code> skips leading spaces and line breaks; a field in
+double quotes is taken exactly; otherwise a string field runs to the
+next comma or line end, and a number field to the next comma, space, or
+line end.</p>
+<p>Data files share storage and naming with saved programs: <a
+href="#files">FILES</a> lists them and <a href="#kill">KILL</a> deletes
+them. Errors: <code>?FILE NOT FOUND ERROR</code> (input),
+<code>?BAD FILE NUMBER ERROR</code> (not 1–4, or not open),
+<code>?FILE ALREADY OPEN ERROR</code>, <code>?BAD FILE MODE ERROR</code>
+(writing to an input file or reading an output file),
+<code>?INPUT PAST END ERROR</code>,
+<code>?FILE TOO LARGE ERROR</code>.</p>
+<h2 id="paint">PAINT</h2>
+<p><strong>Statement</strong> —
+<code>PAINT (x,y)[,fill[,border]]</code></p>
+<p>Flood fills the four-way (up, down, left, right) connected area of
+the graphics surface reachable from the zero-based pixel
+<code>(x,y)</code> without crossing a pixel displaying
+<code>border</code>, replacing it with <code>fill</code>. When
+<code>border</code> is omitted, it defaults to <code>fill</code>, so the
+fill then stops at any pixel already that color.
+<code>PAINT (x,y)</code> alone uses the current <a
+href="#color">COLOR</a> foreground for both fill and border.</p>
+<h3 id="examples-54">Examples</h3>
+<pre class="basic"><code>SCREEN 1
+LINE (50,10)-(10,80),4
+LINE -(90,80),4
+LINE -(50,10),4
+PAINT (50,40),4,4</code></pre>
+<p>Omitted <code>border</code> (defaults to the fill color, so a border
+drawn in the same color as the fill still contains it):</p>
+<pre class="basic"><code>SCREEN 1
+LINE (10,10)-(100,50),2,B
+PAINT (50,30),2</code></pre>
+<h3 id="comments-53">Comments</h3>
+<p>Only valid in <a href="#screen">SCREEN</a> 1 — using it in screen 0
+is <code>?ILLEGAL IN SCREEN 0 ERROR</code>. <code>fill</code> and
+<code>border</code> are each a standard palette number or an <a
+href="#rgb">RGB()</a> value, same as <a href="#line">LINE</a>; an
+out-of-range palette number is <code>?ILLEGAL QUANTITY ERROR</code>.</p>
+<p>A seed pixel outside the graphics surface is a clipped no-op.
+<code>PAINT</code> also changes nothing if the seed already displays
+<code>border</code> or <code>fill</code> (comparing displayed colors, so
+a palette number and an <a href="#rgb">RGB()</a> value that render
+identically also count as a match). See <a href="#fill">FILL</a> for
+filling a same-colored region with no separate border color. A large
+fill still terminates safely — it never recurses and never grows
+unbounded.</p>
+<h2 id="palette">PALETTE</h2>
+<p><strong>Statement</strong> — <code>PALETTE [index, color]</code></p>
+<p>Changes the color that palette index <code>index</code> (0–15) stands
+for. <code>color</code> is an <a href="#rgb">RGB()</a> value or a
+standard color number 0–15. With no arguments, restores the standard
+palette.</p>
+<h3 id="examples-55">Examples</h3>
+<pre class="basic"><code>10 SCREEN 1
+20 LINE (10,10)-(60,60),2,BF
+30 FOR K=1 TO 15: PALETTE 2,K: PAUSE 2: NEXT
+40 PALETTE</code></pre>
+<p>The square cycles through every color, then returns to green.</p>
+<h3 id="comments-54">Comments</h3>
+<p>Like a hardware palette, the change shows at once: in SCREEN 1 every
+pixel showing the index's old color is redrawn in the new one, and a <a
+href="#color">COLOR</a> foreground or background that was that color
+follows it. Text already on the SCREEN 0 console keeps its color. A
+pixel drawn with an <code>RGB()</code> value equal to the old color
+changes too.</p>
+<h2 id="pause">PAUSE</h2>
+<p><strong>Statement</strong> — <code>PAUSE n</code></p>
+<p>Blocks for <code>n</code> tenths of a second — <code>PAUSE 10</code>
+is one second, the classic- BASIC convention.</p>
+<h3 id="examples-56">Examples</h3>
+<pre class="basic"><code>PAUSE 10</code></pre>
+<p>(pauses for one second)</p>
+<h3 id="comments-55">Comments</h3>
+<p><code>n</code> is a full expression, so fractional values work
+(<code>PAUSE 5</code> is half a second). Shares its underlying delay
+with <a href="#sleep">SLEEP</a>.</p>
+<h2 id="play">PLAY</h2>
+<p><strong>Statement</strong> — <code>PLAY string-expression</code></p>
+<p>Plays a short melody: a whitespace-separated string of natural note
+names <code>C D E F G A B</code>, case-insensitive, each in octave 4 and
+lasting 250ms. Uses the same tone playback as <a
+href="#sound">SOUND</a>, so a target with no sound hardware stays silent
+but keeps the same timing.</p>
+<h3 id="examples-57">Examples</h3>
+<pre class="basic"><code>PLAY &quot;C D E F G&quot;
+PLAY &quot;c d e&quot;</code></pre>
+<p>(the first plays five ordered quarter-second notes; lowercase works
+the same as uppercase)</p>
+<h3 id="comments-56">Comments</h3>
+<p>The whole string is validated before anything plays — an unknown
+token (a sharp/flat, an octave number, a rest, anything but a bare
+<code>A</code>-<code>G</code> letter) is <code>?SYNTAX ERROR</code> with
+no partial melody, not an error partway through playback. Sharps/flats,
+octaves, tempo, rests, note lengths, and a fuller music-macro grammar
+are out of scope for this version. On the ESP32-C6, each note streams to
+the connected browser for Web Audio playback the same way <a
+href="#sound">SOUND</a> does.</p>
+<h2 id="pmap">PMAP</h2>
+<p><strong>Function</strong> — <code>PMAP(value, mode)</code></p>
+<p>Converts a coordinate between world and screen coordinates: mode 0 is
+world x to screen x, 1 world y to screen y, 2 screen x to world x, 3
+screen y to world y. With no <code>WINDOW</code> statement (not
+implemented yet) the two coordinate systems are the same, so
+<code>PMAP</code> returns <code>value</code>. A mode other than 0–3 is
+<code>?ILLEGAL QUANTITY ERROR</code>.</p>
+<h2 id="point">POINT</h2>
+<p><strong>Function</strong> — <code>POINT(x, y)</code> or
+<code>POINT(n)</code></p>
+<p><code>POINT(x,y)</code> reads the pixel at <code>(x,y)</code>: the
+palette index (0–15) whose current color it shows, or, when it matches
+no palette entry, its <a href="#rgb">RGB()</a> value. A point outside
+the screen or <a href="#view">VIEW</a> gives <code>-1</code>.</p>
+<p><code>POINT(n)</code> reads the current graphics position:
+<code>n</code>=0 or 1 gives x or y in screen coordinates, 2 or 3 in <a
+href="#view">VIEW</a>-relative coordinates.</p>
+<h3 id="examples-58">Examples</h3>
+<pre class="basic"><code>10 SCREEN 1
+20 PSET 5,5,12
+30 PRINT POINT(5,5); POINT(0); POINT(1)</code></pre>
+<p>Output: <code>1255</code></p>
+<h3 id="comments-57">Comments</h3>
+<p>SCREEN 1 only. Colors read back at the screen's own precision, so two
+colors that look identical on the display read as the same value.</p>
+<h2 id="pos">POS</h2>
+<p><strong>Function</strong> — <code>POS(x)</code></p>
+<p>The column (1-based) where the next <code>PRINT</code> will go. The
+argument is ignored. In SCREEN 1, the graphics text cursor's column.</p>
+<h2 id="preset">PRESET</h2>
+<p><strong>Statement</strong> — <code>PRESET x,y[,color]</code></p>
+<p><a href="#pset">PSET</a> with the background color as its default:
+without <code>color</code> it erases the pixel to the current <a
+href="#color">COLOR</a> background.</p>
+<h2 id="print">PRINT</h2>
+<p><strong>Statement</strong> —
+<code>PRINT [item] [sep item]...</code></p>
+<p>Text is drawn in the current <a href="#color">COLOR</a> foreground
+and background (opaque character cells) in both screen modes.</p>
+<p>Prints zero or more items — a numeric expression or a string
+expression (a <code>"literal"</code>, a <code>$</code> variable, or a
+string function) — each separated from the next by whitespace,
+<code>;</code>, or <code>,</code>:</p>
+<ul>
+<li>Whitespace or <code>;</code> between two items concatenates them
+directly, with nothing inserted between them. The two are
+interchangeable mid-list: <code>PRINT "X=" X</code> and
+<code>PRINT "X="; X</code> print identically.</li>
+<li><code>,</code> advances to the next fixed print zone — columns 1, 9,
+17, 25, ..., 8 apart — padding with literal spaces. An advance that
+wouldn't fit before the end of the current line continues at column 1 of
+the next line instead.</li>
+</ul>
+<p>A trailing <code>;</code> suppresses the line's closing newline
+outright, leaving the cursor where the last item ended. A trailing
+<code>,</code> makes its zone advance (or line wrap) first, then
+suppresses the newline, so the next <code>PRINT</code> continues from
+that column. <code>PRINT</code> with no items just prints a newline.</p>
+<h3 id="examples-59">Examples</h3>
+<pre class="basic"><code>PRINT &quot;A&quot;,&quot;B&quot;
+PRINT &quot;A&quot;;&quot;B&quot;
+PRINT &quot;A&quot; &quot;B&quot;
+NAME$ = &quot;JOEL&quot;
+PRINT &quot;HI &quot;;NAME$;&quot; (&quot;;LEN(NAME$);&quot;)&quot;
+PRINT 1;
+PRINT 2
+FOR I=1 TO 3: PRINT I,: NEXT I
+PRINT &quot;DONE&quot;</code></pre>
+<p>Output:</p>
+<pre><code>A       B
+AB
+AB
+HI JOEL (4)
+1
+2
+1       2       3       DONE</code></pre>
+<p>(<code>1</code> and <code>READY.</code> actually land on the same
+line in that fourth case — the trailing <code>;</code> suppressed
+<code>PRINT 1</code>'s own newline, so <code>READY.</code> runs straight
+into it; shown above on separate lines only for clarity.) The
+<code>FOR</code> loop's trailing <code>,</code> on every pass leaves the
+cursor at the next print zone, so the three numbers line up 8 columns
+apart and the untrailed <code>PRINT "DONE"</code> that follows the loop
+picks up right where the last comma left off instead of starting a new
+line.</p>
+<h3 id="comments-58">Comments</h3>
+<p>Whitespace between two complete items is only a separator —
+<code>PRINT "A" "B"</code> prints <code>AB</code> with nothing inserted
+— but whitespace <em>inside</em> one item is ordinary expression syntax
+and never splits it: <code>PRINT 1 + 2</code> and a spaced function call
+still evaluate as a single item, and spaces inside a
+<code>"string literal"</code> are preserved exactly. Numbers print via
+C's <code>%.6g</code> — six significant digits, switching to exponential
+notation outside that range (<code>PRINT 1000000</code> prints
+<code>1e+06</code>; <code>PRINT 1/3</code> prints
+<code>0.333333</code>). A string expression prints its bytes unchanged.
+Because a trailing <code>;</code>/<code>,</code> suppresses only
+<code>PRINT</code>'s own newline and not the <code>READY.</code> prompt
+that always follows a completed direct statement, a direct-mode
+<code>PRINT</code> ending in <code>;</code> or <code>,</code> runs its
+output straight into <code>READY.</code> on the same line, as noted
+above.</p>
+<p>In <a href="#screen">SCREEN</a> 1, <code>PRINT</code> draws the same
+fixed-width glyphs in white onto the graphics surface at the graphics
+text cursor (set with <a href="#locate">LOCATE</a>), advancing,
+wrapping, handling newlines, and scrolling in character cells exactly as
+the text console does — the formatting and separator rules above are
+unchanged, with print zones measured in that cursor's own character
+cells. Use <a href="#gprint">GPRINT</a> instead to place text at an
+absolute pixel coordinate without touching that cursor.</p>
+<h2 id="pset">PSET</h2>
+<p><strong>Statement</strong> — <code>PSET x,y[,color]</code></p>
+<p>Sets the single pixel at the zero-based coordinate <code>(x,y)</code>
+on the graphics surface to <code>color</code>, or to the current <a
+href="#color">COLOR</a> foreground when omitted, and moves the current
+graphics position there. <a href="#preset">PRESET</a> is the same with
+the background as its default color.</p>
+<h3 id="examples-60">Examples</h3>
+<pre class="basic"><code>SCREEN 1
+PSET 10,10,15
+PSET 12,10,RGB(255,128,0)</code></pre>
+<h3 id="comments-59">Comments</h3>
+<p>Only valid in <a href="#screen">SCREEN</a> 1 —
+<code>?ILLEGAL IN SCREEN 0 ERROR</code> otherwise. <code>color</code>
+uses the exact same resolution as <a href="#line">LINE</a>: a palette
+index <code>0</code>–<code>15</code> or an <a href="#rgb">RGB()</a>
+value, with an out-of-range palette number raising
+<code>?ILLEGAL QUANTITY ERROR</code>. Pixels outside the surface are
+clipped without error, also like <code>LINE</code>.</p>
+<h2 id="put">PUT</h2>
+<p><strong>Statement</strong> —
+<code>PUT (x,y), array[, PSET|PRESET|AND|OR|XOR]</code></p>
+<p>Draws an image saved by <a href="#get">GET</a> with its top-left
+corner at <code>(x,y)</code>. How each pixel combines with what is
+already on screen:</p>
+<ul>
+<li><code>XOR</code> (the default) — so a second identical
+<code>PUT</code> erases the image, for simple animation.</li>
+<li><code>PSET</code> — copies the image.</li>
+<li><code>PRESET</code> — copies its inverse.</li>
+<li><code>AND</code>, <code>OR</code> — combine bitwise.</li>
+</ul>
+<h3 id="examples-61">Examples</h3>
+<pre class="basic"><code>100 FOR X=0 TO 300 STEP 4
+110 PUT (X,50),S: PAUSE 1: PUT (X,50),S
+120 NEXT</code></pre>
+<h3 id="comments-60">Comments</h3>
+<p>Pixels outside the screen or <a href="#view">VIEW</a> are clipped.
+SCREEN 1 only.</p>
+<h2 id="randomize">RANDOMIZE</h2>
+<p><strong>Statement</strong> — <code>RANDOMIZE</code></p>
+<p>Reseeds the random-number generator from the board's uptime, so the
+<a href="#rnd">RND</a> sequence that follows differs from the last
+run's.</p>
+<h3 id="examples-62">Examples</h3>
+<pre class="basic"><code>RANDOMIZE
+PRINT INT(RND*6)+1</code></pre>
+<h3 id="comments-61">Comments</h3>
+<p><code>RANDOMIZE</code> takes no argument.
+<code>RANDOMIZE TIMER</code> and any other trailing input are
+<code>?SYNTAX ERROR</code>; the seed is always the uptime, and there's
+no way to supply your own. Until a program calls <code>RANDOMIZE</code>,
+the generator starts from a fixed seed, so an un-randomized program
+produces the same numbers after every power-up. The sequence isn't saved
+across resets.</p>
+<h2 id="read">READ</h2>
+<p><strong>Statement</strong> — <code>READ var[, var...]</code></p>
+<p>Takes the next item from <a href="#data">DATA</a> for each variable
+or array element.</p>
+<h2 id="rem">REM</h2>
+<p><strong>Statement</strong> — <code>REM text</code> or
+<code>'text</code></p>
+<p>Marks the rest of the physical line as a comment; nothing after
+<code>REM</code> or <code>'</code> is evaluated — including any
+<code>:</code>, so a statement placed after a comment on the same line
+never runs.</p>
+<h3 id="examples-63">Examples</h3>
+<pre class="basic"><code>10 REM this line does nothing
+20 PRINT &quot;A&quot;
+30 &#39;so does this one
+40 PRINT &quot;B&quot;
+50 PRINT &quot;C&quot; : REM everything from REM to the end of line 50 is a comment
+RUN</code></pre>
+<p>Output: <code>A</code>, <code>B</code>, <code>C</code></p>
+<h3 id="comments-62">Comments</h3>
+<p>Because a comment consumes the whole physical line,
+<code>REM</code>/<code>'</code> must come last on a line that also does
+work — <code>PRINT X : REM note</code> is fine,
+<code>REM note : PRINT X</code> prints nothing. <code>REM</code> (like
+every keyword) is case-insensitive; the apostrophe form needs no keyword
+at all.</p>
+<h2 id="renum">RENUM</h2>
+<p><strong>Command</strong> —
+<code>RENUM [new],[old],[increment]</code></p>
+<p>Renumbers stored program lines in place, and updates the line numbers
+that <code>GOTO</code>, <code>GOSUB</code>, and numeric
+<code>IF ... THEN</code> statements use to refer to them.</p>
+<p>Each omitted field takes its own default: <code>new</code> is 10,
+<code>old</code> is 0, and <code>increment</code> is 10. Bare
+<code>RENUM</code> renumbers the whole program as
+<code>10, 20, 30, ...</code>. A field can be left empty between commas,
+as in <code>RENUM 100,,10</code>.</p>
+<ul>
+<li><code>new</code> is the first replacement line number. It must be at
+least 1.</li>
+<li><code>old</code> selects the first stored line numbered
+<code>old</code> or higher. Lines before it keep their numbers; the
+selected lines become <code>new</code>, <code>new + increment</code>,
+and so on.</li>
+<li><code>increment</code> is the spacing between replacement numbers.
+It must be at least 1.</li>
+</ul>
+<p>A literal destination in <code>GOTO</code>, <code>GOSUB</code>, or a
+numeric <code>IF ... THEN</code> that names a renumbered line is changed
+to that line's new number, including destinations inside colon-separated
+statement chains. Destinations that name no renumbered line, numbers in
+expressions, text inside quoted strings, and <code>REM</code> or
+apostrophe comments are left exactly as typed.</p>
+<p><code>RENUM</code> is a direct command, like <a href="#run">RUN</a>,
+<a href="#list">LIST</a>, and <a href="#new">NEW</a>: it can't be stored
+as a numbered line or chained after a colon. On success it prints only
+the <code>READY.</code> prompt. Renumbering an empty program, or a range
+with no lines in it, succeeds and changes nothing.</p>
+<p>Malformed arguments — a non-integer, more than three fields, or text
+after the fields — report <code>?SYNTAX ERROR</code>. Values out of
+range report <code>?ILLEGAL QUANTITY ERROR</code>: a <code>new</code> or
+<code>increment</code> below 1, a negative <code>old</code>, a number
+above 2147483647, or a result that would not stay above the last
+unchanged line. A failed <code>RENUM</code> changes no line numbers and
+no line text.</p>
+<h3 id="examples-64">Examples</h3>
+<pre class="basic"><code>5 X=1
+7 GOTO 5
+30 PRINT X
+RENUM
+LIST</code></pre>
+<p>Output:</p>
+<pre><code>10 X=1
+20 GOTO 10
+30 PRINT X
+READY.</code></pre>
+<p>Renumbering only the lines from 500 upward, starting at 1000 in steps
+of 20:</p>
+<pre class="basic"><code>RENUM 1000,500,20</code></pre>
+<p>Starting from <code>10 A=1</code>, <code>400 PRINT 400</code>,
+<code>500 PRINT 500</code>, and <code>600 GOTO 500</code>, this leaves
+lines 10 and 400 alone, and changes <code>500</code> to
+<code>1000</code>, <code>600</code> to <code>1020</code>, and the
+<code>GOTO</code> destination to match.</p>
+<h3 id="comments-63">Comments</h3>
+<p>Only a suffix of the program can be renumbered: there's no way to
+renumber a middle range or to stop at a final old line. Computed
+destinations such as <code>GOTO X*10</code> are not rewritten, since
+their target isn't known until <code>RUN</code>.</p>
+<h2 id="reset">RESET</h2>
+<p><strong>Statement</strong> — <code>RESET</code></p>
+<p>Closes every open file, writing the output files. See <a
+href="#open">OPEN</a>.</p>
+<h2 id="restore">RESTORE</h2>
+<p><strong>Statement</strong> — <code>RESTORE [line]</code></p>
+<p>Makes the next <a href="#read">READ</a> start over with the first <a
+href="#data">DATA</a> item of the program, or of line <code>line</code>
+onward. A missing line is <code>?UNDEF'D STATEMENT ERROR</code>.</p>
+<h2 id="return">RETURN</h2>
+<p><strong>Statement</strong> — <code>RETURN</code></p>
+<p>Ends the current subroutine and resumes execution at the statement
+right after the <a href="#gosub">GOSUB</a> that called it.</p>
+<h3 id="examples-65">Examples</h3>
+<pre class="basic"><code>10 GOSUB 100
+20 PRINT &quot;DONE&quot;
+30 END
+100 FOR I=1 TO 3
+110 PRINT I
+120 NEXT I
+130 RETURN
+RUN</code></pre>
+<p>Output: <code>1</code>, <code>2</code>, <code>3</code>,
+<code>DONE</code></p>
+<h3 id="comments-64">Comments</h3>
+<p>Only legal inside a running program — typed directly it's
+<code>?ILLEGAL DIRECT ERROR</code>. A <code>RETURN</code> with no
+matching <a href="#gosub">GOSUB</a> still pending is
+<code>?RETURN WITHOUT GOSUB ERROR</code>. Resume is statement-precise:
+if the <code>GOSUB</code> shared its line with later statements
+(<code>GOSUB 100 : PRINT X</code>), <code>RETURN</code> continues at the
+next one; if the <code>GOSUB</code> was last on its line, it continues
+at the next line. Nested calls unwind last-in-first-out: each
+<code>RETURN</code> matches the most recent unreturned
+<code>GOSUB</code>.</p>
+<h2 id="rgb">RGB</h2>
+<p><strong>Function</strong> — <code>RGB(red,green,blue)</code></p>
+<p>Builds a true-color value from three integer components, each 0
+through 255, for use as <a href="#line">LINE</a>'s color argument.</p>
+<h3 id="examples-66">Examples</h3>
+<pre class="basic"><code>LINE (0,0)-(10,10),RGB(40,200,80)</code></pre>
+<h3 id="comments-65">Comments</h3>
+<p>Only meaningful as <code>LINE</code>'s color argument — it isn't a
+general-purpose color type. An out-of-range component is
+<code>?ILLEGAL QUANTITY ERROR</code>, the same error <code>LINE</code>
+raises for an out-of-range palette number. Internally,
+<code>RGB()</code> tags its result above the packed 24-bit range so
+<code>LINE</code> can tell a true color apart from a palette index
+(0-15) whose packed value happens to also fall in 0-15; this is an
+interpreter implementation detail a program never needs to know about.
+See <code>LINE</code>'s palette table.</p>
+<h2 id="right">RIGHT$</h2>
+<p><strong>Function</strong> — <code>RIGHT$(s$, n)</code></p>
+<p>Returns the last <code>n</code> bytes of string expression
+<code>s$</code>. <code>n</code> is converted to an integer.</p>
+<h3 id="examples-67">Examples</h3>
+<pre class="basic"><code>PRINT RIGHT$(&quot;PROGRAM&quot;, 3)
+PRINT RIGHT$(&quot;HI&quot;, 0)
+PRINT RIGHT$(&quot;HI&quot;, 99)</code></pre>
+<p>Output: <code>RAM</code>, `` (empty), <code>HI</code></p>
+<h3 id="comments-66">Comments</h3>
+<p><code>n</code> of <code>0</code> returns <code>""</code>; an
+<code>n</code> larger than the string returns the whole string. A
+negative <code>n</code> is <code>?ILLEGAL QUANTITY ERROR</code>. The
+first argument must be a string; a number is
+<code>?TYPE MISMATCH ERROR</code>. See <a href="#left">LEFT$</a>, <a
+href="#mid">MID$</a>.</p>
+<h2 id="rnd">RND</h2>
+<p><strong>Function-like value (read-only)</strong> —
+<code>RND</code></p>
+<p>A pseudorandom number <code>0 &lt;= RND &lt; 1</code>. Each
+evaluation returns a new value.</p>
+<h3 id="examples-68">Examples</h3>
+<pre class="basic"><code>PRINT RND
+PRINT INT(RND*6)+1</code></pre>
+<h3 id="comments-67">Comments</h3>
+<p>Not a function call — like <a href="#tick">TICK</a>, it takes no
+<code>()</code>, so <code>RND(1)</code>, <code>RND(0)</code>, and
+<code>RND()</code> are <code>?SYNTAX ERROR</code>. Use
+<code>INT(RND*n)</code> for whole numbers from 0 to <code>n-1</code>, or
+<code>INT(RND*n)+1</code> for 1 to <code>n</code>. The generator starts
+from a fixed seed until <a href="#randomize">RANDOMIZE</a> is
+called.</p>
+<h2 id="run">RUN</h2>
+<p><strong>Command</strong> — <code>RUN</code></p>
+<p>Executes the stored program from its lowest line number, in order,
+following any <a href="#goto">GOTO</a>/<a href="#ifthen">IF</a> jumps,
+until <a href="#end">END</a>, the last line, a runtime error, or
+<code>Ctrl-C</code> (BREAK).</p>
+<h3 id="examples-69">Examples</h3>
+<pre class="basic"><code>10 PRINT &quot;HELLO&quot;
+20 GOTO 10</code></pre>
+<pre><code>RUN</code></pre>
+<p>(prints <code>HELLO</code> forever until <code>Ctrl-C</code> stops it
+— a deliberately minimal example of why <code>END</code> or a bounded
+<code>FOR</code> loop matters)</p>
+<h3 id="comments-68">Comments</h3>
+<p><code>RUN</code> starts clean: like <a href="#clear">CLEAR</a>, it
+forgets every variable, array, and <a href="#def-fn">DEF FN</a>, closes
+open files, and restarts <a href="#data">DATA</a>. (The <a
+href="#color">COLOR</a>, <a href="#palette">PALETTE</a>, and screen mode
+carry over.) A program stopped by <a href="#stop">STOP</a> or BREAK can
+be resumed with <a href="#cont">CONT</a> instead.</p>
+<p><code>RUN "FILE"</code> loads a saved program with <a
+href="#load">LOAD</a> and runs it in one step. If the load fails,
+nothing runs and the error is reported. A plain <code>RUN</code> with no
+filename runs the program already in memory, as above. Prints
+<code>READY.</code> once the program stops, whether that's normal
+completion, a runtime error, or BREAK. <code>Ctrl-C</code> is checked
+before every line, so it stops a program even if it never reads <a
+href="#inkey">INKEY</a> itself — otherwise a program that reads its own
+buttons/keyboard through <code>INKEY</code> would have no way to be
+interrupted. On BREAK, the console shows <code>BREAK IN</code> followed
+by the line number that was about to run, e.g.
+<code>BREAK IN 20</code>.</p>
+<h2 id="save">SAVE</h2>
+<p><strong>Command</strong> — <code>SAVE "FILE"</code></p>
+<p>Writes the program in memory to internal flash under
+<code>FILE</code>, as plain ASCII source: one line per stored line, in
+line-number order, each as its number, a space, and its statement text,
+ending in a line feed.</p>
+<h3 id="examples-70">Examples</h3>
+<pre class="basic"><code>10 PRINT &quot;HELLO&quot;
+20 END
+SAVE &quot;HELLO&quot;</code></pre>
+<p>Output: <code>READY.</code></p>
+<p>The file <code>HELLO</code> then contains:</p>
+<pre><code>10 PRINT &quot;HELLO&quot;
+20 END</code></pre>
+<h3 id="comments-69">Comments</h3>
+<p>Saving to a name that already exists replaces that file completely.
+The new copy is written under a temporary name first and moved into
+place only once it is complete, so a failed save leaves the previous
+file untouched.</p>
+<p>Names may use letters, digits, <code>_</code>, <code>-</code>, and
+<code>.</code>, up to 31 characters, and are matched without regard to
+case. Saving <code>"Clock"</code> after <code>"CLOCK"</code> keeps the
+new spelling and removes the old one. Names must not contain
+<code>..</code>, path separators, spaces, or wildcards, and no extension
+is added — <code>SAVE "HELLO"</code> writes exactly <code>HELLO</code>.
+An empty, illegal, or unquoted name is <code>?BAD FILE NAME ERROR</code>
+or <code>?SYNTAX ERROR</code>.</p>
+<p>A program over 64 KiB, or a save that would exceed the flash's free
+space, reports <code>?PROGRAM TOO LARGE ERROR</code> or
+<code>?STORAGE FULL ERROR</code>, and nothing is written. If the flash
+cannot be used at all, the error is <code>?STORAGE ERROR</code>.</p>
+<p>Saved files are stored in the board's own internal flash, not on any
+SD card; they persist across power cycles and are removed only by <a
+href="#kill">KILL</a> or by reflashing the storage partition.
+<code>SAVE</code>, <code>LOAD</code>, <code>RUN "FILE"</code>,
+<code>KILL</code>, and <code>FILES</code> are direct commands; they
+can't be stored as numbered lines or chained after a colon. Saved files
+hold only the program, never variables or the screen. See <a
+href="#load">LOAD</a>, <a href="#files">FILES</a>.</p>
+<h2 id="screen">SCREEN</h2>
+<p><strong>Statement</strong> — <code>SCREEN mode</code></p>
+<p>Selects the active screen: <code>0</code> for the text console (the
+startup default), <code>1</code> for the graphics surface. Only one is
+visible at a time.</p>
+<h3 id="examples-71">Examples</h3>
+<pre class="basic"><code>SCREEN 1
+LINE (0,0)-(10,10),2
+SCREEN 0</code></pre>
+<h3 id="comments-70">Comments</h3>
+<p>Any value other than <code>0</code> or <code>1</code> is
+<code>?ILLEGAL QUANTITY ERROR</code>. Switching screens preserves
+neither screen's contents. <a href="#new">NEW</a> always resets
+<code>SCREEN</code> back to <code>0</code>. SCREEN 1 is the only mode in
+which <a href="#line">LINE</a>, <a href="#pset">PSET</a>, <a
+href="#gprint">GPRINT</a>, and graphics-mode <a
+href="#locate">LOCATE</a>/<a href="#print">PRINT</a> are legal; SCREEN 0
+is the only mode in which <code>PRINT</code> reaches the text
+console.</p>
+<h2 id="sgn">SGN</h2>
+<p><strong>Function</strong> — <code>SGN(x)</code></p>
+<p><code>-1</code> if <code>x</code> is negative, <code>0</code> if it
+is zero, <code>1</code> if it is positive.</p>
+<h2 id="sin">SIN</h2>
+<p><strong>Function</strong> — <code>SIN(x)</code></p>
+<p>Sine of <code>x</code>, where <code>x</code> is in radians.</p>
+<h3 id="examples-72">Examples</h3>
+<pre class="basic"><code>PRINT SIN(0)</code></pre>
+<p>Output: <code>0</code></p>
+<h3 id="comments-71">Comments</h3>
+<p>Radians, not degrees. See <a href="#cos">COS</a>.</p>
+<h2 id="sleep">SLEEP</h2>
+<p><strong>Statement</strong> — <code>SLEEP n</code></p>
+<p>Blocks for <code>n</code> whole seconds.</p>
+<h3 id="examples-73">Examples</h3>
+<pre class="basic"><code>SLEEP 1</code></pre>
+<h3 id="comments-72">Comments</h3>
+<p>Reads more directly than <a href="#pause">PAUSE</a> for whole-second
+delays; both share the same underlying delay, and <code>n</code> is a
+full expression so fractional seconds also work.</p>
+<h2 id="sound">SOUND</h2>
+<p><strong>Statement</strong> —
+<code>SOUND frequency,duration</code></p>
+<p>Plays an exact tone at <code>frequency</code> Hz for
+<code>duration</code> milliseconds, blocking until it finishes —
+sequential <code>SOUND</code> statements form predictable timing.
+<code>frequency</code> must be 20-20000 and <code>duration</code>
+0-60000; a value outside that range is
+<code>?ILLEGAL QUANTITY ERROR</code>, and a missing argument or trailing
+input is <code>?SYNTAX ERROR</code>.</p>
+<h3 id="examples-74">Examples</h3>
+<pre class="basic"><code>SOUND 440,100
+SOUND 660,100
+SOUND 880,100</code></pre>
+<p>(three ascending 100ms tones, one after another)</p>
+<h3 id="comments-73">Comments</h3>
+<p>A duration of 0 is valid and produces no audible output — useful for
+muting a <code>SOUND</code> call without removing it. Both arguments are
+full numeric expressions, truncated to whole Hz/ms. On targets with no
+sound hardware (ESP32-S3, RP2350), <code>SOUND</code> is silent but
+still blocks for the full duration so program timing matches the
+ESP32-C6, which instead streams the tone to its connected browser for
+Web Audio playback; with no browser connected, or if the send fails, the
+program continues silently. See <a href="#play">PLAY</a> for short
+melodies built from natural note names.</p>
+<h2 id="space">SPACE$</h2>
+<p><strong>Function</strong> — <code>SPACE$(n)</code></p>
+<p>A string of <code>n</code> spaces (0–255).</p>
+<h2 id="spc">SPC</h2>
+<p><strong>Print function</strong> — <code>SPC(n)</code>, inside a <a
+href="#print">PRINT</a> list</p>
+<p>Prints <code>n</code> spaces (0–255). Like a trailing <code>;</code>,
+<code>SPC</code> at the end of the list leaves the cursor on the line.
+Only valid as a <code>PRINT</code>/<code>PRINT #</code>/
+<code>GPRINT</code> item.</p>
+<h3 id="examples-75">Examples</h3>
+<pre class="basic"><code>PRINT &quot;A&quot;; SPC(3); &quot;B&quot;</code></pre>
+<p>Output: <code>A   B</code></p>
+<h2 id="sqr">SQR</h2>
+<p><strong>Function</strong> — <code>SQR(x)</code></p>
+<p>Square root of <code>x</code>.</p>
+<h3 id="examples-76">Examples</h3>
+<pre class="basic"><code>PRINT SQR(16)</code></pre>
+<p>Output: <code>4</code></p>
+<h3 id="comments-74">Comments</h3>
+<p>A negative argument is <code>?ILLEGAL QUANTITY ERROR</code>, not
+<code>NaN</code> or a complex result.</p>
+<h2 id="stop">STOP</h2>
+<p><strong>Statement</strong> — <code>STOP</code></p>
+<p>Stops the program and prints <code>BREAK IN</code> and the line
+number, like <code>Ctrl-C</code>. <a href="#cont">CONT</a> carries on
+from the next statement.</p>
+<h3 id="comments-75">Comments</h3>
+<p>Unlike <a href="#end">END</a>, a <code>STOP</code>ped program keeps
+its open files open and can be resumed. Handy for debugging: stop,
+<code>PRINT</code> a few variables, then <code>CONT</code>.</p>
+<h2 id="str">STR$</h2>
+<p><strong>Function</strong> — <code>STR$(n)</code></p>
+<p>Returns the string form of number <code>n</code>, formatted the same
+way <a href="#print">PRINT</a> formats a number: C's <code>%.6g</code>,
+with no leading space in front of a non-negative value.</p>
+<h3 id="examples-77">Examples</h3>
+<pre class="basic"><code>PRINT &quot;[&quot; ; STR$(42) ; &quot;]&quot;
+PRINT &quot;[&quot; ; STR$(-3.5) ; &quot;]&quot;
+PRINT LEN(STR$(1/3))</code></pre>
+<p>Output: <code>[42]</code>, <code>[-3.5]</code>, <code>8</code></p>
+<h3 id="comments-76">Comments</h3>
+<p><code>STR$(n)</code> is a string-typed value for use in a string
+context. It is the rough inverse of <a href="#val">VAL</a>:
+<code>VAL(STR$(n))</code> recovers <code>n</code> within
+<code>%.6g</code> precision. Classic BASICs put a leading space where
+the sign of a positive number would go; BASIC32 does not, matching its
+own <code>PRINT</code>.</p>
+<h2 id="string">STRING$</h2>
+<p><strong>Function</strong> — <code>STRING$(n, code)</code> or
+<code>STRING$(n, text$)</code></p>
+<p>A string of <code>n</code> copies (0–255) of one character: the
+character with ASCII code <code>code</code>, or the first character of
+<code>text$</code>.</p>
+<h3 id="examples-78">Examples</h3>
+<pre class="basic"><code>PRINT STRING$(5, &quot;*&quot;); STRING$(3, 61)</code></pre>
+<p>Output: <code>*****===</code></p>
+<h2 id="swap">SWAP</h2>
+<p><strong>Statement</strong> — <code>SWAP a, b</code></p>
+<p>Exchanges the values of two variables or array elements of the same
+type (both numeric or both string); otherwise
+<code>?TYPE MISMATCH ERROR</code>.</p>
+<h3 id="examples-79">Examples</h3>
+<pre class="basic"><code>10 A=1: B=2: SWAP A,B: PRINT A; B</code></pre>
+<p>Output: <code>21</code></p>
+<h2 id="tab">TAB</h2>
+<p><strong>Print function</strong> — <code>TAB(n)</code>, inside a <a
+href="#print">PRINT</a> list</p>
+<p>Moves to column <code>n</code> by printing spaces. If the cursor is
+already past column <code>n</code>, it starts a new line first. Like a
+trailing <code>;</code>, <code>TAB</code> at the end of the list leaves
+the cursor on the line. Only valid as a <code>PRINT</code>/
+<code>PRINT #</code>/<code>GPRINT</code> item.</p>
+<h3 id="examples-80">Examples</h3>
+<pre class="basic"><code>PRINT &quot;NAME&quot;; TAB(10); &quot;SCORE&quot;</code></pre>
+<p>Output: <code>NAME     SCORE</code></p>
+<h2 id="tan">TAN</h2>
+<p><strong>Function</strong> — <code>TAN(x)</code></p>
+<p>Tangent of <code>x</code>, where <code>x</code> is in radians. See <a
+href="#atn">ATN</a>.</p>
+<h2 id="timer">TIMER</h2>
+<p><strong>Special variable (read-only)</strong> —
+<code>TIMER</code></p>
+<p>Whole seconds since midnight on the board's clock (see <a
+href="#time">TIME$</a>). Read with no <code>()</code>, like <a
+href="#tick">TICK</a>; use <code>TICK</code> for millisecond timing.</p>
+<h2 id="trontroff">TRON/TROFF</h2>
+<p><strong>Statement</strong> — <code>TRON</code>,
+<code>TROFF</code></p>
+<p><code>TRON</code> turns on tracing: as each program line starts, its
+number prints in brackets, e.g. <code>[10][20]</code>.
+<code>TROFF</code> turns it off. <a href="#new">NEW</a> also turns it
+off.</p>
+<h2 id="view">VIEW</h2>
+<p><strong>Statement</strong> —
+<code>VIEW [[SCREEN] (x1,y1)-(x2,y2)[,[fill][,border]]]</code></p>
+<p>Limits graphics to a rectangle of the screen. With plain
+<code>VIEW</code>, coordinates become relative to the rectangle's
+top-left corner; with <code>VIEW SCREEN</code> they stay screen
+coordinates and drawing is only clipped. <code>fill</code> paints the
+rectangle; <code>border</code> draws a frame just outside it.
+<code>VIEW</code> alone returns to the whole screen.</p>
+<h3 id="examples-81">Examples</h3>
+<pre class="basic"><code>10 SCREEN 1
+20 VIEW (100,40)-(220,140),1,15
+30 FOR K=0 TO 200 STEP 8: LINE (0,K)-(200,K-100),14: NEXT
+40 VIEW</code></pre>
+<p>Diagonal lines fill the blue box and stop at its edges.</p>
+<h3 id="comments-77">Comments</h3>
+<p>Corners are screen coordinates and must be on the screen, else
+<code>?ILLEGAL QUANTITY ERROR</code>. Every drawing statement (<a
+href="#line">LINE</a>, <a href="#pset">PSET</a>, <a
+href="#circle">CIRCLE</a>, <a href="#paint">PAINT</a>, <a
+href="#fill">FILL</a>, <a href="#put">PUT</a>, …) is clipped to the
+viewport, <a href="#cls">CLS</a> clears just the viewport, and <a
+href="#point">POINT</a> reads <code>-1</code> outside it. Text (<a
+href="#print">PRINT</a>, <a href="#gprint">GPRINT</a>) isn't affected.
+<a href="#screen">SCREEN</a> removes the viewport. Resets the graphics
+position to <code>(0,0)</code>.</p>
+<h2 id="whilewend">WHILE/WEND</h2>
+<p><strong>Statement</strong> — <code>WHILE condition</code> …
+<code>WEND</code></p>
+<p>Repeats the statements between <code>WHILE</code> and its
+<code>WEND</code> as long as <code>condition</code> is true (nonzero),
+testing it before every pass — so a false condition at the start skips
+the loop entirely.</p>
+<h3 id="examples-82">Examples</h3>
+<pre class="basic"><code>10 I=1
+20 WHILE I&lt;=3
+30 PRINT I;
+40 I=I+1
+50 WEND</code></pre>
+<p>Output: <code>123</code></p>
+<h3 id="comments-78">Comments</h3>
+<p>Loops can nest, 16 deep. <code>WEND</code> with no open
+<code>WHILE</code> is <code>?WEND WITHOUT WHILE ERROR</code>; a
+<code>WHILE</code> whose condition is false with no matching
+<code>WEND</code> after it is <code>?WHILE WITHOUT WEND ERROR</code>.
+Works only in a program.</p>
+<h2 id="write">WRITE</h2>
+<p><strong>Statement</strong> —
+<code>WRITE [#n,] item[, item...]</code></p>
+<p>Prints the items separated by commas, with strings in double quotes
+and numbers without padding, then ends the line — a form <a
+href="#open">INPUT #</a> reads back exactly. Without <code>#n</code>, it
+goes to the screen.</p>
+<h3 id="examples-83">Examples</h3>
+<pre class="basic"><code>WRITE &quot;ANN&quot;, 36, &quot;X&quot;</code></pre>
+<p>Output: <code>"ANN",36,"X"</code></p>
+<h2 id="string-variables">String variables</h2>
+<p><strong>Language rule</strong></p>
+<p>A variable whose name ends in <code>$</code> holds a string of 0–255
+bytes instead of a number. It is a distinct variable from the same base
+name without the <code>$</code> (<code>A</code> and <code>A$</code> are
+unrelated), case-insensitive like every name, and defaults to the empty
+string <code>""</code> until assigned.</p>
+<h3 id="examples-84">Examples</h3>
+<pre class="basic"><code>10 A$ = &quot;HELLO&quot;
+20 NAME$ = &quot;JOEL&quot;
+30 PRINT A$ ; &quot; &quot; ; NAME$
+40 PRINT LEN(NAME$)
+50 PRINT LEFT$(A$, 3) ; MID$(A$, 4, 1) ; RIGHT$(A$, 1)</code></pre>
+<p>Output:</p>
+<pre><code>HELLO JOEL
+4
+HELLO</code></pre>
+<h3 id="comments-79">Comments</h3>
+<p><strong>Where a string expression is allowed.</strong> The RHS of a
+<code>$</code> assignment (<code>LET NAME$="JOEL"</code> or just
+<code>NAME$="JOEL"</code>), any <a href="#print">PRINT</a> item, an <a
+href="#input">INPUT</a> into a <code>$</code> variable, and the
+string-typed arguments of the string functions.</p>
+<p><strong>The string grammar is tiny and has no operators.</strong> A
+string expression is one of: a <code>"literal"</code>, a <code>$</code>
+variable, a <code>$</code> <a href="#dim">array</a> element, a string <a
+href="#def-fn">DEF FN</a>, <a href="#inkey-1">INKEY$</a>, or a call to
+<a href="#left">LEFT$</a>, <a href="#right">RIGHT$</a>, <a
+href="#mid">MID$</a>, <a href="#chr">CHR$</a>, <a href="#str">STR$</a>,
+<a href="#ucase">UCASE$</a>, <a href="#lcase">LCASE$</a>, <a
+href="#hex">HEX$</a>, <a href="#oct">OCT$</a>, <a
+href="#space">SPACE$</a>, <a href="#string">STRING$</a>, or <a
+href="#input-1">INPUT$</a>. There is <strong>no string
+concatenation</strong> (<code>A$ + B$</code> is not valid — build up
+text with successive <code>PRINT</code> items instead). Two strings
+compare with <code>=</code>, <code>&lt;&gt;</code>, <code>&lt;</code>,
+<code>&gt;</code>, <code>&lt;=</code>, <code>&gt;=</code>; see <a
+href="#string-comparisons">String comparisons</a>.</p>
+<p><strong>Type rules.</strong> Using a string where a number is
+expected, or a number where a string is expected, is
+<code>?TYPE MISMATCH ERROR</code> — this covers <code>A = "x"</code>,
+<code>A$ = 5</code>, <code>LEN(5)</code>, <code>PRINT A$ + 1</code>, and
+<code>FOR I$ = 1 TO 3</code>. A string literal or an <a
+href="#input">INPUT</a> line longer than 255 bytes is
+<code>?STRING TOO LONG ERROR</code> rather than a silent truncation.</p>
+<p><strong>Functions that consume or produce strings.</strong> Number →
+string: <a href="#chr">CHR$</a>, <a href="#str">STR$</a>, <a
+href="#hex">HEX$</a>, <a href="#oct">OCT$</a>, <a
+href="#space">SPACE$</a>, <a href="#string">STRING$</a>. String →
+number: <a href="#len">LEN</a>, <a href="#asc">ASC</a>, <a
+href="#val">VAL</a>, <a href="#instr">INSTR</a>. String → string: <a
+href="#left">LEFT$</a>, <a href="#right">RIGHT$</a>, <a
+href="#mid">MID$</a>, <a href="#ucase">UCASE$</a>, <a
+href="#lcase">LCASE$</a>.</p>
+<p><strong>Storage and lifetime.</strong> Each string value is an owned,
+heap-allocated copy. Reassigning a <code>$</code> variable frees the
+value it replaces, and <a href="#new">NEW</a> frees every string value.
+Strings are byte-oriented: <a href="#len">LEN</a>, the slice functions,
+and <a href="#asc">ASC</a>/<a href="#chr">CHR$</a> all work in bytes,
+with no Unicode-aware character counting.</p>
+<h2 id="battery">BATTERY</h2>
+<p><strong>Special variable (read-only)</strong> —
+<code>BATTERY</code></p>
+<p>Estimated remaining battery charge as an integer from 0 through 100,
+or <code>-1</code> when no reading is available.</p>
+<h3 id="examples-85">Examples</h3>
+<pre class="basic"><code>PRINT BATTERY
+IF BATTERY &gt;= 0 THEN PRINT BATTERY;&quot;%&quot;</code></pre>
+<p>Polling loop:</p>
+<pre class="basic"><code>10 B = BATTERY
+20 IF B &lt; 0 THEN PRINT &quot;NO BATTERY DATA&quot;
+30 IF B &gt;= 0 THEN PRINT &quot;BATTERY&quot;;B;&quot;%&quot;
+40 SLEEP 5
+50 GOTO 10</code></pre>
+<h3 id="comments-80">Comments</h3>
+<p>Not a function call — like <a href="#tick">TICK</a>, it takes no
+<code>()</code>, so <code>BATTERY()</code> is a syntax error. Always
+test for <code>-1</code> before showing a percentage; <code>0</code> is
+a valid, fully depleted reading. Only the ESP32-S3 (Waveshare
+ESP32-S3-Touch-AMOLED-1.75-B) measures its battery, using the AXP2101
+fuel gauge. It returns <code>-1</code> if no battery is attached or the
+PMIC can't be read. The stock RP2350-PiZero and XIAO ESP32-C6 have no
+battery sense wired to the MCU and always return <code>-1</code>.</p>
+<h2 id="tick">TICK</h2>
+<p><strong>Special variable (read-only)</strong> — <code>TICK</code></p>
+<p>Milliseconds elapsed since the board booted.</p>
+<h3 id="examples-86">Examples</h3>
+<pre class="basic"><code>PRINT TICK</code></pre>
+<h3 id="comments-81">Comments</h3>
+<p>Not a function call — every function requires exactly one
+parenthesized argument, and <code>TICK</code> needs none, so it's read
+like a variable with no <code>()</code>. <code>TICK</code> is monotonic
+uptime with no wall-clock meaning; for an advancing time and date, use
+<a href="#time">TIME$</a> and <a href="#date">DATE$</a>, which the
+bundled <code>examples/gfxclock.bas</code> reads.
+<code>examples/clock.bas</code> still builds a digital display straight
+from <code>TICK</code>, counting up from <code>12:00:00</code> at
+boot.</p>
+<h2 id="time">TIME$</h2>
+<p><strong>Special variable (readable and assignable)</strong> —
+<code>TIME$</code></p>
+<p>The current local time of day as an 8-character string,
+<code>HH:MM:SS</code>, in 24-hour form with leading zeroes.</p>
+<h3 id="examples-87">Examples</h3>
+<pre class="basic"><code>10 PRINT TIME$
+20 PAUSE 20
+30 PRINT TIME$</code></pre>
+<p>Output:</p>
+<pre><code>14:07:05
+14:07:07</code></pre>
+<pre class="basic"><code>TIME$ = &quot;14:30:00&quot;
+LET TIME$ = &quot;14:30:00&quot;
+PRINT TIME$</code></pre>
+<p>Output: <code>14:30:00</code></p>
+<h3 id="comments-82">Comments</h3>
+<p>Not a function call — like <a href="#tick">TICK</a>, it's read with
+no <code>()</code>, and each evaluation re-reads the clock, so two reads
+a moment apart differ. Successive reads advance in step with the system
+clock and roll <code>MM</code> and <code>HH</code> over normally at 60
+seconds and 60 minutes.</p>
+<p>It is a string value: valid anywhere a string expression is
+(<code>PRINT</code>, <code>GPRINT</code>, assignment to a <code>$</code>
+variable, and inside <a href="#left">LEFT$</a>, <a href="#mid">MID$</a>,
+<a href="#val">VAL</a>, …). <code>HRS = VAL(LEFT$(TIME$,2))</code> pulls
+out the hour as a number. Using <code>TIME$</code> where a number is
+expected is <code>?TYPE MISMATCH ERROR</code>.</p>
+<p>Assigning it — with implicit assignment (<code>TIME$ = ...</code>) or
+<code>LET</code> — sets the system clock's time of day, accepting any
+valid string expression on the right-hand side, not just a literal. The
+value must match the exact <code>HH:MM:SS</code> 24-hour format with
+leading zeroes and every field in range
+(<code>00</code>-<code>23</code>, <code>00</code>-<code>59</code>,
+<code>00</code>-<code>59</code>); anything else is
+<code>?ILLEGAL QUANTITY ERROR</code> and leaves the clock unchanged.
+Setting <code>TIME$</code> preserves the current date and the clock
+keeps advancing normally afterward. <a
+href="#input"><code>INPUT TIME$</code></a> is still rejected — setting
+the clock is assignment syntax, not a new <code>INPUT</code>
+destination.</p>
+<p>The clock is not battery- or network-backed: at boot the firmware
+sets it to a fixed default, <code>12:00:00</code>, like an unset alarm
+clock, and lets it advance from there. So it's consistent across reboots
+rather than an approximation of the actual time of day, until a program
+or a direct-mode command corrects it with an assignment. A later
+firmware update could add network time without changing how
+<code>TIME$</code> behaves. See <a href="#date">DATE$</a>.</p>
+<h2 id="ucase">UCASE$</h2>
+<p><strong>Function</strong> — <code>UCASE$(s$)</code></p>
+<p>Returns a new string in which every ASCII lowercase letter
+<code>a</code>–<code>z</code> in string expression <code>s$</code> is
+converted to uppercase.</p>
+<h3 id="examples-88">Examples</h3>
+<pre class="basic"><code>PRINT UCASE$(&quot;Hello, World 42!&quot;)</code></pre>
+<p>Output: <code>HELLO, WORLD 42!</code></p>
+<h3 id="comments-83">Comments</h3>
+<p>Only the ASCII letters <code>a</code>–<code>z</code> change. Digits,
+punctuation, spaces, and every byte outside the ASCII letter ranges pass
+through unchanged, and the result has the same length as <code>s$</code>
+(see <a href="#len">LEN</a>). The argument is a string expression, so
+<code>UCASE$</code> nests and works anywhere one is valid: a
+<code>$</code> assignment, <a href="#print">PRINT</a>, another string
+function's argument, or either side of a string <a href="#ifthen">IF</a>
+comparison. A number argument is <code>?TYPE MISMATCH ERROR</code>. Case
+conversion is not locale- or Unicode-aware. The lower-case form is <a
+href="#lcase">LCASE$</a>.</p>
+<h2 id="val">VAL</h2>
+<p><strong>Function</strong> — <code>VAL(s$)</code></p>
+<p>Parses the leading number out of string expression <code>s$</code>
+and returns it as a number. Leading whitespace is skipped. When
+<code>s$</code> has no numeric prefix, <code>VAL</code> returns
+<code>0</code>.</p>
+<h3 id="examples-89">Examples</h3>
+<pre class="basic"><code>PRINT VAL(&quot;42&quot;)
+PRINT VAL(&quot;  3.5 kg&quot;)
+PRINT VAL(&quot;kg&quot;)
+PRINT VAL(&quot;-7e2&quot;)</code></pre>
+<p>Output: <code>42</code>, <code>3.5</code>, <code>0</code>,
+<code>-700</code></p>
+<h3 id="comments-84">Comments</h3>
+<p>Accepts the same numeric forms the interpreter itself parses,
+including a leading sign and exponent. Parsing stops at the first
+character that can't extend the number, so trailing text is ignored
+rather than being an error. The argument must be a string; a number is
+<code>?TYPE MISMATCH ERROR</code>. Rough inverse of <a
+href="#str">STR$</a>.</p>
+</main>
+</body>
+</html>

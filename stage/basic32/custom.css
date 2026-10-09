@@ -1,0 +1,5 @@
+pre { overflow-x: auto; }
+table { display: block; overflow-x: auto; }
+code { overflow-wrap: anywhere; }
+pre code { overflow-wrap: normal; }
+:focus-visible { outline: 3px solid currentColor; outline-offset: 2px; }
