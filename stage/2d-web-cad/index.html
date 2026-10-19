@@ -1,0 +1,84 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="color-scheme" content="light dark">
+<title>2D Web CAD</title>
+<link rel="stylesheet" href="style.css">
+<script type="module" src="js/app.js"></script>
+</head>
+<body>
+<svg id="canvas" aria-label="Drawing canvas. Use the X and Y fields to place points exactly.">
+  <defs>
+    <pattern id="grid-pattern" patternUnits="userSpaceOnUse" width="40" height="40">
+      <circle id="grid-dot" class="grid-dot" cx="20" cy="20" r="1.3"/>
+    </pattern>
+  </defs>
+  <rect id="canvas-bg" class="canvas-bg" width="100%" height="100%"/>
+  <rect id="grid" width="100%" height="100%" fill="url(#grid-pattern)"/>
+  <g id="axes"></g>
+  <g id="world"><g id="entities"></g></g>
+  <g id="overlay"></g>
+</svg>
+
+<header class="top">
+  <nav class="toolbar" aria-label="Drawing controls">
+    <button id="tool-btn" class="icon primary" aria-haspopup="true" aria-expanded="false" aria-controls="tool-sheet" aria-label="Tools">+</button>
+    <button id="undo-btn" class="icon" aria-label="Undo" title="Undo (Ctrl+Z)">↶</button>
+    <button id="redo-btn" class="icon" aria-label="Redo" title="Redo (Ctrl+Shift+Z)">↷</button>
+    <button id="snap-btn" aria-pressed="true" title="Snap to grid">Snap</button>
+    <button id="fit-btn" title="Zoom to fit the drawing">Fit</button>
+    <button id="panel-btn" class="icon" aria-expanded="false" aria-controls="panel" aria-label="History, layers, and file">☰</button>
+  </nav>
+  <div class="status">
+    <p id="prompt" role="status"></p>
+    <button id="edit-btn" hidden>Edit</button>
+    <button id="cancel-btn" hidden>Cancel</button>
+    <button id="done-btn" hidden>Done</button>
+  </div>
+  <p id="message" role="alert" hidden></p>
+</header>
+
+<div id="tool-sheet" class="sheet" role="menu" aria-label="Tools" hidden></div>
+
+<form id="coord-bar" class="coord-bar" autocomplete="off" novalidate>
+  <p id="coord-error" class="error" role="alert" hidden></p>
+  <label>X <input id="coord-x" name="x" type="number" step="any" enterkeyhint="next"></label>
+  <label>Y <input id="coord-y" name="y" type="number" step="any" enterkeyhint="done"></label>
+  <button id="coord-set" type="submit" class="primary">Set</button>
+</form>
+
+<aside id="panel" class="panel" aria-label="Drawing panels" hidden>
+  <div class="panel-head" role="tablist">
+    <button role="tab" data-tab="history" aria-selected="true">History</button>
+    <button role="tab" data-tab="layers" aria-selected="false">Layers</button>
+    <button role="tab" data-tab="file" aria-selected="false">Drawing</button>
+    <button id="panel-close" class="icon" aria-label="Close panel">✕</button>
+  </div>
+  <section id="tab-history" role="tabpanel" aria-label="History">
+    <p id="history-empty" class="hint">Nothing drawn yet. Tap + and choose Line or Circle.</p>
+    <ol id="history-list" class="rows"></ol>
+  </section>
+  <section id="tab-layers" role="tabpanel" aria-label="Layers" hidden>
+    <ul id="layer-list" class="rows"></ul>
+    <button id="add-layer" class="primary wide">Add layer</button>
+    <p class="hint">New shapes go on the active layer. Locked layers stay visible but can't be selected or edited.</p>
+  </section>
+  <section id="tab-file" role="tabpanel" aria-label="Drawing" hidden>
+    <form id="grid-form" class="field-row">
+      <label>Grid spacing <input id="grid-spacing" name="gridSpacing" type="number" step="any" min="0"></label>
+      <button type="submit">Apply</button>
+    </form>
+    <p id="grid-error" class="error" role="alert" hidden></p>
+    <button id="theme-btn" class="wide"></button>
+    <button id="new-btn" class="wide">New drawing</button>
+    <button id="export-btn" class="wide">Export JSON</button>
+    <label class="button wide" for="import-input">Import JSON</label>
+    <input id="import-input" name="import" type="file" accept=".json,application/json" class="visually-hidden">
+    <div id="file-status" role="status"></div>
+    <p class="hint">Your drawing saves in this browser automatically. Export a JSON copy to keep it elsewhere.</p>
+  </section>
+</aside>
+</body>
+</html>
