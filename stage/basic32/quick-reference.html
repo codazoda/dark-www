@@ -1,0 +1,158 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BASIC32 Quick Reference</title>
+<meta name="description" content="Compact syntax reference for the BASIC32 language.">
+<link rel="stylesheet" href="neat.css">
+<link rel="stylesheet" href="quick-reference.css">
+</head>
+<body>
+<header>
+<h1>BASIC32 Quick Reference</h1>
+<p>Compact syntax for BASIC32 commands, statements, functions, operators, and built-in values. Follow any name for details and examples.</p>
+<a class="manual-link" href="index.html">Full language reference →</a>
+</header>
+<main class="reference-grid">
+<section><h2>Program editing and control flow</h2><ul class="entries">
+<li><a href="index.html#auto">AUTO</a><code>AUTO [start][,increment]</code></li>
+<li><a href="index.html#clear">CLEAR</a><code>CLEAR</code></li>
+<li><a href="index.html#cont">CONT</a><code>CONT</code></li>
+<li><a href="index.html#edit">EDIT</a><code>EDIT line</code></li>
+<li><a href="index.html#else">ELSE</a><code>IF … THEN … ELSE …</code></li>
+<li><a href="index.html#end">END</a><code>END</code></li>
+<li><a href="index.html#fornext">FOR/NEXT</a><code>FOR v=start TO limit [STEP step] … NEXT [v]</code></li>
+<li><a href="index.html#gosub">GOSUB</a><code>GOSUB line</code></li>
+<li><a href="index.html#goto">GOTO</a><code>GOTO line</code></li>
+<li><a href="index.html#ifthen">IF/THEN</a><code>IF condition THEN line|statements [ELSE …]</code></li>
+<li><a href="index.html#list">LIST</a><code>LIST</code></li>
+<li><a href="index.html#new">NEW</a><code>NEW</code></li>
+<li><a href="index.html#on">ON</a><code>ON n GOTO|GOSUB line[,line…]</code></li>
+<li><a href="index.html#rem">REM</a><code>REM text</code> <span class="note">or <code>'text</code></span></li>
+<li><a href="index.html#renum">RENUM</a><code>RENUM [new],[old],[increment]</code></li>
+<li><a href="index.html#return">RETURN</a><code>RETURN</code></li>
+<li><a href="index.html#run">RUN</a><code>RUN</code></li>
+<li><a href="index.html#stop">STOP</a><code>STOP</code></li>
+<li><a href="index.html#trontroff">TRON/TROFF</a><code>TRON</code> · <code>TROFF</code></li>
+<li><a href="index.html#whilewend">WHILE/WEND</a><code>WHILE condition … WEND</code></li>
+</ul></section>
+
+<section><h2>Console input and output</h2><ul class="entries">
+<li><a href="index.html#cls">CLS</a><code>CLS</code></li>
+<li><a href="index.html#inkey">INKEY</a><code>INKEY</code> <span class="note">key code</span></li>
+<li><a href="index.html#inkey-1">INKEY$</a><code>INKEY$</code> <span class="note">key text</span></li>
+<li><a href="index.html#input">INPUT</a><code>INPUT var</code> <span class="note">or <code>INPUT #file,var…</code></span></li>
+<li><a href="index.html#input-1">INPUT$</a><code>INPUT$(n[, [#]file])</code></li>
+<li><a href="index.html#locate">LOCATE</a><code>LOCATE row,col</code></li>
+<li><a href="index.html#pos">POS</a><code>POS(x)</code></li>
+<li><a href="index.html#print">PRINT</a><code>PRINT [item] [sep item]…</code></li>
+<li><a href="index.html#spc">SPC</a><code>SPC(n)</code> <span class="note">in PRINT</span></li>
+<li><a href="index.html#tab">TAB</a><code>TAB(n)</code> <span class="note">in PRINT</span></li>
+<li><a href="index.html#write">WRITE</a><code>WRITE [#n,] item[,item…]</code></li>
+</ul></section>
+
+<section><h2>Variables, data, and strings</h2><ul class="entries">
+<li><a href="index.html#asc">ASC</a><code>ASC(s$)</code></li>
+<li><a href="index.html#chr">CHR$</a><code>CHR$(n)</code></li>
+<li><a href="index.html#data">DATA</a><code>DATA item[,item…]</code></li>
+<li><a href="index.html#def-fn">DEF FN</a><code>DEF FNname[(params)] = expression</code></li>
+<li><a href="index.html#dim">DIM</a><code>DIM name(bound[,bound…])</code></li>
+<li><a href="index.html#erase">ERASE</a><code>ERASE name[,name…]</code></li>
+<li><a href="index.html#hex">HEX$</a><code>HEX$(n)</code></li>
+<li><a href="index.html#instr">INSTR</a><code>INSTR([start,] text$,find$)</code></li>
+<li><a href="index.html#lcase">LCASE$</a><code>LCASE$(s$)</code></li>
+<li><a href="index.html#left">LEFT$</a><code>LEFT$(s$,n)</code></li>
+<li><a href="index.html#len">LEN</a><code>LEN(s$)</code></li>
+<li><a href="index.html#let">LET</a><code>[LET] var=expr</code></li>
+<li><a href="index.html#mid">MID$</a><code>MID$(s$,start,length)</code></li>
+<li><a href="index.html#oct">OCT$</a><code>OCT$(n)</code></li>
+<li><a href="index.html#read">READ</a><code>READ var[,var…]</code></li>
+<li><a href="index.html#restore">RESTORE</a><code>RESTORE [line]</code></li>
+<li><a href="index.html#right">RIGHT$</a><code>RIGHT$(s$,n)</code></li>
+<li><a href="index.html#space">SPACE$</a><code>SPACE$(n)</code></li>
+<li><a href="index.html#str">STR$</a><code>STR$(n)</code></li>
+<li><a href="index.html#string-variables">String variables</a><code>name$</code></li>
+<li><a href="index.html#string">STRING$</a><code>STRING$(n,code|text$)</code></li>
+<li><a href="index.html#swap">SWAP</a><code>SWAP a,b</code></li>
+<li><a href="index.html#ucase">UCASE$</a><code>UCASE$(s$)</code></li>
+<li><a href="index.html#val">VAL</a><code>VAL(s$)</code></li>
+</ul></section>
+
+<section><h2>Math, comparison, and logic</h2><ul class="entries">
+<li><a href="index.html#abs">ABS</a><code>ABS(x)</code></li>
+<li><a href="index.html#arithmetic-operators">Arithmetic operators</a><code>+ − * / MOD</code></li>
+<li><a href="index.html#atn">ATN</a><code>ATN(x)</code></li>
+<li><a href="index.html#comparison-operators">Comparison operators</a><code>= &lt;&gt; &lt; &gt; &lt;= &gt;=</code></li>
+<li><a href="index.html#cos">COS</a><code>COS(x)</code></li>
+<li><a href="index.html#exp">EXP</a><code>EXP(x)</code></li>
+<li><a href="index.html#fix">FIX</a><code>FIX(x)</code></li>
+<li><a href="index.html#int">INT</a><code>INT(x)</code></li>
+<li><a href="index.html#log">LOG</a><code>LOG(x)</code></li>
+<li><a href="index.html#logical-operators">Logical operators</a><code>NOT AND OR XOR EQV IMP</code></li>
+<li><a href="index.html#randomize">RANDOMIZE</a><code>RANDOMIZE</code></li>
+<li><a href="index.html#rnd">RND</a><code>RND</code></li>
+<li><a href="index.html#sgn">SGN</a><code>SGN(x)</code></li>
+<li><a href="index.html#sin">SIN</a><code>SIN(x)</code></li>
+<li><a href="index.html#sqr">SQR</a><code>SQR(x)</code></li>
+<li><a href="index.html#tan">TAN</a><code>TAN(x)</code></li>
+</ul></section>
+
+<section><h2>Graphics, screen, and color</h2><ul class="entries">
+<li><a href="index.html#circle">CIRCLE</a><code>CIRCLE (x,y),radius[,[color][,…]]</code></li>
+<li><a href="index.html#color">COLOR</a><code>COLOR foreground[,background]</code></li>
+<li><a href="index.html#fill">FILL</a><code>FILL (x,y)[,color]</code></li>
+<li><a href="index.html#get">GET</a><code>GET (x1,y1)-(x2,y2),array</code></li>
+<li><a href="index.html#gprint">GPRINT</a><code>GPRINT x,y,print-list</code></li>
+<li><a href="index.html#line">LINE</a><code>LINE (x1,y1)-(x2,y2)[,color][,B|BF]</code></li>
+<li><a href="index.html#paint">PAINT</a><code>PAINT (x,y)[,fill[,border]]</code></li>
+<li><a href="index.html#palette">PALETTE</a><code>PALETTE [index,color]</code></li>
+<li><a href="index.html#pmap">PMAP</a><code>PMAP(value,mode)</code></li>
+<li><a href="index.html#point">POINT</a><code>POINT(x,y)</code> <span class="note">or <code>POINT(n)</code></span></li>
+<li><a href="index.html#preset">PRESET</a><code>PRESET x,y[,color]</code></li>
+<li><a href="index.html#pset">PSET</a><code>PSET x,y[,color]</code></li>
+<li><a href="index.html#put">PUT</a><code>PUT (x,y),array[,mode]</code></li>
+<li><a href="index.html#rgb">RGB</a><code>RGB(red,green,blue)</code></li>
+<li><a href="index.html#screen">SCREEN</a><code>SCREEN mode</code></li>
+<li><a href="index.html#view">VIEW</a><code>VIEW [[SCREEN] (x1,y1)-(x2,y2)[,…]]</code></li>
+<li><a href="index.html#color-palette">Color palette</a><code>0–15</code><div class="palette"><span>0 Black</span><span>8 Gray</span><span>1 Blue</span><span>9 Light Blue</span><span>2 Green</span><span>10 Light Green</span><span>3 Cyan</span><span>11 Light Cyan</span><span>4 Red</span><span>12 Light Red</span><span>5 Magenta</span><span>13 Light Magenta</span><span>6 Brown</span><span>14 Yellow</span><span>7 Light Gray</span><span>15 White</span></div></li>
+</ul></section>
+
+<section><h2>Sound and timing</h2><ul class="entries">
+<li><a href="index.html#beep">BEEP</a><code>BEEP</code></li>
+<li><a href="index.html#pause">PAUSE</a><code>PAUSE n</code></li>
+<li><a href="index.html#play">PLAY</a><code>PLAY string-expression</code></li>
+<li><a href="index.html#sleep">SLEEP</a><code>SLEEP n</code></li>
+<li><a href="index.html#sound">SOUND</a><code>SOUND frequency,duration</code></li>
+<li><a href="index.html#timer">TIMER</a><code>TIMER</code> <span class="note">seconds</span></li>
+</ul></section>
+
+<section><h2>Program and file storage</h2><ul class="entries">
+<li><a href="index.html#close">CLOSE</a><code>CLOSE [[#]n[, [#]n…]]</code></li>
+<li><a href="index.html#eof">EOF</a><code>EOF(n)</code></li>
+<li><a href="index.html#files">FILES</a><code>FILES</code></li>
+<li><a href="index.html#kill">KILL</a><code>KILL "FILE"</code></li>
+<li><a href="index.html#load">LOAD</a><code>LOAD "FILE"</code></li>
+<li><a href="index.html#loc">LOC</a><code>LOC(n)</code></li>
+<li><a href="index.html#lof">LOF</a><code>LOF(n)</code></li>
+<li><a href="index.html#merge">MERGE</a><code>MERGE "FILE"</code></li>
+<li><a href="index.html#name">NAME</a><code>NAME "old" AS "new"</code></li>
+<li><a href="index.html#open">OPEN</a><code>OPEN "name" FOR mode AS [#]n</code></li>
+<li><a href="index.html#reset">RESET</a><code>RESET</code></li>
+<li><a href="index.html#save">SAVE</a><code>SAVE "FILE"</code></li>
+</ul></section>
+
+<section><h2>System and device values</h2><ul class="entries">
+<li><a href="index.html#battery">BATTERY</a><code>BATTERY</code> <span class="note">percent</span></li>
+<li><a href="index.html#date">DATE$</a><code>DATE$</code> <span class="note">read/write</span></li>
+<li><a href="index.html#fre">FRE</a><code>FRE(x)</code></li>
+<li><a href="index.html#gfonth">GFONTH</a><code>GFONTH</code></li>
+<li><a href="index.html#gfontw">GFONTW</a><code>GFONTW</code></li>
+<li><a href="index.html#gheight">GHEIGHT</a><code>GHEIGHT</code></li>
+<li><a href="index.html#gwidth">GWIDTH</a><code>GWIDTH</code></li>
+<li><a href="index.html#tick">TICK</a><code>TICK</code> <span class="note">milliseconds</span></li>
+<li><a href="index.html#time">TIME$</a><code>TIME$</code> <span class="note">read/write</span></li>
+</ul></section>
+</main>
+</body>
+</html>

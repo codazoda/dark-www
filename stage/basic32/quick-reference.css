@@ -1,0 +1,125 @@
+:root {
+    color-scheme: light dark;
+    --light: #fff;
+    --lesslight: #eee;
+    --dark: #222;
+    --moredark: #000;
+    --link: #000;
+}
+
+body {
+    max-width: 1180px;
+    color: var(--moredark);
+    background: var(--light);
+}
+
+header {
+    border-bottom: 4px solid var(--moredark);
+    margin-bottom: 1.25rem;
+}
+
+header h1 { margin-bottom: .25rem; }
+header p { max-width: 66ch; }
+
+.manual-link {
+    display: inline-block;
+    border: 2px solid var(--moredark);
+    padding: .6rem .8rem;
+    margin-bottom: 1rem;
+    font-weight: 700;
+    text-decoration: none;
+}
+
+.manual-link:hover, .manual-link:focus-visible { color: var(--light); background: var(--moredark); }
+
+.reference-grid {
+    display: grid;
+    gap: 1rem;
+}
+
+section {
+    border: 2px solid var(--moredark);
+    break-inside: avoid;
+}
+
+section h2 {
+    margin: 0;
+    padding: .55rem .7rem;
+    border-bottom: 2px solid var(--moredark);
+    background: var(--lesslight);
+    font-size: 1.05rem;
+    line-height: 1.25;
+}
+
+.entries {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.entries li {
+    padding: .5rem .7rem;
+    break-inside: avoid;
+}
+
+.entries li + li { border-top: 1px solid #888; }
+
+.entries a {
+    display: inline-block;
+    margin-right: .35rem;
+    font-weight: 800;
+}
+
+.entries code {
+    color: var(--moredark);
+    background: transparent;
+    font-size: .9em;
+}
+
+.note { color: var(--dark); }
+
+.palette {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: .2rem .75rem;
+    margin-top: .35rem;
+    font-size: .875rem;
+}
+
+@media (min-width: 44rem) {
+    .reference-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+@media (min-width: 70rem) {
+    .reference-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
+
+@media (prefers-color-scheme: dark) {
+    :root {
+        --light: #222;
+        --lesslight: #333;
+        --dark: #eee;
+        --moredark: #fff;
+        --link: #fff;
+    }
+}
+
+@media print {
+    :root {
+        color-scheme: light;
+        --light: #fff;
+        --lesslight: #eee;
+        --dark: #222;
+        --moredark: #000;
+        --link: #000;
+        font-size: 14px;
+    }
+    body { max-width: none; padding: 0; }
+    header { margin-bottom: .5rem; }
+    .manual-link { padding: 0; border: 0; }
+    .reference-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: .45rem; }
+    section { border-width: 1px; }
+    section h2 { border-bottom-width: 1px; background: #fff; }
+    .entries li { padding: .3rem .45rem; }
+    a[href^="index.html#"]::after { content: none; }
+}
