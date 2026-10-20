@@ -67,7 +67,7 @@
   share.addEventListener('click', function () {
     var value = text.value;
     if (!navigator.share) { showCopy('Sharing is not supported in this browser.'); return; }
-    navigator.share({ text: value }).then(function () {
+    navigator.share({ title: value.trim().split('\n')[0].slice(0, 60), text: value }).then(function () {
       copy.hidden = true; say('Shared.');
     }, function (e) {
       if (e && e.name === 'AbortError') { say(''); return; }
