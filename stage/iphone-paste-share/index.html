@@ -1,0 +1,96 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Paste Share</title>
+<meta name="description" content="Paste text on your iPhone and send it to your laptop with the share sheet. Nothing is uploaded or saved.">
+<meta name="theme-color" content="#111111">
+<style>
+  :root { color-scheme: light dark; }
+  * { box-sizing: border-box; }
+  body { margin: 0; padding: 16px; font: 18px/1.4 system-ui, -apple-system, sans-serif; background: #fff; color: #111; }
+  main { max-width: 36rem; margin: 0 auto; }
+  h1 { font-size: 1.5rem; margin: 0 0 .25rem; }
+  p { margin: 0 0 .75rem; }
+  label { display: block; font-weight: 600; margin-bottom: .25rem; }
+  textarea { width: 100%; min-height: 40vh; min-height: max(40vh, 9rem); padding: 12px; font: inherit; color: inherit; background: #fff; border: 2px solid #111; border-radius: 8px; resize: vertical; }
+  .row { display: flex; flex-wrap: wrap; gap: 12px; margin: 12px 0; }
+  button { min-height: 44px; min-width: 44px; padding: 10px 20px; font: inherit; font-weight: 600; border-radius: 8px; border: 2px solid #111; background: #fff; color: #111; }
+  #share { flex: 1 1 10rem; background: #0b5fd6; border-color: #0b5fd6; color: #fff; }
+  button:disabled { opacity: .5; }
+  :focus-visible { outline: 3px solid #f59e0b; outline-offset: 2px; }
+  #status { min-height: 1.4em; font-weight: 600; }
+  .note, footer { font-size: 14px; }
+  @media (prefers-color-scheme: dark) {
+    body { background: #111; color: #f2f2f2; }
+    textarea, button { background: #1c1c1c; color: #f2f2f2; border-color: #f2f2f2; }
+    #share { background: #3b82f6; border-color: #3b82f6; color: #000; }
+  }
+  @media (max-height: 400px) { textarea { min-height: 6rem; } }
+</style>
+</head>
+<body>
+<main>
+  <h1>Paste Share</h1>
+  <p>Tap the box, choose Paste, then tap Share to send it to your laptop.</p>
+  <label for="text">Text to share</label>
+  <textarea id="text" autocomplete="off" autocapitalize="off" spellcheck="false"></textarea>
+  <div class="row">
+    <button id="share" type="button" disabled>Share</button>
+    <button id="copy" type="button" hidden>Copy</button>
+  </div>
+  <p id="status" role="status" aria-live="polite"></p>
+  <p class="note">Privacy: your text stays in this page. It is never uploaded or saved, and it is gone when you reload. It leaves only when you tap Share or Copy.</p>
+  <footer><a href="https://dark.joeldare.com/">Dark</a></footer>
+</main>
+<script>
+(function () {
+  var text = document.getElementById('text');
+  var share = document.getElementById('share');
+  var copy = document.getElementById('copy');
+  var status = document.getElementById('status');
+
+  function say(msg) { status.textContent = msg; }
+
+  text.addEventListener('input', function () {
+    share.disabled = text.value.trim() === '';
+    if (share.disabled) { copy.hidden = true; }
+    say('');
+  });
+
+  function showCopy(reason) {
+    copy.hidden = false;
+    say('Error: ' + reason + ' Your text is kept. Use Copy instead.');
+  }
+
+  share.addEventListener('click', function () {
+    var value = text.value;
+    if (!navigator.share) { showCopy('Sharing is not supported in this browser.'); return; }
+    navigator.share({ text: value }).then(function () {
+      copy.hidden = true; say('Shared.');
+    }, function (e) {
+      if (e && e.name === 'AbortError') { say(''); return; }
+      showCopy('Sharing failed.');
+    });
+  });
+
+  function fallbackCopy() {
+    text.focus(); text.select();
+    var ok = false;
+    try { ok = document.execCommand('copy'); } catch (e) {}
+    text.setSelectionRange(text.value.length, text.value.length);
+    return ok;
+  }
+
+  copy.addEventListener('click', function () {
+    var done = function () { say('Copied to clipboard.'); };
+    var fail = function () { say('Error: Copy failed. Select the text and copy it manually.'); };
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text.value).then(done, function () { fallbackCopy() ? done() : fail(); });
+    } else { fallbackCopy() ? done() : fail(); }
+  });
+})();
+</script>
+</body>
+</html>
