@@ -224,7 +224,7 @@
       var campaign = activeCampaign();
       if (!campaign) {
         app.innerHTML = renderNewCampaignForm();
-      } else if (campaign.closed_at && !campaign.final_decision) {
+      } else if (isCampaignComplete(campaign) && !campaign.final_decision) {
         app.innerHTML = renderCompleteScreen(campaign);
       } else {
         app.innerHTML = renderCockpit(campaign);
@@ -332,8 +332,6 @@
     var rps = revenuePerStartingSubscriber(campaign);
     var lowPrice = num(campaign.price) < 25;
 
-    var allSent = isCampaignComplete(campaign);
-
     var verdictLine;
     if (completed === 0) {
       verdictLine = "No pitches sent yet. Experiment not started.";
@@ -374,19 +372,12 @@
         '<div class="offer-meta"><strong>For:</strong> ' + escapeHtml(campaign.audience) + "</div>" +
       "</div>" +
 
-      (allSent
-        ? '<div class="rule-banner close-banner">' +
-            "<h2>ALL " + planned + " PITCHES SENT</h2>" +
-            "<p>Fill in any purchases, revenue, and metrics still missing from the table below.</p>" +
-            "<p>When the numbers are complete, close the experiment and decide what the market told you.</p>" +
-            '<button type="button" class="primary" data-action="close-experiment">Close Experiment</button>' +
-          "</div>"
-        : '<div class="rule-banner">' +
-            "<h2>DON'T CHANGE THE OFFER YET</h2>" +
-            "<p>You committed to testing this offer <strong>" + planned + " times</strong>.</p>" +
-            "<p>You are currently on <strong>Pitch " + Math.min(completed + 1, planned) + " of " + planned + "</strong>.</p>" +
-            "<p>Finish the experiment before deciding what the results mean.</p>" +
-          "</div>") +
+      '<div class="rule-banner">' +
+        "<h2>DON'T CHANGE THE OFFER YET</h2>" +
+        "<p>You committed to testing this offer <strong>" + planned + " times</strong>.</p>" +
+        "<p>You are currently on <strong>Pitch " + Math.min(completed + 1, planned) + " of " + planned + "</strong>.</p>" +
+        "<p>Finish the experiment before deciding what the results mean.</p>" +
+      "</div>" +
 
       '<div class="results-row">' +
         '<div class="stat"><div class="label">Purchases</div><div class="value">' + purchases + "</div></div>" +
@@ -563,8 +554,7 @@
         '<textarea id="next_action" name="next_action" required></textarea>' +
 
         '<button type="submit" class="primary">Archive Experiment</button>' +
-      "</form>" +
-      '<button type="button" class="secondary" data-action="reopen-experiment">Back to Campaign</button>'
+      "</form>"
     );
   }
 
@@ -705,21 +695,6 @@
       ui.archiveDetailId = target.dataset.campaignId;
       ui.view = "archiveDetail";
       render();
-    } else if (action === "close-experiment") {
-      var closing = activeCampaign();
-      if (closing && isCampaignComplete(closing)) {
-        closing.closed_at = new Date().toISOString();
-        saveData();
-        window.scrollTo(0, 0);
-        render();
-      }
-    } else if (action === "reopen-experiment") {
-      var reopening = activeCampaign();
-      if (reopening) {
-        reopening.closed_at = "";
-        saveData();
-        render();
-      }
     } else if (action === "view-archive") {
       ui.view = "archive";
       render();
@@ -771,7 +746,6 @@
       lessons: "",
       next_action: "",
       plan_changes: [],
-      closed_at: "",
       created_at: new Date().toISOString(),
       completed_at: "",
       pitches: buildPitches(planned, start, cadence)
