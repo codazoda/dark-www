@@ -104,6 +104,8 @@
 </ul></section>
 
 <section><h2>Graphics, screen, and color</h2><ul class="entries">
+<li><a href="index.html#bload">BLOAD</a><code>BLOAD "file"[,x,y]</code></li>
+<li><a href="index.html#bsave">BSAVE</a><code>BSAVE "file"[,x,y,width,height]</code></li>
 <li><a href="index.html#circle">CIRCLE</a><code>CIRCLE (x,y),radius[,[color][,…]]</code></li>
 <li><a href="index.html#color">COLOR</a><code>COLOR foreground[,background]</code></li>
 <li><a href="index.html#fill">FILL</a><code>FILL (x,y)[,color]</code></li>
@@ -111,7 +113,7 @@
 <li><a href="index.html#gprint">GPRINT</a><code>GPRINT x,y,print-list</code></li>
 <li><a href="index.html#line">LINE</a><code>LINE (x1,y1)-(x2,y2)[,color][,B|BF]</code></li>
 <li><a href="index.html#paint">PAINT</a><code>PAINT (x,y)[,fill[,border]]</code></li>
-<li><a href="index.html#palette">PALETTE</a><code>PALETTE [index,color]</code></li>
+<li><a href="index.html#palette">PALETTE</a><code>PALETTE [index[,color]]</code></li>
 <li><a href="index.html#pmap">PMAP</a><code>PMAP(value,mode)</code></li>
 <li><a href="index.html#point">POINT</a><code>POINT(x,y)</code> <span class="note">or <code>POINT(n)</code></span></li>
 <li><a href="index.html#preset">PRESET</a><code>PRESET x,y[,color]</code></li>
@@ -120,7 +122,7 @@
 <li><a href="index.html#rgb">RGB</a><code>RGB(red,green,blue)</code></li>
 <li><a href="index.html#screen">SCREEN</a><code>SCREEN mode</code></li>
 <li><a href="index.html#view">VIEW</a><code>VIEW [[SCREEN] (x1,y1)-(x2,y2)[,…]]</code></li>
-<li><a href="index.html#color-palette">Color palette</a><code>0–15</code><div class="palette"><span>0 Black</span><span>8 Gray</span><span>1 Blue</span><span>9 Light Blue</span><span>2 Green</span><span>10 Light Green</span><span>3 Cyan</span><span>11 Light Cyan</span><span>4 Red</span><span>12 Light Red</span><span>5 Magenta</span><span>13 Light Magenta</span><span>6 Brown</span><span>14 Yellow</span><span>7 Light Gray</span><span>15 White</span></div></li>
+<li><a href="index.html#color-palette">Color palette</a><code>0–255</code> <span class="note">VGA: 0–15 below, 16–31 grays, 32–247 hues, 248–255 black</span><div class="palette"><span>0 Black</span><span>8 Gray</span><span>1 Blue</span><span>9 Light Blue</span><span>2 Green</span><span>10 Light Green</span><span>3 Cyan</span><span>11 Light Cyan</span><span>4 Red</span><span>12 Light Red</span><span>5 Magenta</span><span>13 Light Magenta</span><span>6 Brown</span><span>14 Yellow</span><span>7 Light Gray</span><span>15 White</span></div></li>
 </ul></section>
 
 <section><h2>Sound and timing</h2><ul class="entries">
@@ -150,13 +152,16 @@
 <section><h2>System and device values</h2><ul class="entries">
 <li><a href="index.html#battery">BATTERY</a><code>BATTERY</code> <span class="note">percent</span></li>
 <li><a href="index.html#date">DATE$</a><code>DATE$</code> <span class="note">read/write</span></li>
+<li><a href="index.html#display">DISPLAY</a><code>DISPLAY ON|OFF</code></li>
 <li><a href="index.html#fre">FRE</a><code>FRE(x)</code></li>
 <li><a href="index.html#gfonth">GFONTH</a><code>GFONTH</code></li>
 <li><a href="index.html#gfontw">GFONTW</a><code>GFONTW</code></li>
 <li><a href="index.html#gheight">GHEIGHT</a><code>GHEIGHT</code></li>
 <li><a href="index.html#gwidth">GWIDTH</a><code>GWIDTH</code></li>
+<li><a href="index.html#power-off">POWER OFF</a><code>POWER OFF [seconds]</code> <span class="note">deep sleep</span></li>
 <li><a href="index.html#tick">TICK</a><code>TICK</code> <span class="note">milliseconds</span></li>
 <li><a href="index.html#time">TIME$</a><code>TIME$</code> <span class="note">read/write</span></li>
+<li><a href="index.html#wake">WAKE</a><code>WAKE</code> <span class="note">0 boot, 1 timer, 2 button</span></li>
 </ul></section>
 </main>
 </body>
