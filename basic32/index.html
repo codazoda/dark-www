@@ -272,8 +272,9 @@ closes. See <a href="#open">OPEN</a>.</p>
 <h2 id="cls">CLS</h2>
 <p><strong>Statement</strong> — <code>CLS</code></p>
 <p>Clears whichever screen is currently active: the text console in <a
-href="#screen">SCREEN</a> 0, or the graphics surface to black in SCREEN
-1.</p>
+href="#screen">SCREEN</a> 0, or the graphics surface to palette index
+<code>0</code> (black unless <a href="#palette">PALETTE</a> changed it)
+in SCREEN 1.</p>
 <h3 id="examples-8">Examples</h3>
 <pre class="basic"><code>CLS</code></pre>
 <h3 id="comments-8">Comments</h3>
@@ -281,20 +282,23 @@ href="#screen">SCREEN</a> 0, or the graphics surface to black in SCREEN
 contents, so <code>CLS</code> is the only way to blank either one. In
 SCREEN 1 it also returns the graphics text cursor (see <a
 href="#locate">LOCATE</a> and <a href="#print">PRINT</a>) to row 1,
-column 1.</p>
+column 1. <code>CLS</code> never touches the palette: entries changed
+with <a href="#palette">PALETTE</a> stay changed.</p>
 <h2 id="color">COLOR</h2>
 <p><strong>Statement</strong> —
 <code>COLOR foreground[,background]</code></p>
 <p>Sets the current foreground and background colors. Each is a numeric
-expression: a palette index <code>0</code>-<code>15</code> or an
-<code>RGB(r,g,b)</code> value. An invalid value is
-<code>?ILLEGAL QUANTITY ERROR</code>; a missing, empty, or extra
-argument is <code>?SYNTAX ERROR</code>. Both values are checked before
-either is applied, so a bad background never leaves a half-changed
-foreground.</p>
+expression: a palette index <code>0</code>-<code>255</code> (see <a
+href="#color-palette">Colors</a>) or an <code>RGB(r,g,b)</code> value,
+which selects the palette entry nearest that color. An index outside
+<code>0</code>-<code>255</code> is <code>?ILLEGAL QUANTITY ERROR</code>
+(it never wraps); a missing, empty, or extra argument is
+<code>?SYNTAX ERROR</code>. Both values are checked before either is
+applied, so a bad background never leaves a half-changed foreground.</p>
 <h3 id="examples-9">Examples</h3>
 <pre class="basic"><code>COLOR 4          : REM red text, background unchanged
 COLOR 15,1       : REM white on blue
+COLOR 42         : REM orange, from the VGA hues past 15
 COLOR RGB(255,128,0),0</code></pre>
 <h3 id="comments-9">Comments</h3>
 <p><code>COLOR foreground</code> leaves the background alone. A fresh
@@ -306,8 +310,10 @@ when the interpreter starts. It works in either screen mode.</p>
 href="#gprint">GPRINT</a> draw each character cell opaque: the glyph in
 the foreground and the rest of the cell in the background, so a space
 clears its cell to the background. Newlines and cursor movement paint
-nothing, and text already on screen is not recolored. Serial output
-stays plain text. <a href="#line">LINE</a>, <a href="#pset">PSET</a>, <a
+nothing, and a later <code>COLOR</code> doesn't recolor text already on
+screen — but <a href="#palette">PALETTE</a> does, because the screen
+remembers each cell's palette index. Serial output stays plain text. <a
+href="#line">LINE</a>, <a href="#pset">PSET</a>, <a
 href="#paint">PAINT</a>, and <a href="#fill">FILL</a> use the foreground
 when their color is left off; an explicit color overrides it for that
 one statement and does not change the <code>COLOR</code> state.</p>
@@ -610,19 +616,19 @@ FILL (50,40),2</code></pre>
 <h3 id="comments-21">Comments</h3>
 <p>Only valid in <a href="#screen">SCREEN</a> 1 — using it in screen 0
 is <code>?ILLEGAL IN SCREEN 0 ERROR</code>. <code>color</code> is a
-standard palette number or an <a href="#rgb">RGB()</a> value, same as <a
+palette index 0–255 or an <a href="#rgb">RGB()</a> value, same as <a
 href="#line">LINE</a>; an out-of-range palette number is
 <code>?ILLEGAL QUANTITY ERROR</code>. Unlike <a href="#paint">PAINT</a>,
 <code>FILL</code> has no separate border color — every pixel that
-doesn't exactly match the seed's captured color acts as a boundary, so
-the fill stops at the first color change in every direction rather than
-at a named border color.</p>
+doesn't hold the seed's palette index acts as a boundary, so the fill
+stops at the first color change in every direction rather than at a
+named border color.</p>
 <p>A seed pixel outside the graphics surface is a clipped no-op. If the
-seed already displays <code>color</code>, <code>FILL</code> changes
-nothing (comparing displayed colors, so a palette number and an <a
-href="#rgb">RGB()</a> value that render identically also count as
-already matching). A large fill still terminates safely — it never
-recurses and never grows unbounded.</p>
+seed already holds <code>color</code>'s palette index, <code>FILL</code>
+changes nothing. Pixels are compared by index, not by how they look: two
+entries that happen to show the same color are still a boundary. A large
+fill still terminates safely — it never recurses and never grows
+unbounded.</p>
 <h2 id="fix">FIX</h2>
 <p><strong>Function</strong> — <code>FIX(x)</code></p>
 <p><code>x</code> with its fractional part dropped, toward zero:
@@ -675,7 +681,7 @@ or a string) is ignored.</p>
 <code>GET (x1,y1)-(x2,y2), array</code></p>
 <p>Copies a rectangle of the graphics screen into a numeric array, to
 draw again with <a href="#put">PUT</a>. Element 0 holds the width,
-element 1 the height, then one packed RGB value per pixel, row by
+element 1 the height, then one palette index (0–255) per pixel, row by
 row.</p>
 <h3 id="examples-25">Examples</h3>
 <pre class="basic"><code>10 SCREEN 1
@@ -1162,10 +1168,11 @@ LINE -(50,10),4</code></pre>
 <h3 id="comments-42">Comments</h3>
 <p>Only valid in <a href="#screen">SCREEN</a> 1 — using it in screen 0
 is <code>?ILLEGAL IN SCREEN 0 ERROR</code>. <code>color</code> is either
-a standard palette number 0 through 15, or a value returned by <a
-href="#rgb">RGB()</a>; an out-of-range palette number is
-<code>?ILLEGAL QUANTITY ERROR</code>. The 16 palette colors are listed
-under <a href="#color-palette">Color Palette</a>.</p>
+a palette index 0 through 255, or a value returned by <a
+href="#rgb">RGB()</a>, which draws in the palette entry nearest that
+color; an out-of-range palette number is
+<code>?ILLEGAL QUANTITY ERROR</code>. The palette is described under <a
+href="#color-palette">Colors</a>.</p>
 <p>Coordinates outside the surface are clipped rather than erroring. <a
 href="#pset">PSET</a> sets one pixel with the same color and clipping
 rules. See <code>examples/gfxclock.bas</code> for a three-hand analog
@@ -1610,36 +1617,68 @@ PAINT (50,30),2</code></pre>
 <h3 id="comments-52">Comments</h3>
 <p>Only valid in <a href="#screen">SCREEN</a> 1 — using it in screen 0
 is <code>?ILLEGAL IN SCREEN 0 ERROR</code>. <code>fill</code> and
-<code>border</code> are each a standard palette number or an <a
+<code>border</code> are each a palette index 0–255 or an <a
 href="#rgb">RGB()</a> value, same as <a href="#line">LINE</a>; an
 out-of-range palette number is <code>?ILLEGAL QUANTITY ERROR</code>.</p>
 <p>A seed pixel outside the graphics surface is a clipped no-op.
-<code>PAINT</code> also changes nothing if the seed already displays
-<code>border</code> or <code>fill</code> (comparing displayed colors, so
-a palette number and an <a href="#rgb">RGB()</a> value that render
-identically also count as a match). See <a href="#fill">FILL</a> for
-filling a same-colored region with no separate border color. A large
-fill still terminates safely — it never recurses and never grows
-unbounded.</p>
+<code>PAINT</code> also changes nothing if the seed already holds
+<code>border</code>'s or <code>fill</code>'s palette index. Pixels are
+compared by palette index, not by how they look. See <a
+href="#fill">FILL</a> for filling a same-colored region with no separate
+border color. A large fill still terminates safely — it never recurses
+and never grows unbounded.</p>
 <h2 id="palette">PALETTE</h2>
-<p><strong>Statement</strong> — <code>PALETTE [index, color]</code></p>
-<p>Changes the color that palette index <code>index</code> (0–15) stands
-for. <code>color</code> is an <a href="#rgb">RGB()</a> value or a
-standard color number 0–15. With no arguments, restores the standard
-palette.</p>
+<p><strong>Statement</strong> —
+<code>PALETTE [index[, color]]</code></p>
+<p>Changes the color a palette index (0–255) displays, or puts entries
+back to their <a href="#color-palette">VGA defaults</a>:</p>
+<ul>
+<li><code>PALETTE index, RGB(r,g,b)</code> — sets the entry to that
+color.</li>
+<li><code>PALETTE index, n</code> — sets the entry to entry
+<code>n</code>'s default color.</li>
+<li><code>PALETTE index</code> — restores that one entry's default.</li>
+<li><code>PALETTE</code> — restores all 256 defaults.</li>
+</ul>
 <h3 id="examples-56">Examples</h3>
 <pre class="basic"><code>10 SCREEN 1
-20 LINE (10,10)-(60,60),2,BF
-30 FOR K=1 TO 15: PALETTE 2,K: PAUSE 2: NEXT
-40 PALETTE</code></pre>
-<p>The square cycles through every color, then returns to green.</p>
+20 COLOR 5
+30 CIRCLE (GWIDTH/2,GHEIGHT/2),GHEIGHT/3
+40 FOR I=0 TO 255 STEP 5
+50 PALETTE 5,RGB(I,0,255-I)
+60 PAUSE 1
+70 NEXT I
+80 PALETTE 5</code></pre>
+<p>The circle is drawn once and fades from blue to red without being
+redrawn, then returns to magenta.</p>
+<pre class="basic"><code>PALETTE 5, RGB(255,128,0)   : REM index 5 is orange now
+PALETTE 1, 14               : REM index 1 shows yellow
+PALETTE 5                   : REM index 5 is magenta again
+PALETTE                     : REM every entry back to the VGA default</code></pre>
 <h3 id="comments-53">Comments</h3>
-<p>Like a hardware palette, the change shows at once: in SCREEN 1 every
-pixel showing the index's old color is redrawn in the new one, and a <a
-href="#color">COLOR</a> foreground or background that was that color
-follows it. Text already on the SCREEN 0 console keeps its color. A
-pixel drawn with an <code>RGB()</code> value equal to the old color
-changes too.</p>
+<p>The screen stores a palette index per pixel and per text cell, not a
+color, so a change shows on everything already drawn in that index at
+the next refresh — without redrawing it — and on everything drawn in it
+later. Pixels in other indices don't change, even ones that happened to
+look the same. Restoring entries doesn't touch the screen's contents
+either. That makes palette animation cheap: draw once, then change
+entries in a loop (<code>examples/palanim.bas</code>).</p>
+<p>An index or palette number outside 0–255 is
+<code>?ILLEGAL QUANTITY ERROR</code> (it never wraps), as is an
+<code>RGB()</code> component outside 0–255; a stray or missing argument
+after a comma is <code>?SYNTAX ERROR</code>. On an error the palette is
+unchanged.</p>
+<p>The palette is reset to the defaults when the interpreter starts, by
+every <code>SCREEN 1</code>, and by a bare <code>PALETTE</code>.
+Otherwise it stays as set: <a href="#cls">CLS</a> and <code>RUN</code>
+keep it, and it still applies to the text console after a program ends —
+run <code>PALETTE</code> to put it back.</p>
+<p>On the desktop build the palette is exact: pixels are stored as
+indices. The ESP32, ESP32-C6, Hosyond and RP2350 displays store RGB, so
+there a change repaints the pixels that showed the entry's old color
+(including pixels of any other index that showed the same color), takes
+a full-screen pass per changed entry, and leaves text already on the
+SCREEN 0 console alone.</p>
 <h2 id="pause">PAUSE</h2>
 <p><strong>Statement</strong> — <code>PAUSE n</code></p>
 <p>Blocks for <code>n</code> tenths of a second — <code>PAUSE 10</code>
@@ -1683,10 +1722,9 @@ implemented yet) the two coordinate systems are the same, so
 <h2 id="point">POINT</h2>
 <p><strong>Function</strong> — <code>POINT(x, y)</code> or
 <code>POINT(n)</code></p>
-<p><code>POINT(x,y)</code> reads the pixel at <code>(x,y)</code>: the
-palette index (0–15) whose current color it shows, or, when it matches
-no palette entry, its <a href="#rgb">RGB()</a> value. A point outside
-the screen or <a href="#view">VIEW</a> gives <code>-1</code>.</p>
+<p><code>POINT(x,y)</code> reads the pixel at <code>(x,y)</code>: its
+palette index, 0–255. A point outside the screen or <a
+href="#view">VIEW</a> gives <code>-1</code>.</p>
 <p><code>POINT(n)</code> reads the current graphics position:
 <code>n</code>=0 or 1 gives x or y in screen coordinates, 2 or 3 in <a
 href="#view">VIEW</a>-relative coordinates.</p>
@@ -1696,8 +1734,12 @@ href="#view">VIEW</a>-relative coordinates.</p>
 30 PRINT POINT(5,5); POINT(0); POINT(1)</code></pre>
 <p>Output: <code>1255</code></p>
 <h3 id="comments-56">Comments</h3>
-<p>SCREEN 1 only. Colors read back at the screen's own precision, so two
-colors that look identical on the display read as the same value.</p>
+<p>SCREEN 1 only. A pixel drawn with an <a href="#rgb">RGB()</a> color
+reads back as the palette index it was drawn in, so compare
+<code>POINT</code> with indices, not <code>RGB()</code> values: after
+<code>PSET 0,0,RGB(0,255,0)</code>, <code>POINT(0,0)</code> is
+<code>48</code>. On the device builds, whose displays store RGB, a pixel
+reads back as the lowest index showing its color.</p>
 <h2 id="pos">POS</h2>
 <p><strong>Function</strong> — <code>POS(x)</code></p>
 <p>The column (1-based) where the next <code>PRINT</code> will go. The
@@ -1798,7 +1840,7 @@ PSET 12,10,RGB(255,128,0)</code></pre>
 <p>Only valid in <a href="#screen">SCREEN</a> 1 —
 <code>?ILLEGAL IN SCREEN 0 ERROR</code> otherwise. <code>color</code>
 uses the exact same resolution as <a href="#line">LINE</a>: a palette
-index <code>0</code>–<code>15</code> or an <a href="#rgb">RGB()</a>
+index <code>0</code>–<code>255</code> or an <a href="#rgb">RGB()</a>
 value, with an out-of-range palette number raising
 <code>?ILLEGAL QUANTITY ERROR</code>. Pixels outside the surface are
 clipped without error, also like <code>LINE</code>.</p>
@@ -1812,9 +1854,12 @@ already on screen:</p>
 <li><code>XOR</code> (the default) — so a second identical
 <code>PUT</code> erases the image, for simple animation.</li>
 <li><code>PSET</code> — copies the image.</li>
-<li><code>PRESET</code> — copies its inverse.</li>
+<li><code>PRESET</code> — copies its inverse (index
+<code>255-n</code>).</li>
 <li><code>AND</code>, <code>OR</code> — combine bitwise.</li>
 </ul>
+<p>The combining works on palette indices, as on a VGA card, so what an
+<code>XOR</code> looks like depends on the palette.</p>
 <h3 id="examples-62">Examples</h3>
 <pre class="basic"><code>100 FOR X=0 TO 300 STEP 4
 110 PUT (X,50),S: PAUSE 1: PUT (X,50),S
@@ -1993,20 +2038,27 @@ at the next line. Nested calls unwind last-in-first-out: each
 <code>GOSUB</code>.</p>
 <h2 id="rgb">RGB</h2>
 <p><strong>Function</strong> — <code>RGB(red,green,blue)</code></p>
-<p>Builds a true-color value from three integer components, each 0
-through 255, for use as <a href="#line">LINE</a>'s color argument.</p>
+<p>Builds a color from three integer components, each 0 through 255, for
+use wherever a color is taken (<a href="#color">COLOR</a>, <a
+href="#line">LINE</a>, <a href="#pset">PSET</a>, <a
+href="#circle">CIRCLE</a>, <a href="#paint">PAINT</a>, <a
+href="#fill">FILL</a>, <a href="#view">VIEW</a>) and as <a
+href="#palette">PALETTE</a>'s new color.</p>
 <h3 id="examples-68">Examples</h3>
 <pre class="basic"><code>LINE (0,0)-(10,10),RGB(40,200,80)</code></pre>
 <h3 id="comments-65">Comments</h3>
-<p>Only meaningful as <code>LINE</code>'s color argument — it isn't a
-general-purpose color type. An out-of-range component is
-<code>?ILLEGAL QUANTITY ERROR</code>, the same error <code>LINE</code>
-raises for an out-of-range palette number. Internally,
-<code>RGB()</code> tags its result above the packed 24-bit range so
-<code>LINE</code> can tell a true color apart from a palette index
-(0-15) whose packed value happens to also fall in 0-15; this is an
-interpreter implementation detail a program never needs to know about.
-See <code>LINE</code>'s palette table.</p>
+<p>The screen holds palette indices, so a drawing color given as
+<code>RGB()</code> lands on the palette entry nearest it (the lowest
+index on a tie); the VGA palette has exact entries for the pure colors,
+such as <code>RGB(0,255,0)</code> (index 48).
+<code>PALETTE n, RGB(r,g,b)</code> instead stores the exact color in
+entry <code>n</code>. An out-of-range component is
+<code>?ILLEGAL QUANTITY ERROR</code>, the same error raised for an
+out-of-range palette number. Internally, <code>RGB()</code> tags its
+result above the packed 24-bit range so a color argument can tell a true
+color apart from a palette index whose packed value happens to fall in
+0-255; this is an interpreter implementation detail a program never
+needs to know about. See <a href="#color-palette">Colors</a>.</p>
 <h2 id="right">RIGHT$</h2>
 <p><strong>Function</strong> — <code>RIGHT$(s$, n)</code></p>
 <p>Returns the last <code>n</code> bytes of string expression
@@ -2122,9 +2174,11 @@ SCREEN 0</code></pre>
 <h3 id="comments-70">Comments</h3>
 <p>Any value other than <code>0</code> or <code>1</code> is
 <code>?ILLEGAL QUANTITY ERROR</code>. Switching screens preserves
-neither screen's contents. <a href="#new">NEW</a> always resets
-<code>SCREEN</code> back to <code>0</code>. SCREEN 1 is the only mode in
-which <a href="#line">LINE</a>, <a href="#pset">PSET</a>, <a
+neither screen's contents. Every <code>SCREEN 1</code> also resets the
+<a href="#palette">palette</a> to the VGA defaults. <a
+href="#new">NEW</a> always resets <code>SCREEN</code> back to
+<code>0</code>. SCREEN 1 is the only mode in which <a
+href="#line">LINE</a>, <a href="#pset">PSET</a>, <a
 href="#gprint">GPRINT</a>, and graphics-mode <a
 href="#locate">LOCATE</a>/<a href="#print">PRINT</a> are legal; SCREEN 0
 is the only mode in which <code>PRINT</code> reaches the text
@@ -2553,12 +2607,50 @@ PRINT 17 MOD 5</code></pre>
 <code>MOD</code> by zero. There is no integer-division operator or
 exponentiation operator.</p>
 <h3 id="color-palette">Color Palette</h3>
-<p><strong>Reference</strong> — the 16 standard palette colors</p>
-<p>These are the palette numbers accepted wherever a <code>color</code>
-is taken (<a href="#color">COLOR</a>, <a href="#line">LINE</a>, <a
-href="#pset">PSET</a>, <a href="#paint">PAINT</a>, <a
-href="#fill">FILL</a>). <a href="#palette">PALETTE</a> can remap them;
-the table shows the standard values.</p>
+<p><strong>Reference</strong> — the 256-color VGA palette</p>
+<p>Every color on the screen is a palette index, 0 through 255 — the
+numbers accepted wherever a <code>color</code> is taken (<a
+href="#color">COLOR</a>, <a href="#line">LINE</a>, <a
+href="#pset">PSET</a>, <a href="#circle">CIRCLE</a>, <a
+href="#paint">PAINT</a>, <a href="#fill">FILL</a>, <a
+href="#view">VIEW</a>) and returned by <a href="#point">POINT</a>. The
+graphics surface and the text console store one index per pixel or
+character cell; what each index looks like comes from the palette, so <a
+href="#palette">PALETTE</a> can recolor everything drawn in an index
+without redrawing it. An <a href="#rgb">RGB()</a> color passed where an
+index is expected picks the entry nearest it.</p>
+<p>The palette starts as the IBM VGA Mode 13h default from 1987, the
+same on every BASIC32 build:</p>
+<table>
+<thead>
+<tr>
+<th style="text-align: right;">Indices</th>
+<th>Colors</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: right;">0–15</td>
+<td>The 16 EGA-compatible colors (below)</td>
+</tr>
+<tr>
+<td style="text-align: right;">16–31</td>
+<td>A 16-step gray ramp, black to white</td>
+</tr>
+<tr>
+<td style="text-align: right;">32–247</td>
+<td>Nine 24-color hue rings: bright, then dim, then dark, each at high,
+medium and low saturation</td>
+</tr>
+<tr>
+<td style="text-align: right;">248–255</td>
+<td>Black</td>
+</tr>
+</tbody>
+</table>
+<p>VGA hardware used 6-bit color levels (0–63); each is widened to 8
+bits by repeating its top two bits, so 21, 42 and 63 become 85, 170 and
+255. <code>examples/vgapal.bas</code> draws all 256 as a 16×16 grid.</p>
 <table>
 <thead>
 <tr>
@@ -2647,6 +2739,377 @@ the table shows the standard values.</p>
 <td style="text-align: right;">15</td>
 <td>White</td>
 <td><code>RGB(255,255,255)</code></td>
+</tr>
+</tbody>
+</table>
+<p>All 256 defaults, as hex <code>RRGGBB</code>
+(<code>RGB(&amp;HRR,&amp;HGG,&amp;HBB)</code>):</p>
+<table>
+<thead>
+<tr>
+<th style="text-align: right;">Index</th>
+<th>+0</th>
+<th>+1</th>
+<th>+2</th>
+<th>+3</th>
+<th>+4</th>
+<th>+5</th>
+<th>+6</th>
+<th>+7</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: right;">0</td>
+<td><code>000000</code></td>
+<td><code>0000AA</code></td>
+<td><code>00AA00</code></td>
+<td><code>00AAAA</code></td>
+<td><code>AA0000</code></td>
+<td><code>AA00AA</code></td>
+<td><code>AA5500</code></td>
+<td><code>AAAAAA</code></td>
+</tr>
+<tr>
+<td style="text-align: right;">8</td>
+<td><code>555555</code></td>
+<td><code>5555FF</code></td>
+<td><code>55FF55</code></td>
+<td><code>55FFFF</code></td>
+<td><code>FF5555</code></td>
+<td><code>FF55FF</code></td>
+<td><code>FFFF55</code></td>
+<td><code>FFFFFF</code></td>
+</tr>
+<tr>
+<td style="text-align: right;">16</td>
+<td><code>000000</code></td>
+<td><code>141414</code></td>
+<td><code>202020</code></td>
+<td><code>2C2C2C</code></td>
+<td><code>383838</code></td>
+<td><code>454545</code></td>
+<td><code>515151</code></td>
+<td><code>616161</code></td>
+</tr>
+<tr>
+<td style="text-align: right;">24</td>
+<td><code>717171</code></td>
+<td><code>828282</code></td>
+<td><code>929292</code></td>
+<td><code>A2A2A2</code></td>
+<td><code>B6B6B6</code></td>
+<td><code>CBCBCB</code></td>
+<td><code>E3E3E3</code></td>
+<td><code>FFFFFF</code></td>
+</tr>
+<tr>
+<td style="text-align: right;">32</td>
+<td><code>0000FF</code></td>
+<td><code>4100FF</code></td>
+<td><code>7D00FF</code></td>
+<td><code>BE00FF</code></td>
+<td><code>FF00FF</code></td>
+<td><code>FF00BE</code></td>
+<td><code>FF007D</code></td>
+<td><code>FF0041</code></td>
+</tr>
+<tr>
+<td style="text-align: right;">40</td>
+<td><code>FF0000</code></td>
+<td><code>FF4100</code></td>
+<td><code>FF7D00</code></td>
+<td><code>FFBE00</code></td>
+<td><code>FFFF00</code></td>
+<td><code>BEFF00</code></td>
+<td><code>7DFF00</code></td>
+<td><code>41FF00</code></td>
+</tr>
+<tr>
+<td style="text-align: right;">48</td>
+<td><code>00FF00</code></td>
+<td><code>00FF41</code></td>
+<td><code>00FF7D</code></td>
+<td><code>00FFBE</code></td>
+<td><code>00FFFF</code></td>
+<td><code>00BEFF</code></td>
+<td><code>007DFF</code></td>
+<td><code>0041FF</code></td>
+</tr>
+<tr>
+<td style="text-align: right;">56</td>
+<td><code>7D7DFF</code></td>
+<td><code>9E7DFF</code></td>
+<td><code>BE7DFF</code></td>
+<td><code>DF7DFF</code></td>
+<td><code>FF7DFF</code></td>
+<td><code>FF7DDF</code></td>
+<td><code>FF7DBE</code></td>
+<td><code>FF7D9E</code></td>
+</tr>
+<tr>
+<td style="text-align: right;">64</td>
+<td><code>FF7D7D</code></td>
+<td><code>FF9E7D</code></td>
+<td><code>FFBE7D</code></td>
+<td><code>FFDF7D</code></td>
+<td><code>FFFF7D</code></td>
+<td><code>DFFF7D</code></td>
+<td><code>BEFF7D</code></td>
+<td><code>9EFF7D</code></td>
+</tr>
+<tr>
+<td style="text-align: right;">72</td>
+<td><code>7DFF7D</code></td>
+<td><code>7DFF9E</code></td>
+<td><code>7DFFBE</code></td>
+<td><code>7DFFDF</code></td>
+<td><code>7DFFFF</code></td>
+<td><code>7DDFFF</code></td>
+<td><code>7DBEFF</code></td>
+<td><code>7D9EFF</code></td>
+</tr>
+<tr>
+<td style="text-align: right;">80</td>
+<td><code>B6B6FF</code></td>
+<td><code>C7B6FF</code></td>
+<td><code>DBB6FF</code></td>
+<td><code>EBB6FF</code></td>
+<td><code>FFB6FF</code></td>
+<td><code>FFB6EB</code></td>
+<td><code>FFB6DB</code></td>
+<td><code>FFB6C7</code></td>
+</tr>
+<tr>
+<td style="text-align: right;">88</td>
+<td><code>FFB6B6</code></td>
+<td><code>FFC7B6</code></td>
+<td><code>FFDBB6</code></td>
+<td><code>FFEBB6</code></td>
+<td><code>FFFFB6</code></td>
+<td><code>EBFFB6</code></td>
+<td><code>DBFFB6</code></td>
+<td><code>C7FFB6</code></td>
+</tr>
+<tr>
+<td style="text-align: right;">96</td>
+<td><code>B6FFB6</code></td>
+<td><code>B6FFC7</code></td>
+<td><code>B6FFDB</code></td>
+<td><code>B6FFEB</code></td>
+<td><code>B6FFFF</code></td>
+<td><code>B6EBFF</code></td>
+<td><code>B6DBFF</code></td>
+<td><code>B6C7FF</code></td>
+</tr>
+<tr>
+<td style="text-align: right;">104</td>
+<td><code>000071</code></td>
+<td><code>1C0071</code></td>
+<td><code>380071</code></td>
+<td><code>550071</code></td>
+<td><code>710071</code></td>
+<td><code>710055</code></td>
+<td><code>710038</code></td>
+<td><code>71001C</code></td>
+</tr>
+<tr>
+<td style="text-align: right;">112</td>
+<td><code>710000</code></td>
+<td><code>711C00</code></td>
+<td><code>713800</code></td>
+<td><code>715500</code></td>
+<td><code>717100</code></td>
+<td><code>557100</code></td>
+<td><code>387100</code></td>
+<td><code>1C7100</code></td>
+</tr>
+<tr>
+<td style="text-align: right;">120</td>
+<td><code>007100</code></td>
+<td><code>00711C</code></td>
+<td><code>007138</code></td>
+<td><code>007155</code></td>
+<td><code>007171</code></td>
+<td><code>005571</code></td>
+<td><code>003871</code></td>
+<td><code>001C71</code></td>
+</tr>
+<tr>
+<td style="text-align: right;">128</td>
+<td><code>383871</code></td>
+<td><code>453871</code></td>
+<td><code>553871</code></td>
+<td><code>613871</code></td>
+<td><code>713871</code></td>
+<td><code>713861</code></td>
+<td><code>713855</code></td>
+<td><code>713845</code></td>
+</tr>
+<tr>
+<td style="text-align: right;">136</td>
+<td><code>713838</code></td>
+<td><code>714538</code></td>
+<td><code>715538</code></td>
+<td><code>716138</code></td>
+<td><code>717138</code></td>
+<td><code>617138</code></td>
+<td><code>557138</code></td>
+<td><code>457138</code></td>
+</tr>
+<tr>
+<td style="text-align: right;">144</td>
+<td><code>387138</code></td>
+<td><code>387145</code></td>
+<td><code>387155</code></td>
+<td><code>387161</code></td>
+<td><code>387171</code></td>
+<td><code>386171</code></td>
+<td><code>385571</code></td>
+<td><code>384571</code></td>
+</tr>
+<tr>
+<td style="text-align: right;">152</td>
+<td><code>515171</code></td>
+<td><code>595171</code></td>
+<td><code>615171</code></td>
+<td><code>695171</code></td>
+<td><code>715171</code></td>
+<td><code>715169</code></td>
+<td><code>715161</code></td>
+<td><code>715159</code></td>
+</tr>
+<tr>
+<td style="text-align: right;">160</td>
+<td><code>715151</code></td>
+<td><code>715951</code></td>
+<td><code>716151</code></td>
+<td><code>716951</code></td>
+<td><code>717151</code></td>
+<td><code>697151</code></td>
+<td><code>617151</code></td>
+<td><code>597151</code></td>
+</tr>
+<tr>
+<td style="text-align: right;">168</td>
+<td><code>517151</code></td>
+<td><code>517159</code></td>
+<td><code>517161</code></td>
+<td><code>517169</code></td>
+<td><code>517171</code></td>
+<td><code>516971</code></td>
+<td><code>516171</code></td>
+<td><code>515971</code></td>
+</tr>
+<tr>
+<td style="text-align: right;">176</td>
+<td><code>000041</code></td>
+<td><code>100041</code></td>
+<td><code>200041</code></td>
+<td><code>300041</code></td>
+<td><code>410041</code></td>
+<td><code>410030</code></td>
+<td><code>410020</code></td>
+<td><code>410010</code></td>
+</tr>
+<tr>
+<td style="text-align: right;">184</td>
+<td><code>410000</code></td>
+<td><code>411000</code></td>
+<td><code>412000</code></td>
+<td><code>413000</code></td>
+<td><code>414100</code></td>
+<td><code>304100</code></td>
+<td><code>204100</code></td>
+<td><code>104100</code></td>
+</tr>
+<tr>
+<td style="text-align: right;">192</td>
+<td><code>004100</code></td>
+<td><code>004110</code></td>
+<td><code>004120</code></td>
+<td><code>004130</code></td>
+<td><code>004141</code></td>
+<td><code>003041</code></td>
+<td><code>002041</code></td>
+<td><code>001041</code></td>
+</tr>
+<tr>
+<td style="text-align: right;">200</td>
+<td><code>202041</code></td>
+<td><code>282041</code></td>
+<td><code>302041</code></td>
+<td><code>382041</code></td>
+<td><code>412041</code></td>
+<td><code>412038</code></td>
+<td><code>412030</code></td>
+<td><code>412028</code></td>
+</tr>
+<tr>
+<td style="text-align: right;">208</td>
+<td><code>412020</code></td>
+<td><code>412820</code></td>
+<td><code>413020</code></td>
+<td><code>413820</code></td>
+<td><code>414120</code></td>
+<td><code>384120</code></td>
+<td><code>304120</code></td>
+<td><code>284120</code></td>
+</tr>
+<tr>
+<td style="text-align: right;">216</td>
+<td><code>204120</code></td>
+<td><code>204128</code></td>
+<td><code>204130</code></td>
+<td><code>204138</code></td>
+<td><code>204141</code></td>
+<td><code>203841</code></td>
+<td><code>203041</code></td>
+<td><code>202841</code></td>
+</tr>
+<tr>
+<td style="text-align: right;">224</td>
+<td><code>2C2C41</code></td>
+<td><code>302C41</code></td>
+<td><code>342C41</code></td>
+<td><code>3C2C41</code></td>
+<td><code>412C41</code></td>
+<td><code>412C3C</code></td>
+<td><code>412C34</code></td>
+<td><code>412C30</code></td>
+</tr>
+<tr>
+<td style="text-align: right;">232</td>
+<td><code>412C2C</code></td>
+<td><code>41302C</code></td>
+<td><code>41342C</code></td>
+<td><code>413C2C</code></td>
+<td><code>41412C</code></td>
+<td><code>3C412C</code></td>
+<td><code>34412C</code></td>
+<td><code>30412C</code></td>
+</tr>
+<tr>
+<td style="text-align: right;">240</td>
+<td><code>2C412C</code></td>
+<td><code>2C4130</code></td>
+<td><code>2C4134</code></td>
+<td><code>2C413C</code></td>
+<td><code>2C4141</code></td>
+<td><code>2C3C41</code></td>
+<td><code>2C3441</code></td>
+<td><code>2C3041</code></td>
+</tr>
+<tr>
+<td style="text-align: right;">248</td>
+<td><code>000000</code></td>
+<td><code>000000</code></td>
+<td><code>000000</code></td>
+<td><code>000000</code></td>
+<td><code>000000</code></td>
+<td><code>000000</code></td>
+<td><code>000000</code></td>
+<td><code>000000</code></td>
 </tr>
 </tbody>
 </table>
