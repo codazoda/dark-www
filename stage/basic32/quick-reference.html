@@ -22,6 +22,9 @@
 <li><a href="index.html#edit">EDIT</a><code>EDIT line</code></li>
 <li><a href="index.html#else">ELSE</a><code>IF … THEN … ELSE …</code></li>
 <li><a href="index.html#end">END</a><code>END</code></li>
+<li><a href="index.html#erl">ERL</a><code>ERL</code> <span class="note">error line</span></li>
+<li><a href="index.html#err">ERR</a><code>ERR</code> <span class="note">error number</span></li>
+<li><a href="index.html#error">ERROR</a><code>ERROR n</code></li>
 <li><a href="index.html#fornext">FOR/NEXT</a><code>FOR v=start TO limit [STEP step] … NEXT [v]</code></li>
 <li><a href="index.html#gosub">GOSUB</a><code>GOSUB line</code></li>
 <li><a href="index.html#goto">GOTO</a><code>GOTO line</code></li>
@@ -29,8 +32,10 @@
 <li><a href="index.html#list">LIST</a><code>LIST</code></li>
 <li><a href="index.html#new">NEW</a><code>NEW</code></li>
 <li><a href="index.html#on">ON</a><code>ON n GOTO|GOSUB line[,line…]</code></li>
+<li><a href="index.html#on-error-goto">ON ERROR GOTO</a><code>ON ERROR GOTO line|0</code></li>
 <li><a href="index.html#rem">REM</a><code>REM text</code> <span class="note">or <code>'text</code></span></li>
 <li><a href="index.html#renum">RENUM</a><code>RENUM [new],[old],[increment]</code></li>
+<li><a href="index.html#resume">RESUME</a><code>RESUME [NEXT|line]</code></li>
 <li><a href="index.html#return">RETURN</a><code>RETURN</code></li>
 <li><a href="index.html#run">RUN</a><code>RUN</code></li>
 <li><a href="index.html#stop">STOP</a><code>STOP</code></li>
@@ -72,7 +77,7 @@
 <li><a href="index.html#right">RIGHT$</a><code>RIGHT$(s$,n)</code></li>
 <li><a href="index.html#space">SPACE$</a><code>SPACE$(n)</code></li>
 <li><a href="index.html#str">STR$</a><code>STR$(n)</code></li>
-<li><a href="index.html#string-variables">String variables</a><code>name$</code></li>
+<li><a href="index.html#string-variables">String variables</a><code>name$</code> · <code>a$+b$</code></li>
 <li><a href="index.html#string">STRING$</a><code>STRING$(n,code|text$)</code></li>
 <li><a href="index.html#swap">SWAP</a><code>SWAP a,b</code></li>
 <li><a href="index.html#ucase">UCASE$</a><code>UCASE$(s$)</code></li>
@@ -106,7 +111,7 @@
 <li><a href="index.html#gprint">GPRINT</a><code>GPRINT x,y,print-list</code></li>
 <li><a href="index.html#line">LINE</a><code>LINE (x1,y1)-(x2,y2)[,color][,B|BF]</code></li>
 <li><a href="index.html#paint">PAINT</a><code>PAINT (x,y)[,fill[,border]]</code></li>
-<li><a href="index.html#palette">PALETTE</a><code>PALETTE [index,color]</code></li>
+<li><a href="index.html#palette">PALETTE</a><code>PALETTE [index[,color]]</code></li>
 <li><a href="index.html#pmap">PMAP</a><code>PMAP(value,mode)</code></li>
 <li><a href="index.html#point">POINT</a><code>POINT(x,y)</code> <span class="note">or <code>POINT(n)</code></span></li>
 <li><a href="index.html#preset">PRESET</a><code>PRESET x,y[,color]</code></li>
@@ -115,7 +120,7 @@
 <li><a href="index.html#rgb">RGB</a><code>RGB(red,green,blue)</code></li>
 <li><a href="index.html#screen">SCREEN</a><code>SCREEN mode</code></li>
 <li><a href="index.html#view">VIEW</a><code>VIEW [[SCREEN] (x1,y1)-(x2,y2)[,…]]</code></li>
-<li><a href="index.html#color-palette">Color palette</a><code>0–15</code><div class="palette"><span>0 Black</span><span>8 Gray</span><span>1 Blue</span><span>9 Light Blue</span><span>2 Green</span><span>10 Light Green</span><span>3 Cyan</span><span>11 Light Cyan</span><span>4 Red</span><span>12 Light Red</span><span>5 Magenta</span><span>13 Light Magenta</span><span>6 Brown</span><span>14 Yellow</span><span>7 Light Gray</span><span>15 White</span></div></li>
+<li><a href="index.html#color-palette">Color palette</a><code>0–255</code> <span class="note">VGA: 0–15 below, 16–31 grays, 32–247 hues, 248–255 black</span><div class="palette"><span>0 Black</span><span>8 Gray</span><span>1 Blue</span><span>9 Light Blue</span><span>2 Green</span><span>10 Light Green</span><span>3 Cyan</span><span>11 Light Cyan</span><span>4 Red</span><span>12 Light Red</span><span>5 Magenta</span><span>13 Light Magenta</span><span>6 Brown</span><span>14 Yellow</span><span>7 Light Gray</span><span>15 White</span></div></li>
 </ul></section>
 
 <section><h2>Sound and timing</h2><ul class="entries">
