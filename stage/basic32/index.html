@@ -228,16 +228,17 @@ BLOAD &quot;PICTURE.BMP&quot;</code></pre>
 <p>Only the plain, uncompressed BMP that most paint programs save is
 read: a Windows BMP with the 40-byte <code>BITMAPINFOHEADER</code>, one
 plane, a positive width and height (rows stored bottom-up), no
-compression, and either 8-bit indexed (256-color) or 24-bit RGB pixels.
-Anything else — RLE or other compression, 1-, 4-, 16- or 32-bit pixels,
-bit fields, alpha, top-down rows, OS/2 or newer (V4/V5) headers, a
-truncated file, or an 8-bit pixel with no color-table entry — is
-<code>?BAD FILE ERROR</code>, and the screen is left untouched: the
-whole file is checked before the first pixel is drawn.</p>
+compression, and either 1-, 4- or 8-bit indexed (2-, 16- or 256-color)
+or 24-bit RGB pixels. Anything else — RLE or other compression, 2-, 16-
+or 32-bit pixels, bit fields, alpha, top-down rows, OS/2 or newer
+(V4/V5) headers, a truncated file, or an indexed pixel with no
+color-table entry — is <code>?BAD FILE ERROR</code>, and the screen is
+left untouched: the whole file is checked before the first pixel is
+drawn.</p>
 <p>Each color in the image is drawn as the nearest entry of the current
 <a href="#palette">palette</a> (squared RGB distance; on a tie the lower
 index wins), so a <a href="#palette">PALETTE</a> change affects how an
-image loads. In an 8-bit file, a color-table entry whose color the
+image loads. In an indexed file, a color-table entry whose color the
 current palette shows at the same index keeps that index, so a file
 written by <a href="#bsave">BSAVE</a> loads back exactly as it was
 saved. Files of up to 4 MB are read; each pixel goes through the
