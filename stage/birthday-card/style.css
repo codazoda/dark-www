@@ -1,0 +1,115 @@
+:root {
+  --coral: #d86f75; --gold: #c79b45; --pearl: #e9e1d6;
+  --blue: #6589ad; --purple: #806b9d; --teal: #4e9694;
+  --ink: #40373b; --paper: #fffdf9; --soft: #f5efe8;
+  font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  color: var(--ink); background: var(--paper); color-scheme: light;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; min-height: 100%; }
+body { overflow-x: hidden; }
+a { color: inherit; }
+button, a { -webkit-tap-highlight-color: transparent; }
+.script { font-family: "Segoe Script", "Bradley Hand", "Snell Roundhand", cursive; }
+
+/* Gallery */
+.gallery { background: linear-gradient(180deg, #fffdf9, #f8f2ec); }
+.gallery-head { padding: clamp(4rem, 12vw, 8rem) 1.25rem 3rem; text-align: center; }
+.eyebrow { margin: 0 0 .8rem; color: var(--teal); font-size: .78rem; font-weight: 700; letter-spacing: .16em; text-transform: uppercase; }
+.gallery h1 { margin: 0; font: clamp(3rem, 9vw, 6rem)/1.05 "Segoe Script", "Bradley Hand", cursive; color: var(--coral); }
+.gallery-head > p:last-child { margin: 1rem 0 0; font-size: 1.05rem; }
+.gallery main { width: min(1120px, calc(100% - 2rem)); margin: auto; }
+.gallery section { margin-bottom: 5rem; }
+.section-head { display: flex; align-items: baseline; justify-content: space-between; gap: 1rem; border-bottom: 1px solid #d9cec5; margin-bottom: 1.25rem; }
+.section-head h2 { font: 1.55rem/1.2 Georgia, serif; }
+.section-head p { color: #74676d; font-size: .85rem; }
+.card-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; }
+.preview { display: block; min-width: 0; padding: 1rem; border: 1px solid #e0d5cc; border-radius: 18px; background: rgba(255,255,255,.72); text-decoration: none; transition: transform .2s, box-shadow .2s; }
+.preview:hover, .preview:focus-visible { transform: translateY(-3px); box-shadow: 0 12px 32px #69504418; outline: 2px solid var(--teal); outline-offset: 2px; }
+.preview-art { position: relative; height: 215px; overflow: hidden; border-radius: 12px; background: var(--paper); }
+.preview h3 { margin: .9rem 0 .2rem; font-size: 1rem; }
+.preview p { margin: 0; color: #74676d; font-size: .82rem; }
+footer { padding: 0 1rem 3rem; text-align: center; color: #74676d; font-size: .85rem; }
+
+/* Shared balloon artwork */
+.balloon { --c: var(--coral); position: absolute; width: 74px; height: 92px; border-radius: 50% 50% 47% 47%; background: radial-gradient(circle at 30% 25%, #ffffffc9 0 5%, transparent 18%), linear-gradient(135deg, color-mix(in srgb, var(--c), white 25%), var(--c) 55%, color-mix(in srgb, var(--c), black 14%)); box-shadow: inset -8px -5px 14px #33222b20, 0 8px 20px #3d2f3520; transform: translate(-50%, -50%); }
+.balloon::before { content: ""; position: absolute; left: 50%; bottom: -7px; border: 5px solid transparent; border-bottom: 0; border-top: 8px solid var(--c); transform: translateX(-50%); }
+.balloon::after { content: ""; position: absolute; left: 50%; top: 99%; width: 1px; height: var(--string, 110px); background: #766c6f; transform-origin: top; transform: rotate(var(--tilt, 0deg)); opacity: .7; }
+.balloon.small { width: 48px; height: 60px; --string: 82px; }
+.balloon.tiny { width: 29px; height: 37px; --string: 55px; }
+.coral { --c: var(--coral); } .gold { --c: var(--gold); } .pearl { --c: var(--pearl); }
+.blue { --c: var(--blue); } .purple { --c: var(--purple); } .teal { --c: var(--teal); }
+.art-greeting { position: absolute; z-index: 4; top: 68%; width: 100%; text-align: center; font: 2rem/1.05 "Segoe Script", "Bradley Hand", cursive; color: var(--ink); }
+.fifty { position: absolute; left: 50%; top: 39%; transform: translate(-50%,-50%); font: bold 5.2rem/1 Georgia, serif; color: var(--gold); }
+.confetti { position: absolute; width: 5px; height: 10px; border-radius: 3px; background: var(--c); transform: rotate(var(--r)); }
+
+/* Print */
+.print-view { min-height: 100vh; padding: 1.5rem; background: #eee9e4; }
+.print-tools { width: min(11in, 100%); min-height: 52px; margin: 0 auto 1rem; display: flex; align-items: center; justify-content: space-between; gap: 1rem; font-size: .85rem; }
+.print-tools a, .print-tools button { display: inline-grid; min-height: 44px; align-items: center; border: 0; border-radius: 999px; padding: .65rem 1rem; background: white; color: var(--ink); font: inherit; cursor: pointer; text-decoration: none; }
+.print-tools button { background: var(--ink); color: white; }
+.print-tools p { margin: 0; text-align: center; }
+.sheet { display: grid; grid-template-columns: 1fr 1fr; width: 11in; height: 8.5in; margin: auto; overflow: hidden; background: white; box-shadow: 0 8px 30px #33252b24; }
+.front, .back { position: relative; overflow: hidden; }
+.front { border-left: 1px dashed #d9d2cb; background: var(--paper); }
+.front .balloon { transform: translate(-50%, -50%) scale(1.25); }
+.front .balloon.small { transform: translate(-50%, -50%) scale(1.15); }
+.front .art-greeting { font-size: .52in; }
+.front .fifty { top: 40%; font-size: 2.25in; text-shadow: inset 0 0 5px white; }
+.front .ribbon-heart { position: absolute; left: 50%; top: 44%; width: 2.3in; height: 2in; transform: translateX(-50%); }
+
+/* Electronic cards */
+.ecard-view { min-height: 100dvh; background: var(--paper); }
+.ecard { position: relative; isolation: isolate; width: 100%; min-height: 100dvh; overflow: hidden; display: grid; place-items: center; background: radial-gradient(circle at 50% 38%, white, var(--soft)); }
+.ecard-art { position: absolute; inset: 0; }
+.greeting { position: relative; z-index: 5; padding: 1rem; text-align: center; }
+.greeting h1 { margin: 0; font: clamp(2.8rem, 11vw, 6.5rem)/1.05 "Segoe Script", "Bradley Hand", cursive; color: var(--ink); text-shadow: 0 2px white; }
+.age { display: block; color: var(--gold); font: 700 clamp(5rem, 23vw, 12rem)/.8 Georgia, serif; opacity: .9; }
+.ecard .balloon { --string: 140px; }
+.no-script { position: fixed; z-index: 8; left: 0; right: 0; bottom: 1.25rem; margin: 0; padding: 0 1rem; text-align: center; color: #74676d; font-size: .85rem; }
+.release-button { position: relative; z-index: 10; min-width: 150px; min-height: 48px; margin-top: 1.5rem; border: 1px solid #43383d; border-radius: 999px; background: #fffdf9dd; color: var(--ink); font: 600 1rem/1 system-ui, sans-serif; cursor: pointer; }
+.release-button:focus-visible { outline: 3px solid var(--teal); outline-offset: 3px; }
+.heart-line { position: absolute; left: 50%; top: 51%; width: min(42vw, 220px); transform: translate(-50%,-50%); fill: none; stroke: var(--coral); stroke-width: 2; stroke-linecap: round; stroke-dasharray: 520; stroke-dashoffset: 520; }
+.ecard.ribbons .heart-line { animation: draw 4s ease forwards .5s; }
+.ecard.ribbons .greeting { opacity: 0; animation: reveal 1.4s ease forwards 3.5s; }
+.ecard.rise .balloon { animation: rise 10s ease-in-out infinite alternate; }
+.ecard.reveal .balloon { opacity: 0; animation: bouquet-in 2s cubic-bezier(.2,.8,.2,1) forwards; }
+.ecard.golden .age { animation: breathe 4s ease-in-out infinite; }
+.ecard.field .balloon { animation: sway 4s ease-in-out infinite alternate; }
+.ecard.release-card .balloon { transform: translate(-50%, 105vh); transition: transform 3.2s cubic-bezier(.15,.7,.2,1); }
+.ecard.release-card.released .balloon { transform: translate(-50%, -50%); }
+@keyframes rise { to { transform: translate(-50%, calc(-50% - 38px)) rotate(2deg); } }
+@keyframes bouquet-in { from { transform: translate(-50%, 90px) scale(.8); } to { opacity: 1; transform: translate(-50%,-50%) scale(1); } }
+@keyframes breathe { 50% { transform: scale(1.035); } }
+@keyframes sway { to { transform: translate(calc(-50% + 9px), calc(-50% - 8px)) rotate(3deg); } }
+@keyframes draw { to { stroke-dashoffset: 0; } }
+@keyframes reveal { to { opacity: 1; } }
+
+@media (max-width: 760px) {
+  .card-grid { grid-template-columns: repeat(2, 1fr); }
+  .section-head { display: block; padding-bottom: .8rem; }
+  .section-head h2, .section-head p { margin-bottom: .35rem; }
+  .print-view { padding: .75rem; }
+  .print-tools { flex-wrap: wrap; justify-content: center; }
+  .print-tools p { order: 3; width: 100%; }
+  .sheet { transform-origin: top left; transform: scale(calc((100vw - 1.5rem) / 1056)); margin-bottom: calc(-816px + (816 * ((100vw - 1.5rem) / 1056))); }
+}
+@media (max-width: 430px) { .card-grid { grid-template-columns: 1fr; } .preview-art { height: 230px; } }
+@media (max-height: 420px) and (orientation: landscape) {
+  .greeting h1 { font-size: clamp(2.3rem, 9vw, 4.2rem); }
+  .age { display: inline; margin-right: .2em; font-size: clamp(3rem, 14vw, 5rem); }
+  .ecard .balloon { transform: translate(-50%,-50%) scale(.72); }
+}
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { scroll-behavior: auto !important; animation-duration: .001ms !important; animation-delay: 0ms !important; animation-iteration-count: 1 !important; transition-duration: .001ms !important; }
+  .ecard.ribbons .heart-line { stroke-dashoffset: 0; }
+  .ecard.ribbons .greeting, .ecard.reveal .balloon { opacity: 1; }
+  .ecard.release-card .balloon { transform: translate(-50%,-50%); }
+}
+@page { size: letter landscape; margin: 0; }
+@media print {
+  html, body.print-view { width: 11in; height: 8.5in; margin: 0; padding: 0; background: white; }
+  .print-tools { display: none !important; }
+  .sheet { width: 11in; height: 8.5in; margin: 0; box-shadow: none; transform: none; }
+  .front { border-left: 0; }
+}
