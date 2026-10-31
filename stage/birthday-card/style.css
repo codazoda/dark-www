@@ -112,4 +112,11 @@ footer { padding: 0 1rem 3rem; text-align: center; color: #74676d; font-size: .8
   .print-tools { display: none !important; }
   .sheet { width: 11in; height: 8.5in; margin: 0; box-shadow: none; transform: none; color-adjust: exact; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
   .front { border-left: 0; background: white; }
+  .balloon { background-image: none; box-shadow: none; }
+  .balloon.coral { background-color: #d86f75; }
+  .balloon.gold { background-color: #c79b45; }
+  .balloon.pearl { background-color: #e9e1d6; }
+  .balloon.blue { background-color: #6589ad; }
+  .balloon.purple { background-color: #806b9d; }
+  .balloon.teal { background-color: #4e9694; }
 }
