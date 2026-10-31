@@ -111,5 +111,5 @@ footer { padding: 0 1rem 3rem; text-align: center; color: #74676d; font-size: .8
   html, body.print-view { width: 11in; height: 8.5in; margin: 0; padding: 0; background: white; }
   .print-tools { display: none !important; }
   .sheet { width: 11in; height: 8.5in; margin: 0; box-shadow: none; transform: none; color-adjust: exact; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-  .front { border-left: 0; }
+  .front { border-left: 0; background: white; }
 }
