@@ -13,7 +13,7 @@
     ['rise', 'Gentle rise', 'Balloons on their way up'],
     ['reveal', 'Bouquet reveal', 'A greeting that blooms'],
     ['golden', 'Golden 50', 'A softly shining milestone'],
-    ['release', 'Tap to release', 'Send the balloons skyward'],
+    ['release', 'Balloon release', 'Balloons rising into view'],
     ['ribbons', 'Ribbon drawing', 'A heart drawn in ribbon'],
     ['field', 'Celebration field', 'Color and a little confetti']
   ];
@@ -72,8 +72,6 @@
       artEl.innerHTML = balloon('coral',22,24,'small',-4) + balloon('purple',78,24,'small',4) + '<svg class="heart-line" viewBox="0 0 200 180"><path d="M100 170 C35 132 7 93 21 51 C33 15 76 15 100 49 C124 15 167 15 179 51 C193 93 165 132 100 170"/></svg>';
     } else if (kind === 'release') {
       artEl.innerHTML = colors.slice(0,5).map((c,i) => balloon(c,24+i*13,23+Math.abs(2-i)*8,'small',(i-2)*4,i*.08)).join('');
-      root.querySelector('.greeting').insertAdjacentHTML('beforeend', '<button class="release-button" type="button">Release the balloons</button>');
-      root.querySelector('.release-button').addEventListener('click', e => { root.classList.add('released'); e.currentTarget.textContent = 'Up they go!'; e.currentTarget.disabled = true; });
     } else if (kind === 'reveal') {
       artEl.innerHTML = colors.slice(0,5).map((c,i) => balloon(c,32+i*9,68-Math.abs(2-i)*5,'small',(i-2)*5,i*.16)).join('');
     } else {

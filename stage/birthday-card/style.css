@@ -67,21 +67,21 @@ footer { padding: 0 1rem 3rem; text-align: center; color: #74676d; font-size: .8
 .age { display: block; color: var(--gold); font: 700 clamp(5rem, 23vw, 12rem)/.8 Georgia, serif; opacity: .9; }
 .ecard .balloon { --string: 140px; }
 .no-script { position: fixed; z-index: 8; left: 0; right: 0; bottom: 1.25rem; margin: 0; padding: 0 1rem; text-align: center; color: #74676d; font-size: .85rem; }
-.release-button { position: relative; z-index: 10; min-width: 150px; min-height: 48px; margin-top: 1.5rem; border: 1px solid #43383d; border-radius: 999px; background: #fffdf9dd; color: var(--ink); font: 600 1rem/1 system-ui, sans-serif; cursor: pointer; }
-.release-button:focus-visible { outline: 3px solid var(--teal); outline-offset: 3px; }
 .heart-line { position: absolute; left: 50%; top: 51%; width: min(42vw, 220px); transform: translate(-50%,-50%); fill: none; stroke: var(--coral); stroke-width: 2; stroke-linecap: round; stroke-dasharray: 520; stroke-dashoffset: 520; }
 .ecard.ribbons .heart-line { animation: draw 4s ease forwards .5s; }
 .ecard.ribbons .greeting { opacity: 0; animation: reveal 1.4s ease forwards 3.5s; }
 .ecard.rise .balloon { animation: rise 10s ease-in-out infinite alternate; }
 .ecard.reveal .balloon { opacity: 0; animation: bouquet-in 2s cubic-bezier(.2,.8,.2,1) forwards; }
 .ecard.golden .age { animation: breathe 4s ease-in-out infinite; }
-.ecard.field .balloon { animation: sway 4s ease-in-out infinite alternate; }
-.ecard.release-card .balloon { transform: translate(-50%, 105vh); transition: transform 3.2s cubic-bezier(.15,.7,.2,1); }
-.ecard.release-card.released .balloon { transform: translate(-50%, -50%); }
+.ecard.field .balloon { animation: field-drift 3.6s ease-in-out infinite alternate; }
+.ecard.field .confetti { animation: confetti-drift 2.8s ease-in-out infinite alternate; }
+.ecard.release-card .balloon { animation: release 3.2s cubic-bezier(.15,.7,.2,1) forwards; }
 @keyframes rise { to { transform: translate(-50%, calc(-50% - 38px)) rotate(2deg); } }
 @keyframes bouquet-in { from { transform: translate(-50%, 90px) scale(.8); } to { opacity: 1; transform: translate(-50%,-50%) scale(1); } }
 @keyframes breathe { 50% { transform: scale(1.035); } }
-@keyframes sway { to { transform: translate(calc(-50% + 9px), calc(-50% - 8px)) rotate(3deg); } }
+@keyframes field-drift { to { transform: translate(calc(-50% + 14px), calc(-50% - 13px)) rotate(4deg); } }
+@keyframes confetti-drift { to { transform: translate(3px, 7px) rotate(calc(var(--r) + 12deg)); } }
+@keyframes release { from { transform: translate(-50%, 105vh); } to { transform: translate(-50%, -50%); } }
 @keyframes draw { to { stroke-dashoffset: 0; } }
 @keyframes reveal { to { opacity: 1; } }
 
