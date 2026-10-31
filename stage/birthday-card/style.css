@@ -59,8 +59,8 @@ footer { padding: 0 1rem 3rem; text-align: center; color: #74676d; font-size: .8
 .front .ribbon-heart { position: absolute; left: 50%; top: 44%; width: 2.3in; height: 2in; transform: translateX(-50%); }
 
 /* Electronic cards */
-.ecard-view { min-height: 100dvh; background: var(--paper); }
-.ecard { position: relative; isolation: isolate; width: 100%; min-height: 100dvh; overflow: hidden; display: grid; place-items: center; background: radial-gradient(circle at 50% 38%, white, var(--soft)); }
+.ecard-view { min-height: 100dvh; background: white; }
+.ecard { position: relative; isolation: isolate; width: 100%; min-height: 100dvh; overflow: hidden; display: grid; place-items: center; background: white; }
 .ecard-art { position: absolute; inset: 0; }
 .greeting { position: relative; z-index: 5; padding: 1rem; text-align: center; }
 .greeting h1 { margin: 0; font: clamp(2.8rem, 11vw, 6.5rem)/1.05 "Segoe Script", "Bradley Hand", cursive; color: var(--ink); text-shadow: 0 2px white; }
