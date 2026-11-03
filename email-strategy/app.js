@@ -629,58 +629,238 @@
     );
   }
 
-  function renderArchiveDetail() {
-    var campaign = data.campaigns.find(function (c) { return c.id === ui.archiveDetailId; });
-    if (!campaign) return '<button type="button" class="secondary" data-action="view-archive">&larr; Back to archive</button>';
+  // ---------- archive report ----------
+  // One renderer feeds both the in-app report and the downloaded file.
 
-    var rows = campaign.pitches
-      .slice()
-      .sort(function (a, b) { return a.pitch_number - b.pitch_number; })
-      .map(function (p) {
-        return (
-          "<tr><td>" + p.pitch_number + "</td><td>" + (isSent(p) ? formatDate(p.actual_send_date) : "") + "</td><td>" +
-          (isSent(p) ? num(p.purchases) : "") + "</td><td>" + (isSent(p) ? money(p.revenue) : "") + "</td><td>" + (isSent(p) ? num(p.opens) : "") + "</td><td>" + (isSent(p) ? num(p.unsubscribes) : "") + "</td></tr>"
-        );
-      })
-      .join("");
+  function isRecorded(v) {
+    return v !== undefined && v !== null && String(v).trim() !== "" && !isNaN(Number(v));
+  }
 
-    var rps = revenuePerStartingSubscriber(campaign);
-    var endingListSize = campaign.current_list_size !== undefined && campaign.current_list_size !== ""
-      ? campaign.current_list_size
-      : campaign.starting_list_size;
+  function textOr(v, missing) {
+    return String(v == null ? "" : v).trim() ? nl2br(v) : missing;
+  }
+
+  function countOr(v) {
+    return isRecorded(v) ? num(v).toLocaleString() : "—";
+  }
+
+  function moneyOr(v) {
+    return isRecorded(v) ? money(v) : "—";
+  }
+
+  // Sum of recorded values across sent pitches, or null when none were recorded.
+  function sumRecorded(campaign, key) {
+    var recorded = sentPitches(campaign).filter(function (p) { return isRecorded(p[key]); });
+    if (!recorded.length) return null;
+    return recorded.reduce(function (sum, p) { return sum + num(p[key]); }, 0);
+  }
+
+  function formatLongDate(dateStr) {
+    if (!dateStr) return "Not recorded";
+    var d = new Date(/^\d{4}-\d{2}-\d{2}$/.test(dateStr) ? dateStr + "T00:00:00" : dateStr);
+    if (isNaN(d.getTime())) return escapeHtml(dateStr);
+    return d.toLocaleDateString(undefined, { year: "numeric", month: "short", day: "numeric" });
+  }
+
+  function localDateOf(iso) {
+    var d = new Date(iso);
+    if (isNaN(d.getTime())) return "";
+    return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0");
+  }
+
+  function lastSendDate(campaign) {
+    return sentPitches(campaign)
+      .map(function (p) { return p.actual_send_date; })
+      .sort()
+      .pop() || "";
+  }
+
+  function dlRows(pairs) {
+    return pairs.map(function (pair) {
+      return "<div><dt>" + pair[0] + "</dt><dd>" + pair[1] + "</dd></div>";
+    }).join("");
+  }
+
+  function renderReport(campaign) {
+    var pitches = campaign.pitches.slice().sort(function (a, b) { return a.pitch_number - b.pitch_number; });
+    var purchases = sumRecorded(campaign, "purchases");
+    var revenue = sumRecorded(campaign, "revenue");
+    var unsubs = sumRecorded(campaign, "unsubscribes");
+    var startSize = campaign.starting_list_size;
+    var endSize = campaign.current_list_size;
+    var rps = revenue != null && isRecorded(startSize) && num(startSize) > 0 ? revenue / num(startSize) : null;
+
+    var target = (isRecorded(campaign.minimum_interesting_purchases)
+      ? num(campaign.minimum_interesting_purchases) + " purchase" + (num(campaign.minimum_interesting_purchases) === 1 ? "" : "s")
+      : "Not recorded") +
+      (isRecorded(campaign.optional_revenue_target) ? " / " + money(campaign.optional_revenue_target) + " revenue" : "");
+
+    var changes = campaign.plan_changes && campaign.plan_changes.length
+      ? "<ul>" + campaign.plan_changes.map(function (c) {
+          return "<li>" + formatLongDate(c.at) + ": " + num(c.from) + " → " + num(c.to) + " pitches</li>";
+        }).join("") + "</ul>"
+      : "None";
+
+    var rows = pitches.map(function (p) {
+      return (
+        "<tr>" +
+          '<th scope="row">' + p.pitch_number + "</th>" +
+          "<td>" + (p.planned_date ? formatLongDate(p.planned_date) : "—") + "</td>" +
+          "<td>" + (p.actual_send_date ? formatLongDate(p.actual_send_date) : "—") + "</td>" +
+          "<td>" + countOr(p.delivered) + "</td>" +
+          "<td>" + countOr(p.opens) + "</td>" +
+          "<td>" + countOr(p.clicks) + "</td>" +
+          "<td>" + countOr(p.replies) + "</td>" +
+          "<td>" + countOr(p.purchases) + "</td>" +
+          "<td>" + moneyOr(p.revenue) + "</td>" +
+          "<td>" + countOr(p.unsubscribes) + "</td>" +
+          '<td class="notes">' + textOr(p.notes, "—") + "</td>" +
+        "</tr>"
+      );
+    }).join("");
 
     return (
-      '<button type="button" class="secondary" data-action="view-archive">&larr; Back to archive</button>' +
-      '<div class="card offer-block">' +
-        '<div class="offer-name">' + escapeHtml(campaign.offer_name) + "</div>" +
-        '<div class="offer-price">' + money(campaign.price) + "</div>" +
-        '<div class="offer-meta">' + escapeHtml(campaign.offer_description) + "</div>" +
-        '<div class="offer-meta"><strong>For:</strong> ' + escapeHtml(campaign.audience) + "</div>" +
-        '<span class="decision status-badge">' + escapeHtml(campaign.final_decision) + "</span>" +
-      "</div>" +
+      '<article class="report">' +
+        '<header class="report-head">' +
+          '<p class="report-kicker">Email experiment report</p>' +
+          "<h1>" + escapeHtml(campaign.offer_name || "Untitled offer") + "</h1>" +
+          '<p class="report-meta">Ran ' + formatLongDate(campaign.campaign_start) + " – " + formatLongDate(lastSendDate(campaign)) +
+            " · Completed " + formatLongDate(campaign.completed_at) + "</p>" +
+          '<p class="report-decision">Decision: <strong>' + textOr(campaign.final_decision, "Not recorded") + "</strong></p>" +
+        "</header>" +
 
-      '<div class="results-row">' +
-        '<div class="stat"><div class="label">Total purchases</div><div class="value">' + totalPurchases(campaign) + "</div></div>" +
-        '<div class="stat"><div class="label">Total revenue</div><div class="value">' + money(totalRevenue(campaign)) + "</div></div>" +
-      "</div>" +
-      '<div class="secondary-line">' +
-        num(campaign.starting_list_size) + " → " + num(endingListSize) + " subscribers" +
-        (rps != null ? " · " + money(rps) + " revenue/subscriber" : "") +
-        " · " + totalUnsubscribes(campaign) + " unsubscribes" +
-      "</div>" +
+        '<section class="report-section">' +
+          "<h2>Offer</h2>" +
+          '<dl class="report-dl">' + dlRows([
+            ["What it is", textOr(campaign.offer_description, "Not recorded")],
+            ["Audience", textOr(campaign.audience, "Not recorded")],
+            ["Problem", textOr(campaign.problem, "Not recorded")],
+            ["Promise", textOr(campaign.promise, "Not recorded")],
+            ["Price", moneyOr(campaign.price)],
+            ["Delivery", textOr(campaign.delivery_type, "Not recorded")],
+            ["Why it fits the list", textOr(campaign.audience_fit, "Not recorded")],
+            ["If people buy", textOr(campaign.delivery_commitment, "Not recorded")]
+          ]) + "</dl>" +
+        "</section>" +
 
-      '<div class="card">' +
-        "<h3>Sends</h3>" +
-        '<table class="pitch-table"><thead><tr><th>#</th><th>Date</th><th>Purch.</th><th>Rev.</th><th>Opens</th><th>Unsub.</th></tr></thead>' +
-        "<tbody>" + rows + "</tbody></table>" +
-      "</div>" +
+        '<section class="report-section">' +
+          "<h2>Experiment commitment</h2>" +
+          '<dl class="report-dl">' + dlRows([
+            ["Planned pitches", countOr(campaign.planned_pitch_count)],
+            ["Cadence", textOr(campaign.cadence, "Not recorded")],
+            ["Success signal", target],
+            ["Starting list size", isRecorded(startSize) ? countOr(startSize) : "Not recorded"],
+            ["Changes to the plan", changes]
+          ]) + "</dl>" +
+        "</section>" +
 
-      '<div class="card">' +
-        "<h3>Notes</h3>" +
-        '<p class="secondary-line"><strong>What happened?</strong><br>' + nl2br(campaign.factual_summary) + "</p>" +
-        '<p class="secondary-line"><strong>What did I learn?</strong><br>' + nl2br(campaign.lessons) + "</p>" +
-        '<p class="secondary-line"><strong>What will I do next?</strong><br>' + nl2br(campaign.next_action) + "</p>" +
-      "</div>"
+        '<section class="report-section">' +
+          "<h2>Outcome</h2>" +
+          '<dl class="report-stats">' + dlRows([
+            ["Pitches sent", sentPitches(campaign).length + " of " + num(campaign.planned_pitch_count)],
+            ["Purchases", purchases != null ? purchases.toLocaleString() : "—"],
+            ["Revenue", revenue != null ? money(revenue) : "—"],
+            ["List size", countOr(startSize) + " → " + countOr(endSize)],
+            ["Revenue / starting subscriber", rps != null ? money(rps) : "—"],
+            ["Unsubscribes", unsubs != null ? unsubs.toLocaleString() : "—"]
+          ]) + "</dl>" +
+        "</section>" +
+
+        '<section class="report-section report-pitches">' +
+          "<h2>Results by pitch</h2>" +
+          '<p class="report-note">— means not recorded.</p>' +
+          '<div class="table-scroll" tabindex="0" role="region" aria-label="Results by pitch">' +
+            '<table class="report-table">' +
+              "<thead><tr>" +
+                '<th scope="col">#</th><th scope="col">Planned</th><th scope="col">Sent</th>' +
+                '<th scope="col">Delivered</th><th scope="col">Opens</th><th scope="col">Clicks</th>' +
+                '<th scope="col">Replies</th><th scope="col">Purchases</th><th scope="col">Revenue</th>' +
+                '<th scope="col">Unsubs</th><th scope="col">Notes</th>' +
+              "</tr></thead>" +
+              "<tbody>" + rows + "</tbody>" +
+            "</table>" +
+          "</div>" +
+        "</section>" +
+
+        '<section class="report-section">' +
+          "<h2>Conclusion</h2>" +
+          '<dl class="report-dl">' + dlRows([
+            ["What happened", textOr(campaign.factual_summary, "Not recorded")],
+            ["What I learned", textOr(campaign.lessons, "Not recorded")],
+            ["What happens next", textOr(campaign.next_action, "Not recorded")]
+          ]) + "</dl>" +
+        "</section>" +
+      "</article>"
+    );
+  }
+
+  // Compact, light-only styles embedded in the downloaded file so it stands alone.
+  var REPORT_CSS =
+    "*{box-sizing:border-box}" +
+    "body{margin:0;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;color:#1a1a1a;background:#fff;line-height:1.45;font-size:15px}" +
+    "main{max-width:760px;margin:0 auto;padding:24px 16px 48px}" +
+    "h1{font-size:26px;margin:0 0 6px}h2{font-size:18px;margin:0 0 10px;padding-bottom:4px;border-bottom:1px solid #d9d9d9}" +
+    ".report-kicker{margin:0;font-size:12px;text-transform:uppercase;letter-spacing:.06em;color:#5a5a5a}" +
+    ".report-meta,.report-note,.report-footer{color:#5a5a5a;font-size:14px;margin:4px 0}" +
+    ".report-decision{margin:10px 0 0;font-size:16px}" +
+    ".report-section{margin-top:28px;break-inside:avoid}.report-pitches{break-inside:auto}" +
+    "dl{margin:0}dl>div{padding:6px 0;border-bottom:1px solid #eee}dt{font-weight:600;font-size:14px}dd{margin:2px 0 0}dd ul{margin:0;padding-left:20px}" +
+    ".report-stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px}" +
+    ".report-stats>div{border:1px solid #d9d9d9;border-radius:8px;padding:8px 10px}" +
+    ".report-stats dt{font-size:12px;text-transform:uppercase;letter-spacing:.04em;color:#5a5a5a}.report-stats dd{font-size:20px;font-weight:700}" +
+    ".table-scroll{overflow-x:auto}" +
+    "table{border-collapse:collapse;width:100%;font-size:14px}th,td{text-align:left;padding:6px;border-bottom:1px solid #d9d9d9;vertical-align:top;white-space:nowrap}" +
+    "td.notes{white-space:normal;min-width:180px}thead{display:table-header-group}tr{break-inside:avoid}" +
+    ".report-footer{margin-top:32px;font-size:12px}" +
+    "@media print{main{max-width:none;padding:0}.table-scroll{overflow:visible}th,td{white-space:normal}}";
+
+  function reportFilename(campaign) {
+    var slug = String(campaign.offer_name || "")
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/^-+|-+$/g, "")
+      .slice(0, 60)
+      .replace(/-+$/, "") || "experiment";
+    var date = localDateOf(campaign.completed_at);
+    return slug + "-report" + (date ? "-" + date : "") + ".html";
+  }
+
+  function downloadReport(campaign) {
+    var doc =
+      "<!doctype html>\n" +
+      '<html lang="en">\n<head>\n<meta charset="utf-8">\n' +
+      '<meta name="viewport" content="width=device-width, initial-scale=1">\n' +
+      "<title>" + escapeHtml(campaign.offer_name || "Experiment") + " — Email experiment report</title>\n" +
+      "<style>" + REPORT_CSS + "</style>\n</head>\n<body>\n<main>\n" +
+      renderReport(campaign) +
+      '\n<p class="report-footer">Saved from Email Strategy on ' + formatLongDate(localToday()) + ".</p>" +
+      "\n</main>\n</body>\n</html>\n";
+    var blob = new Blob([doc], { type: "text/html" });
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement("a");
+    a.href = url;
+    a.download = reportFilename(campaign);
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  }
+
+  function archiveDetailCampaign() {
+    return data.campaigns.find(function (c) { return c.id === ui.archiveDetailId; });
+  }
+
+  function renderArchiveDetail() {
+    var campaign = archiveDetailCampaign();
+    if (!campaign) return '<button type="button" class="secondary" data-action="view-archive">&larr; Back to archive</button>';
+
+    return (
+      '<div class="report-actions">' +
+        '<button type="button" class="secondary" data-action="view-archive">&larr; Back to archive</button>' +
+        '<button type="button" class="secondary" data-action="download-report">Download HTML</button>' +
+        '<button type="button" class="secondary" data-action="print-report">Print / Save PDF</button>' +
+      "</div>" +
+      renderReport(campaign)
     );
   }
 
@@ -758,6 +938,11 @@
         saveData();
         render();
       }
+    } else if (action === "download-report") {
+      var reporting = archiveDetailCampaign();
+      if (reporting) downloadReport(reporting);
+    } else if (action === "print-report") {
+      window.print();
     } else if (action === "view-archive") {
       ui.view = "archive";
       render();
