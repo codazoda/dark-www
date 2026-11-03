@@ -132,6 +132,37 @@
     return sentPitches(campaign).reduce(function (sum, p) { return sum + num(p.clicks); }, 0);
   }
 
+  // Purchases per click across sent pitches; null until there are clicks.
+  function clickToPurchase(campaign) {
+    var clicks = totalClicks(campaign);
+    if (!clicks) return null;
+    return totalPurchases(campaign) / clicks * 100;
+  }
+
+  var CONVERSION_GOAL = 15;
+
+  function conversionStat(campaign) {
+    var rate = clickToPurchase(campaign);
+    var value, note;
+    if (rate == null) {
+      value = "—";
+      note = "Unavailable — clicks are needed to calculate. Goal: above " + CONVERSION_GOAL + "%.";
+    } else {
+      value = rate.toFixed(1) + "%";
+      // compare exact counts so 15% is exact: purchases / clicks vs 15 / 100
+      var diff = totalPurchases(campaign) * 100 - totalClicks(campaign) * CONVERSION_GOAL;
+      note = diff > 0
+        ? "&#10003; Exceeds the " + CONVERSION_GOAL + "% goal"
+        : diff === 0
+          ? "= Met " + CONVERSION_GOAL + "%, not above the goal yet"
+          : "&#10007; Below the " + CONVERSION_GOAL + "% goal";
+    }
+    return (
+      '<div class="stat"><div class="label">Click-to-purchase</div><div class="value">' + value + "</div>" +
+        '<div class="goal-note">' + note + "</div></div>"
+    );
+  }
+
   function avgOpenRate(campaign) {
     var sent = sentPitches(campaign).filter(function (p) { return num(p.delivered) > 0; });
     if (!sent.length) return 0;
@@ -357,6 +388,7 @@
             "<td>" + p.pitch_number + "</td>" +
             "<td><span class=\"status-badge " + badgeClass + "\">" + label + "</span></td>" +
             "<td>" + formatDate(pitchDate(p)) + "</td>" +
+            "<td>" + (isSent(p) ? num(p.clicks) : "") + "</td>" +
             "<td>" + (isSent(p) ? num(p.purchases) : "") + "</td>" +
             "<td>" + (isSent(p) ? money(p.revenue) : "") + "</td>" +
           "</tr>"
@@ -391,6 +423,8 @@
       '<div class="results-row">' +
         '<div class="stat"><div class="label">Purchases</div><div class="value">' + purchases + "</div></div>" +
         '<div class="stat"><div class="label">Revenue</div><div class="value">' + money(revenue) + "</div></div>" +
+        '<div class="stat"><div class="label">Clicks</div><div class="value">' + totalClicks(campaign) + "</div></div>" +
+        conversionStat(campaign) +
       "</div>" +
       '<div class="progress-line">' + completed + " / " + planned + " pitches completed</div>" +
       '<p class="small-note">' + verdictLine + "</p>" +
@@ -404,7 +438,12 @@
 
       '<div class="card">' +
         "<h3>Campaign Progress</h3>" +
-        '<table class="pitch-table"><thead><tr><th>Pitch</th><th>Status</th><th>Date</th><th>Purchases</th><th>Revenue</th></tr></thead>' +
+        '<table class="pitch-table"><thead><tr>' +
+          '<th><span class="th-long">Pitch</span><span class="th-short">#</span></th>' +
+          "<th>Status</th><th>Date</th><th>Clicks</th>" +
+          '<th><span class="th-long">Purchases</span><span class="th-short">Purch.</span></th>' +
+          '<th><span class="th-long">Revenue</span><span class="th-short">Rev.</span></th>' +
+        "</tr></thead>" +
         "<tbody>" + rows + "</tbody></table>" +
       "</div>" +
 
@@ -412,7 +451,6 @@
         "<h3>Results So Far</h3>" +
         '<div class="results-row">' +
           '<div class="stat secondary"><div class="label">Avg. open rate</div><div class="value">' + pct(avgOpenRate(campaign)) + "</div></div>" +
-          '<div class="stat secondary"><div class="label">Total clicks</div><div class="value">' + totalClicks(campaign) + "</div></div>" +
           '<div class="stat secondary"><div class="label">Unsubscribes</div><div class="value">' + unsub + "</div></div>" +
         "</div>" +
         '<div class="secondary-line">' +

@@ -180,6 +180,12 @@ h1, h2, h3 { margin: 0 0 8px; }
 
 .stat.secondary .value { font-size: 18px; font-weight: 700; }
 
+.stat .goal-note {
+  font-size: 14px;
+  font-weight: 600;
+  margin-top: 4px;
+}
+
 .progress-line {
   font-size: 15px;
   font-weight: 600;
@@ -198,6 +204,9 @@ table.pitch-table th, table.pitch-table td {
   border-bottom: 1px solid var(--border);
   font-size: 14px;
 }
+
+/* short column headers, swapped in on very narrow screens */
+.th-short { display: none; }
 
 table.pitch-table tbody tr {
   cursor: pointer;
@@ -488,6 +497,14 @@ textarea.big {
   border-radius: 8px;
   min-height: 44px;
   text-decoration: none;
+}
+
+@media (max-width: 359px) {
+  .card { padding-left: 10px; padding-right: 10px; }
+  table.pitch-table th, table.pitch-table td { padding: 10px 2px; font-size: 13px; }
+  table.pitch-table .status-badge { padding: 2px 5px; }
+  .th-long { display: none; }
+  .th-short { display: inline; }
 }
 
 @media (prefers-reduced-motion: reduce) {
