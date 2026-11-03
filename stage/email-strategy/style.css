@@ -180,6 +180,12 @@ h1, h2, h3 { margin: 0 0 8px; }
 
 .stat.secondary .value { font-size: 18px; font-weight: 700; }
 
+.stat .goal-note {
+  font-size: 14px;
+  font-weight: 600;
+  margin-top: 4px;
+}
+
 .progress-line {
   font-size: 15px;
   font-weight: 600;
@@ -488,6 +494,10 @@ textarea.big {
   border-radius: 8px;
   min-height: 44px;
   text-decoration: none;
+}
+
+@media (max-width: 359px) {
+  table.pitch-table th, table.pitch-table td { padding: 10px 3px; }
 }
 
 @media (prefers-reduced-motion: reduce) {

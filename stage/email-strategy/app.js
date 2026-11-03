@@ -132,6 +132,37 @@
     return sentPitches(campaign).reduce(function (sum, p) { return sum + num(p.clicks); }, 0);
   }
 
+  // Purchases per click across sent pitches; null until there are clicks.
+  function clickToPurchase(campaign) {
+    var clicks = totalClicks(campaign);
+    if (!clicks) return null;
+    return totalPurchases(campaign) / clicks * 100;
+  }
+
+  var CONVERSION_GOAL = 15;
+
+  function conversionStat(campaign) {
+    var rate = clickToPurchase(campaign);
+    var value, note;
+    if (rate == null) {
+      value = "—";
+      note = "Unavailable — clicks are needed to calculate. Goal: above " + CONVERSION_GOAL + "%.";
+    } else {
+      value = rate.toFixed(1) + "%";
+      // compare exact counts so 15% is exact: purchases / clicks vs 15 / 100
+      var diff = totalPurchases(campaign) * 100 - totalClicks(campaign) * CONVERSION_GOAL;
+      note = diff > 0
+        ? "&#10003; Exceeds the " + CONVERSION_GOAL + "% goal"
+        : diff === 0
+          ? "= Met " + CONVERSION_GOAL + "%, not above the goal yet"
+          : "&#10007; Below the " + CONVERSION_GOAL + "% goal";
+    }
+    return (
+      '<div class="stat"><div class="label">Click-to-purchase</div><div class="value">' + value + "</div>" +
+        '<div class="goal-note">' + note + "</div></div>"
+    );
+  }
+
   function avgOpenRate(campaign) {
     var sent = sentPitches(campaign).filter(function (p) { return num(p.delivered) > 0; });
     if (!sent.length) return 0;
@@ -224,7 +255,7 @@
       var campaign = activeCampaign();
       if (!campaign) {
         app.innerHTML = renderNewCampaignForm();
-      } else if (isCampaignComplete(campaign) && !campaign.final_decision) {
+      } else if (campaign.closed_at && !campaign.final_decision) {
         app.innerHTML = renderCompleteScreen(campaign);
       } else {
         app.innerHTML = renderCockpit(campaign);
@@ -332,6 +363,8 @@
     var rps = revenuePerStartingSubscriber(campaign);
     var lowPrice = num(campaign.price) < 25;
 
+    var allSent = isCampaignComplete(campaign);
+
     var verdictLine;
     if (completed === 0) {
       verdictLine = "No pitches sent yet. Experiment not started.";
@@ -372,16 +405,25 @@
         '<div class="offer-meta"><strong>For:</strong> ' + escapeHtml(campaign.audience) + "</div>" +
       "</div>" +
 
-      '<div class="rule-banner">' +
-        "<h2>DON'T CHANGE THE OFFER YET</h2>" +
-        "<p>You committed to testing this offer <strong>" + planned + " times</strong>.</p>" +
-        "<p>You are currently on <strong>Pitch " + Math.min(completed + 1, planned) + " of " + planned + "</strong>.</p>" +
-        "<p>Finish the experiment before deciding what the results mean.</p>" +
-      "</div>" +
+      (allSent
+        ? '<div class="rule-banner close-banner">' +
+            "<h2>ALL " + planned + " PITCHES SENT</h2>" +
+            "<p>Fill in any purchases, revenue, and metrics still missing from the table below.</p>" +
+            "<p>When the numbers are complete, close the experiment and decide what the market told you.</p>" +
+            '<button type="button" class="primary" data-action="close-experiment">Close Experiment</button>' +
+          "</div>"
+        : '<div class="rule-banner">' +
+            "<h2>DON'T CHANGE THE OFFER YET</h2>" +
+            "<p>You committed to testing this offer <strong>" + planned + " times</strong>.</p>" +
+            "<p>You are currently on <strong>Pitch " + Math.min(completed + 1, planned) + " of " + planned + "</strong>.</p>" +
+            "<p>Finish the experiment before deciding what the results mean.</p>" +
+          "</div>") +
 
       '<div class="results-row">' +
         '<div class="stat"><div class="label">Purchases</div><div class="value">' + purchases + "</div></div>" +
         '<div class="stat"><div class="label">Revenue</div><div class="value">' + money(revenue) + "</div></div>" +
+        '<div class="stat"><div class="label">Clicks</div><div class="value">' + totalClicks(campaign) + "</div></div>" +
+        conversionStat(campaign) +
       "</div>" +
       '<div class="progress-line">' + completed + " / " + planned + " pitches completed</div>" +
       '<p class="small-note">' + verdictLine + "</p>" +
@@ -403,7 +445,6 @@
         "<h3>Results So Far</h3>" +
         '<div class="results-row">' +
           '<div class="stat secondary"><div class="label">Avg. open rate</div><div class="value">' + pct(avgOpenRate(campaign)) + "</div></div>" +
-          '<div class="stat secondary"><div class="label">Total clicks</div><div class="value">' + totalClicks(campaign) + "</div></div>" +
           '<div class="stat secondary"><div class="label">Unsubscribes</div><div class="value">' + unsub + "</div></div>" +
         "</div>" +
         '<div class="secondary-line">' +
@@ -554,7 +595,8 @@
         '<textarea id="next_action" name="next_action" required></textarea>' +
 
         '<button type="submit" class="primary">Archive Experiment</button>' +
-      "</form>"
+      "</form>" +
+      '<button type="button" class="secondary" data-action="reopen-experiment">Back to Campaign</button>'
     );
   }
 
@@ -695,6 +737,21 @@
       ui.archiveDetailId = target.dataset.campaignId;
       ui.view = "archiveDetail";
       render();
+    } else if (action === "close-experiment") {
+      var closing = activeCampaign();
+      if (closing && isCampaignComplete(closing)) {
+        closing.closed_at = new Date().toISOString();
+        saveData();
+        window.scrollTo(0, 0);
+        render();
+      }
+    } else if (action === "reopen-experiment") {
+      var reopening = activeCampaign();
+      if (reopening) {
+        reopening.closed_at = "";
+        saveData();
+        render();
+      }
     } else if (action === "view-archive") {
       ui.view = "archive";
       render();
@@ -746,6 +803,7 @@
       lessons: "",
       next_action: "",
       plan_changes: [],
+      closed_at: "",
       created_at: new Date().toISOString(),
       completed_at: "",
       pitches: buildPitches(planned, start, cadence)
