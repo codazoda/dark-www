@@ -520,12 +520,15 @@ and the clock keeps advancing normally afterward. <a
 href="#input"><code>INPUT DATE$</code></a> is still rejected — setting
 the clock is assignment syntax, not a new <code>INPUT</code>
 destination.</p>
-<p>The clock has no battery or network backing. The firmware seeds it at
-boot to a fixed default, <code>01-01-1970</code>, rather than the build
-time, so it's consistent across reboots instead of merely approximate —
-the value has no wall-clock meaning, it's a starting point the clock
-then advances from, until a program or a direct-mode command corrects it
-with an assignment. See <a href="#time">TIME$</a>.</p>
+<p>On the Waveshare watch, the board's battery-backed real-time clock
+keeps the date: an assignment is saved to it, and the next boot picks up
+from there. Other boards have no battery or network backing: the firmware
+seeds the clock at boot to a fixed default, <code>01-01-1970</code>,
+rather than the build time, so it's consistent across reboots instead of
+merely approximate — the value has no wall-clock meaning, it's a starting
+point the clock then advances from, until a program or a direct-mode
+command corrects it with an assignment. The watch also starts there until
+the first assignment. See <a href="#time">TIME$</a>.</p>
 <h2 id="def-fn">DEF FN</h2>
 <p><strong>Statement</strong> —
 <code>DEF FNname[(param[, param...])] = expression</code></p>
@@ -2684,13 +2687,16 @@ keeps advancing normally afterward. <a
 href="#input"><code>INPUT TIME$</code></a> is still rejected — setting
 the clock is assignment syntax, not a new <code>INPUT</code>
 destination.</p>
-<p>The clock is not battery- or network-backed: at boot the firmware
-sets it to a fixed default, <code>12:00:00</code>, like an unset alarm
-clock, and lets it advance from there. So it's consistent across reboots
-rather than an approximation of the actual time of day, until a program
-or a direct-mode command corrects it with an assignment. A later
-firmware update could add network time without changing how
-<code>TIME$</code> behaves. See <a href="#date">DATE$</a>.</p>
+<p>On the Waveshare watch, the board's battery-backed real-time clock
+keeps the time: an assignment is saved to it, and the next boot picks up
+from there. Other boards have no battery or network backing: at boot the
+firmware sets the clock to a fixed default, <code>12:00:00</code>, like an
+unset alarm clock, and lets it advance from there. So it's consistent
+across reboots rather than an approximation of the actual time of day,
+until a program or a direct-mode command corrects it with an assignment.
+The watch also starts there until the first assignment. A later firmware
+update could add network time without changing how <code>TIME$</code>
+behaves. See <a href="#date">DATE$</a>.</p>
 <h2 id="ucase">UCASE$</h2>
 <p><strong>Function</strong> — <code>UCASE$(s$)</code></p>
 <p>Returns a new string in which every ASCII lowercase letter
