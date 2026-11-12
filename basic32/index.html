@@ -148,7 +148,8 @@ href="#tick">TICK</a> · <a href="#time">TIME$</a> · <a
 href="#timer">TIMER</a> · <a href="#trontroff">TRON/TROFF</a> · <a
 href="#ucase">UCASE$</a> · <a href="#val">VAL</a> · <a
 href="#view">VIEW</a> · <a href="#wake">WAKE</a> · <a
-href="#whilewend">WHILE/WEND</a> · <a href="#write">WRITE</a></p>
+href="#whilewend">WHILE/WEND</a> · <a href="#wifi">WIFI</a> · <a
+href="#write">WRITE</a></p>
 <h2 id="abs">ABS</h2>
 <p><strong>Function</strong> — <code>ABS(x)</code></p>
 <p>Returns the absolute value of <code>x</code>.</p>
@@ -522,13 +523,14 @@ the clock is assignment syntax, not a new <code>INPUT</code>
 destination.</p>
 <p>On the Waveshare watch, the board's battery-backed real-time clock
 keeps the date: an assignment is saved to it, and the next boot picks up
-from there. Other boards have no battery or network backing: the firmware
-seeds the clock at boot to a fixed default, <code>01-01-1970</code>,
-rather than the build time, so it's consistent across reboots instead of
-merely approximate — the value has no wall-clock meaning, it's a starting
-point the clock then advances from, until a program or a direct-mode
-command corrects it with an assignment. The watch also starts there until
-the first assignment. See <a href="#time">TIME$</a>.</p>
+from there. Other boards have no battery or network backing: the
+firmware seeds the clock at boot to a fixed default,
+<code>01-01-1970</code>, rather than the build time, so it's consistent
+across reboots instead of merely approximate — the value has no
+wall-clock meaning, it's a starting point the clock then advances from,
+until a program or a direct-mode command corrects it with an assignment.
+The watch also starts there until the first assignment. See <a
+href="#time">TIME$</a>.</p>
 <h2 id="def-fn">DEF FN</h2>
 <p><strong>Statement</strong> —
 <code>DEF FNname[(param[, param...])] = expression</code></p>
@@ -2487,6 +2489,63 @@ the loop entirely.</p>
 <code>WHILE</code> whose condition is false with no matching
 <code>WEND</code> after it is <code>?WHILE WITHOUT WEND ERROR</code>.
 Works only in a program.</p>
+<h2 id="wifi">WIFI</h2>
+<p><strong>Statement</strong> — <code>WIFI</code> / <code>WIFI ON</code>
+/ <code>WIFI OFF</code> / <code>WIFI "ssid","password"</code></p>
+<p>Shows or changes the board's Wi-Fi. Works at <code>READY.</code> and
+in a program.</p>
+<ul>
+<li><code>WIFI</code> prints the connection status: the mode
+(<code>STA</code> joined to a network, <code>AP</code> running the
+board's own open access point, <code>CONNECTING</code>, or
+<code>OFF</code>), the SSID, the IP address, and the board's own names:
+its hostname, such as <code>basic32-a1b2.local</code>, and its access
+point, such as <code>BASIC32-A1B2</code>. It never prints the
+password.</li>
+<li><code>WIFI OFF</code> turns the radio off, not just disconnects, and
+stops the HTTP API and mDNS, which saves battery. It lasts only until
+the next boot: every boot, normal or safe mode, starts Wi-Fi again, so a
+program can't leave a board unreachable for good.</li>
+<li><code>WIFI ON</code> starts Wi-Fi in the background with the saved
+network, falling back to the access point, and returns at once.
+<code>WIFI</code> shows <code>CONNECTING</code> until it is up.</li>
+<li><code>WIFI "ssid","password"</code> saves a network to join,
+replacing any saved before, prints <code>WI-FI SAVED, RESTARTING</code>,
+and restarts the board about a second later to join it. Use
+<code>""</code> as the password for an open network. A running program
+ends there.</li>
+</ul>
+<h3 id="examples-89">Examples</h3>
+<pre class="basic"><code>WIFI</code></pre>
+<p>Output on a board joined to a network:</p>
+<pre><code>MODE STA
+SSID HOMENET
+IP 192.168.1.42
+HOST basic32-a1b2.local
+AP BASIC32-A1B2</code></pre>
+<pre class="basic"><code>10 WIFI OFF
+20 REM ... a battery-friendly program ...</code></pre>
+<pre class="basic"><code>WIFI &quot;HOMENET&quot;,&quot;secret password&quot;</code></pre>
+<h3 id="comments-83">Comments</h3>
+<p><code>ON</code> and <code>OFF</code> are safe to repeat. Both, and
+the plain status, take nothing after them; anything else is
+<code>?SYNTAX ERROR</code>. The SSID must be 1 to 32 characters and the
+password at most 64, or it is <code>?ILLEGAL QUANTITY ERROR</code>;
+either can be any string expression. The network is kept in the board's
+own settings storage, never with the program files or on a card. If
+saving fails it is <code>?STORAGE ERROR</code> and nothing restarts.</p>
+<p>Starting Wi-Fi never holds up boot or the <code>READY.</code> prompt,
+and BASIC32 works the same with no network at all.</p>
+<p>On a board with no Wi-Fi, <code>WIFI OFF</code> does nothing and
+succeeds, so the same program runs everywhere; <code>WIFI ON</code> and
+<code>WIFI "ssid","password"</code> are <code>?UNSUPPORTED ERROR</code>.
+On the desktop the operating system owns the network: <code>WIFI</code>
+shows the computer's local IP address, <code>WIFI ON</code> and
+<code>WIFI OFF</code> succeed without changing anything, and saving a
+network is <code>?UNSUPPORTED ERROR</code>.</p>
+<p>On the XIAO ESP32-C6 the browser is the board's screen and keyboard,
+so <code>WIFI OFF</code> there leaves it with neither until it is
+reset.</p>
 <h2 id="write">WRITE</h2>
 <p><strong>Statement</strong> —
 <code>WRITE [#n,] item[, item...]</code></p>
@@ -2494,7 +2553,7 @@ Works only in a program.</p>
 and numbers without padding, then ends the line — a form <a
 href="#open">INPUT #</a> reads back exactly. Without <code>#n</code>, it
 goes to the screen.</p>
-<h3 id="examples-89">Examples</h3>
+<h3 id="examples-90">Examples</h3>
 <pre class="basic"><code>WRITE &quot;ANN&quot;, 36, &quot;X&quot;</code></pre>
 <p>Output: <code>"ANN",36,"X"</code></p>
 <h2 id="string-variables">String variables</h2>
@@ -2504,7 +2563,7 @@ bytes instead of a number. It is a distinct variable from the same base
 name without the <code>$</code> (<code>A</code> and <code>A$</code> are
 unrelated), case-insensitive like every name, and defaults to the empty
 string <code>""</code> until assigned.</p>
-<h3 id="examples-90">Examples</h3>
+<h3 id="examples-91">Examples</h3>
 <pre class="basic"><code>10 A$ = &quot;HELLO&quot;
 20 NAME$ = &quot;JOEL&quot;
 30 PRINT A$ ; &quot; &quot; ; NAME$
@@ -2514,7 +2573,7 @@ string <code>""</code> until assigned.</p>
 <pre><code>HELLO JOEL
 4
 HELLO</code></pre>
-<h3 id="comments-83">Comments</h3>
+<h3 id="comments-84">Comments</h3>
 <p><strong>Where a string expression is allowed.</strong> The RHS of a
 <code>$</code> assignment (<code>LET NAME$="JOEL"</code> or just
 <code>NAME$="JOEL"</code>), any <a href="#print">PRINT</a> item, an <a
@@ -2577,7 +2636,7 @@ with no Unicode-aware character counting.</p>
 <code>BATTERY</code></p>
 <p>Estimated remaining battery charge as an integer from 0 through 100,
 or <code>-1</code> when no reading is available.</p>
-<h3 id="examples-91">Examples</h3>
+<h3 id="examples-92">Examples</h3>
 <pre class="basic"><code>PRINT BATTERY
 IF BATTERY &gt;= 0 THEN PRINT BATTERY;&quot;%&quot;</code></pre>
 <p>Polling loop:</p>
@@ -2586,7 +2645,7 @@ IF BATTERY &gt;= 0 THEN PRINT BATTERY;&quot;%&quot;</code></pre>
 30 IF B &gt;= 0 THEN PRINT &quot;BATTERY&quot;;B;&quot;%&quot;
 40 SLEEP 5
 50 GOTO 10</code></pre>
-<h3 id="comments-84">Comments</h3>
+<h3 id="comments-85">Comments</h3>
 <p>Not a function call — like <a href="#tick">TICK</a>, it takes no
 <code>()</code>, so <code>BATTERY()</code> is a syntax error. Always
 test for <code>-1</code> before showing a percentage; <code>0</code> is
@@ -2624,19 +2683,19 @@ battery sense wired to the MCU and always return <code>-1</code>.</p>
 </tr>
 </tbody>
 </table>
-<h3 id="examples-92">Examples</h3>
+<h3 id="examples-93">Examples</h3>
 <pre class="basic"><code>10 IF WAKE = 1 THEN PRINT &quot;TIMER WAKE&quot;
 20 POWER OFF 60</code></pre>
-<h3 id="comments-85">Comments</h3>
+<h3 id="comments-86">Comments</h3>
 <p>Not a function call — like <a href="#tick">TICK</a>, it takes no
 <code>()</code>. Boards that can't sleep always report
 <code>0</code>.</p>
 <h2 id="tick">TICK</h2>
 <p><strong>Special variable (read-only)</strong> — <code>TICK</code></p>
 <p>Milliseconds elapsed since the board booted.</p>
-<h3 id="examples-93">Examples</h3>
+<h3 id="examples-94">Examples</h3>
 <pre class="basic"><code>PRINT TICK</code></pre>
-<h3 id="comments-86">Comments</h3>
+<h3 id="comments-87">Comments</h3>
 <p>Not a function call — every function requires exactly one
 parenthesized argument, and <code>TICK</code> needs none, so it's read
 like a variable with no <code>()</code>. <code>TICK</code> is monotonic
@@ -2651,7 +2710,7 @@ boot.</p>
 <code>TIME$</code></p>
 <p>The current local time of day as an 8-character string,
 <code>HH:MM:SS</code>, in 24-hour form with leading zeroes.</p>
-<h3 id="examples-94">Examples</h3>
+<h3 id="examples-95">Examples</h3>
 <pre class="basic"><code>10 PRINT TIME$
 20 PAUSE 20
 30 PRINT TIME$</code></pre>
@@ -2662,7 +2721,7 @@ boot.</p>
 LET TIME$ = &quot;14:30:00&quot;
 PRINT TIME$</code></pre>
 <p>Output: <code>14:30:00</code></p>
-<h3 id="comments-87">Comments</h3>
+<h3 id="comments-88">Comments</h3>
 <p>Not a function call — like <a href="#tick">TICK</a>, it's read with
 no <code>()</code>, and each evaluation re-reads the clock, so two reads
 a moment apart differ. Successive reads advance in step with the system
@@ -2690,8 +2749,8 @@ destination.</p>
 <p>On the Waveshare watch, the board's battery-backed real-time clock
 keeps the time: an assignment is saved to it, and the next boot picks up
 from there. Other boards have no battery or network backing: at boot the
-firmware sets the clock to a fixed default, <code>12:00:00</code>, like an
-unset alarm clock, and lets it advance from there. So it's consistent
+firmware sets the clock to a fixed default, <code>12:00:00</code>, like
+an unset alarm clock, and lets it advance from there. So it's consistent
 across reboots rather than an approximation of the actual time of day,
 until a program or a direct-mode command corrects it with an assignment.
 The watch also starts there until the first assignment. A later firmware
@@ -2702,10 +2761,10 @@ behaves. See <a href="#date">DATE$</a>.</p>
 <p>Returns a new string in which every ASCII lowercase letter
 <code>a</code>–<code>z</code> in string expression <code>s$</code> is
 converted to uppercase.</p>
-<h3 id="examples-95">Examples</h3>
+<h3 id="examples-96">Examples</h3>
 <pre class="basic"><code>PRINT UCASE$(&quot;Hello, World 42!&quot;)</code></pre>
 <p>Output: <code>HELLO, WORLD 42!</code></p>
-<h3 id="comments-88">Comments</h3>
+<h3 id="comments-89">Comments</h3>
 <p>Only the ASCII letters <code>a</code>–<code>z</code> change. Digits,
 punctuation, spaces, and every byte outside the ASCII letter ranges pass
 through unchanged, and the result has the same length as <code>s$</code>
@@ -2722,14 +2781,14 @@ href="#lcase">LCASE$</a>.</p>
 and returns it as a number. Leading whitespace is skipped. When
 <code>s$</code> has no numeric prefix, <code>VAL</code> returns
 <code>0</code>.</p>
-<h3 id="examples-96">Examples</h3>
+<h3 id="examples-97">Examples</h3>
 <pre class="basic"><code>PRINT VAL(&quot;42&quot;)
 PRINT VAL(&quot;  3.5 kg&quot;)
 PRINT VAL(&quot;kg&quot;)
 PRINT VAL(&quot;-7e2&quot;)</code></pre>
 <p>Output: <code>42</code>, <code>3.5</code>, <code>0</code>,
 <code>-700</code></p>
-<h3 id="comments-89">Comments</h3>
+<h3 id="comments-90">Comments</h3>
 <p>Accepts the same numeric forms the interpreter itself parses,
 including a leading sign and exponent. Parsing stops at the first
 character that can't extend the number, so trailing text is ignored
@@ -2752,14 +2811,14 @@ precedence. All values are C <code>double</code>s.</p>
 of <code>a</code> (<code>-17 MOD 5</code> is <code>-2</code>).</p>
 <p>Number constants can also be written in hexadecimal or octal:
 <code>&amp;HFF</code> is 255 and <code>&amp;O17</code> is 15.</p>
-<h4 id="examples-97">Examples</h4>
+<h4 id="examples-98">Examples</h4>
 <pre class="basic"><code>PRINT 2+3*4
 PRINT (2+3)*4
 PRINT -5+2
 PRINT 17 MOD 5</code></pre>
 <p>Output: <code>14</code>, <code>20</code>, <code>-3</code>,
 <code>2</code></p>
-<h4 id="comments-90">Comments</h4>
+<h4 id="comments-91">Comments</h4>
 <p>Dividing by zero is a runtime error
 (<code>?DIVISION BY ZERO ERROR</code>), not infinity or NaN, and so is
 <code>MOD</code> by zero. There is no integer-division operator or
@@ -3281,12 +3340,12 @@ href="#ifthen">IF</a>'s condition. True is <code>-1</code> (every bit
 set), as in classic BASIC, so the results combine correctly with the
 bitwise <a href="#logical-operators">logical operators</a>:
 <code>NOT</code> of a true comparison is false.</p>
-<h4 id="examples-98">Examples</h4>
+<h4 id="examples-99">Examples</h4>
 <pre class="basic"><code>PRINT 3&gt;2
 PRINT 1=2
 PRINT 2&lt;=2</code></pre>
 <p>Output: <code>-1</code>, <code>0</code>, <code>-1</code></p>
-<h4 id="comments-91">Comments</h4>
+<h4 id="comments-92">Comments</h4>
 <p>Below arithmetic and above the <a href="#logical-operators">logical
 operators</a> in precedence. Comparisons group left to right
 (<code>1&lt;2&lt;3</code> is <code>(1&lt;2)&lt;3</code>, not a range
