@@ -1802,9 +1802,9 @@ token (a sharp/flat, an octave number, a rest, anything but a bare
 <code>A</code>-<code>G</code> letter) is <code>?SYNTAX ERROR</code> with
 no partial melody, not an error partway through playback. Sharps/flats,
 octaves, tempo, rests, note lengths, and a fuller music-macro grammar
-are out of scope for this version. On the ESP32-C6, each note streams to
-the connected browser for Web Audio playback the same way <a
-href="#sound">SOUND</a> does.</p>
+are out of scope for this version. On a target with no speaker each note
+waits its length silently, the same way <a href="#sound">SOUND</a>
+does.</p>
 <h2 id="pmap">PMAP</h2>
 <p><strong>Function</strong> — <code>PMAP(value, mode)</code></p>
 <p>Converts a coordinate between world and screen coordinates: mode 0 is
@@ -2324,7 +2324,11 @@ is zero, <code>1</code> if it is positive.</p>
 <h3 id="comments-76">Comments</h3>
 <p>Reads more directly than <a href="#pause">PAUSE</a> for whole-second
 delays; both share the same underlying delay, and <code>n</code> is a
-full expression so fractional seconds also work.</p>
+full expression so fractional seconds also work. In a running program,
+<code>Ctrl-C</code> (or <code>POST /api/stop</code> from the <a
+href="API.md">HTTP API</a>) ends either wait at once with
+<code>BREAK IN n</code>; <a href="#cont">CONT</a> carries on after
+it.</p>
 <h2 id="sound">SOUND</h2>
 <p><strong>Statement</strong> —
 <code>SOUND frequency,duration</code></p>
@@ -2344,12 +2348,11 @@ SOUND 880,100</code></pre>
 <p>A duration of 0 is valid and produces no audible output — useful for
 muting a <code>SOUND</code> call without removing it. Both arguments are
 full numeric expressions, truncated to whole Hz/ms. On targets with no
-sound hardware (ESP32-S3, RP2350), <code>SOUND</code> is silent but
-still blocks for the full duration so program timing matches the
-ESP32-C6, which instead streams the tone to its connected browser for
-Web Audio playback; with no browser connected, or if the send fails, the
-program continues silently. See <a href="#play">PLAY</a> for short
-melodies built from natural note names.</p>
+sound hardware (ESP32-S3, ESP32-C6, RP2350), <code>SOUND</code> is
+silent but still blocks for the full duration, so program timing is the
+same on every target. The browser page plays no sound. See <a
+href="#play">PLAY</a> for short melodies built from natural note
+names.</p>
 <h2 id="space">SPACE$</h2>
 <p><strong>Function</strong> — <code>SPACE$(n)</code></p>
 <p>A string of <code>n</code> spaces (0–255).</p>
@@ -2543,8 +2546,8 @@ On the desktop the operating system owns the network: <code>WIFI</code>
 shows the computer's local IP address, <code>WIFI ON</code> and
 <code>WIFI OFF</code> succeed without changing anything, and saving a
 network is <code>?UNSUPPORTED ERROR</code>.</p>
-<p>On the XIAO ESP32-C6 the browser is the board's screen and keyboard,
-so <code>WIFI OFF</code> there leaves it with neither until it is
+<p>On the XIAO ESP32-C6 the browser is the board's screen, so
+<code>WIFI OFF</code> there leaves it with no display until it is
 reset.</p>
 <h2 id="write">WRITE</h2>
 <p><strong>Statement</strong> —
